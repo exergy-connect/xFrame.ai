@@ -4,7 +4,7 @@
 REPO="https://github.com/exergy-connect/xFrame.ai.git"
 SKILLS=("skills/xframe-model" "skills/xframe-consolidate")
 TARGET=".cursor/skills"
-VERSION_URL="https://exergy-connect.github.io/xFrame.ai/version.json"
+VERSION_URL="https://exergy-connect.github.io/xFrame.ai/latest"
 
 if [ ! -d ".cursor" ]; then
   echo "No .cursor directory found. Run this from your project root."
@@ -13,8 +13,8 @@ fi
 
 # --check flag: compare versions only
 if [ "$1" = "--check" ]; then
-  LATEST=$(curl -fsSL "$VERSION_URL" | grep -o '"version":"[^"]*"' | cut -d'"' -f4)
-  LOCAL=$(cat "$TARGET/.xframe-version" 2>/dev/null || echo "not installed")
+  LATEST=$(curl -fsSL "$VERSION_URL")
+  LOCAL=$(cat "$TARGET/.xframe-latest" 2>/dev/null || echo "not installed")
   echo "Installed: $LOCAL — Latest: $LATEST"
   [ "$LOCAL" = "$LATEST" ] && echo "Up to date." || echo "Update available. Re-run without --check to install."
   exit 0
@@ -34,7 +34,8 @@ for SKILL in "${SKILLS[@]}"; do
 done
 
 # Record installed version
-curl -fsSL "$VERSION_URL" | grep -o '"version":"[^"]*"' | cut -d'"' -f4 > "$OLDPWD/$TARGET/.xframe-version"
+SUITE_VERSION=$(curl -fsSL "$VERSION_URL")
+echo "$SUITE_VERSION" > "$OLDPWD/$TARGET/.xframe-latest"
 
 rm -rf "$TMP"
-echo "xFrame.ai suite v$(cat "$OLDPWD/$TARGET/.xframe-version") installed."
+echo "xFrame.ai suite v$SUITE_VERSION installed."
