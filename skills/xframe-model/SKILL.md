@@ -18,6 +18,13 @@ Create YAML files that define the **model** (entity schemas) and **data** (entit
 - **model/** – One or more YAML files defining entities and fields. All are merged into a single schema.
 - **data/** – One or more YAML files with entity data, keyed by entity name. Often a single file (e.g. `sample_data.yaml`) with multiple entity keys.
 
+## Version
+
+Installed: `.cursor/skills/.xframe-latest`
+```bash
+bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh) [--check|--update]
+```
+
 ## Model YAML structure
 
 Top-level:

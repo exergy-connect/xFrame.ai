@@ -40,6 +40,13 @@ node skills/xframe-consolidate/scripts/consolidate.min.js <data_dir> --model-dir
 | `--js` | Also write `.js` ES module files (`consolidated_model.js`, `consolidated_data.js`). |
 | `--jsz` | Also write gzipped JS artifacts (`.gz.js`). |
 
+## Version
+
+Installed: `.cursor/skills/.xframe-latest`
+```bash
+bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh) [--check|--update]
+```
+
 ## Directory layout
 
 - **Model directory**: YAML files defining entities, fields, and schema. Consolidator merges them into one schema.
