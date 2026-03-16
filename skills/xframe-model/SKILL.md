@@ -31,7 +31,7 @@ Top-level:
 
 ```yaml
 name: "My Model"
-version: "25.01.01.1"
+version: "25.01.01.1" # format: YY.MM.DD.N where YY is 2-digit year, MM is month, DD is day, and N is sequence number
 author: "Author Name"
 entities:
   - name: <entity_name>

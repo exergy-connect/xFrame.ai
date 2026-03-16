@@ -1,7 +1,7 @@
 # Example xFrame model: Company -> Department -> Employee
 # Use with example-data.yaml and run xframe-consolidate (model-dir and data_dir pointing at assets or copies).
 name: "Example Model"
-version: "1.0.0"
+version: "25.03.16.1"
 author: "xFrame"
 
 entities:
