@@ -40,10 +40,6 @@ cp -r path/to/xFrame.ai/skills/xframe-consolidate .cursor/skills/
 
 - **xframe-consolidate**: Node.js ≥18 (for `consolidate.min.js`). No npm install; the script is self-contained.
 
-## Links
-
-- **xFrame** (core): [github.com/exergy-connect/xFrame](https://github.com/exergy-connect/xFrame) — consolidator, loader, schema, and TypeScript port.
-
 ## License
 
-Same as xFrame (MIT).
+See [LICENSE](LICENSE).
