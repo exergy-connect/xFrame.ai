@@ -29,7 +29,7 @@ node skills/xframe-consolidate/scripts/consolidate.min.js <data_dir> --model-dir
 |----------|-------------|
 | `<data_dir>` | Directory containing JSON data files (entity data). |
 | `--model-dir <dir>` | Directory containing JSON model files (entity schemas). |
-| `--note "<text>"` | Change note for this consolidation run (required, non-empty). |
+| `--note "<text>"` | **Reason for this run** (required, non-empty). Describe what changed that required reconsolidation, e.g. *"Add field_reserves oil/gas/boe composites"*, *"Updated operator data and new facility records"*, *"New entities field_platloc and field_fasttrack"*, *"Fix Ladybug host_facility; add Tick-GB189"*. Do not use generic text like *"Consolidate"* or *"Sync"*—the note is stored in `data.change` and should tell future readers what actually changed. |
 
 **Optional:**
 
@@ -62,7 +62,7 @@ Paths can be absolute or relative. Create `output/` if missing.
 ## Example
 
 ```bash
-node skills/xframe-consolidate/scripts/consolidate.min.js ./data --model-dir ./model --note "Sync from source" --author "ci" --git-commit-hash "$(git rev-parse HEAD)" --js
+node skills/xframe-consolidate/scripts/consolidate.min.js ./data --model-dir ./model --note "Add field_reserves composites; update lifecycle dates from source" --author "ci" --git-commit-hash "$(git rev-parse HEAD)" --js
 ```
 
 Output appears in `./output/` (sibling of `./model`).
