@@ -1,0 +1,5 @@
+{
+  "version": "0.1.0",
+  "suite": "xFrame.ai",
+  "skills": ["xframe-model", "xframe-consolidate"]
+}
