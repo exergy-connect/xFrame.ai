@@ -1,0 +1,48 @@
+// Example xFrame data for example-model.jsonc
+// JSONC (JSON with comments) for documentation. Remove comments for actual input JSON.
+{
+  "company": [
+    {
+      "company_id": "acme",
+      "company_name": "ACME Corp",
+      "source": "companies.xlsx / Companies",
+      "departments": [
+        {
+          "department_id": "eng",
+          "department_name": "Engineering",
+          "employees": [
+            {
+              "employee_id": "alice",
+              "employee_name": "Alice",
+              "email": "alice@acme.com"
+            },
+            {
+              "employee_id": "bob",
+              "employee_name": "Bob",
+              "email": "bob@acme.com"
+            }
+          ]
+        },
+        {
+          // Second department row
+          "department_id": "sales",
+          "department_name": "Sales",
+          "employees": [
+            {
+              "employee_id": "charlie",
+              "employee_name": "Charlie",
+              "email": "charlie@acme.com"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "company_id": "other",
+      "company_name": "Other Co",
+      "source": "companies.xlsx / Companies",
+      "departments": []
+    }
+  ]
+}
+

@@ -1,0 +1,137 @@
+// Example xFrame model: Company -> Department -> Employee
+// JSONC (JSON with comments) for documentation. Remove comments for actual input JSON.
+{
+  "name": "Example Model",
+  "version": "25.03.16.1", // YY.MM.DD.N format: 2-digit year, month, day, sequence number
+  "author": "xFrame",
+  "source": "Excel workbook: companies.xlsx", // Model-level data source (e.g. file, API, URL)
+  "entities": [
+    {
+      "name": "company", // Top-level company entity
+      "brief": "Top-level company",
+      "description": "A legal or organizational entity that owns departments and employees.",
+      "source": "Sheet: Companies", // Entity-level source (e.g. sheet or table)
+      "primary_key": "company_id", // Primary key for company records
+      "fields": [
+        {
+          "name": "company_id",
+          "description": "Unique identifier for the company.",
+          "type": "string",
+          "required": true,
+          "source": "Column: Company ID" // Field-level source
+        },
+        {
+          "name": "company_name",
+          "description": "Human-readable name of the company.",
+          "type": "string",
+          "required": true,
+          "source": "Column: Company Name"
+        },
+        {
+          "name": "departments", // Nested departments under each company
+          "description": "List of departments that belong to this company.",
+          "type": "array",
+          "required": false,
+          "item_type": {
+            "entity": "department"
+          }
+        },
+        {
+          "name": "source",
+          "description": "Free-text description of where this company record comes from (system or file).",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "department", // Department entity under company
+      "brief": "Department under company",
+      "description": "Organizational unit within a company that groups employees by function.",
+      "source": "Sheet: Departments",
+      "primary_key": "department_id",
+      "fields": [
+        {
+          "name": "department_id",
+          "description": "Unique identifier for the department within a company.",
+          "type": "string",
+          "required": true,
+          "source": "Column: Department ID"
+        },
+        {
+          "name": "department_name",
+          "description": "Human-readable name of the department.",
+          "type": "string",
+          "required": true,
+          "source": "Column: Department Name"
+        },
+        {
+          "name": "company_id", // Foreign key back to company; also used for nesting under company.departments
+          "description": "Foreign key reference to the parent company that owns this department.",
+          "type": "string",
+          "required": true,
+          "source": "Column: Company ID (FK)",
+          "foreignKeys": [
+            {
+              "entity": "company",
+              "parent_array": "departments"
+            }
+          ]
+        },
+        {
+          "name": "employees", // Nested employees under each department
+          "description": "List of employees that work in this department.",
+          "type": "array",
+          "required": false,
+          "item_type": {
+            "entity": "employee"
+          }
+        }
+      ]
+    },
+    {
+      "name": "employee", // Employee entity under department
+      "brief": "Employee under department",
+      "description": "Individual person employed by a company and assigned to a department.",
+      "source": "Sheet: Employees",
+      "primary_key": "employee_id",
+      "fields": [
+        {
+          "name": "employee_id",
+          "description": "Unique identifier for the employee.",
+          "type": "string",
+          "required": true,
+          "source": "Column: Employee ID"
+        },
+        {
+          "name": "employee_name",
+          "description": "Full name of the employee.",
+          "type": "string",
+          "required": true,
+          "source": "Column: Employee Name"
+        },
+        {
+          "name": "department_id", // Foreign key back to department; also used for nesting under department.employees
+          "description": "Foreign key reference to the department where the employee works.",
+          "type": "string",
+          "required": true,
+          "source": "Column: Department ID (FK)",
+          "foreignKeys": [
+            {
+              "entity": "department",
+              "parent_array": "employees"
+            }
+          ]
+        },
+        {
+          "name": "email",
+          "description": "Work email address for the employee.",
+          "type": "string",
+          "required": false,
+          "source": "Column: Email"
+        }
+      ]
+    }
+  ]
+}
+

@@ -1,16 +1,16 @@
 ---
 name: xframe-consolidate
-description: Normalizes and consolidates YAML model and data files into validated JSON using the xFrame consolidator. Use when the user wants to consolidate YAML models and data, normalize entity data, validate against a schema, generate consolidated JSON/JS output, or run the consolidate script.
+description: Normalizes and consolidates JSON model and data files into validated consolidated JSON using the xFrame consolidator. Use when the user wants to consolidate JSON models and data, normalize entity data, validate against a schema, generate consolidated JSON/JS output, or run the consolidate script.
 disable-model-invocation: true
 ---
 
 # Consolidate (xFrame)
 
-Normalize YAML model and data files into validated, consolidated JSON (and optional JS). Uses the xFrame consolidator: load model YAML, load data YAML, validate, compute fields, add change record, write output.
+Normalize JSON model and data files into validated, consolidated JSON (and optional JS). Uses the xFrame consolidator: load model JSON, load data JSON, validate, compute fields, add change record, write output.
 
 ## When to use
 
-- User wants to **consolidate** or **normalize** YAML model and/or data files.
+- User wants to **consolidate** or **normalize** JSON model and/or data files.
 - User mentions **xFrame**, **consolidator**, **consolidated_model**, **consolidated_data**.
 - User has a **model/** and **data/** layout and wants JSON output.
 - User wants to **validate** data against a model schema and get a single JSON artifact.
@@ -27,8 +27,8 @@ node skills/xframe-consolidate/scripts/consolidate.min.js <data_dir> --model-dir
 
 | Argument | Description |
 |----------|-------------|
-| `<data_dir>` | Directory containing YAML data files (entity data). |
-| `--model-dir <dir>` | Directory containing YAML model files (entity schemas). |
+| `<data_dir>` | Directory containing JSON data files (entity data). |
+| `--model-dir <dir>` | Directory containing JSON model files (entity schemas). |
 | `--note "<text>"` | Change note for this consolidation run (required, non-empty). |
 
 **Optional:**
@@ -49,8 +49,8 @@ bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh) 
 
 ## Directory layout
 
-- **Model directory**: YAML files defining entities, fields, and schema. Consolidator merges them into one schema.
-- **Data directory**: YAML files with entity data keyed by entity name. Loaded, validated against the model, then normalized.
+- **Model directory**: JSON files defining entities, fields, and schema. Consolidator merges them into one schema.
+- **Data directory**: JSON files with entity data keyed by entity name. Loaded, validated against the model, then normalized.
 - **Output**: Written to **`<model_dir>/../output/`** (one level up from the model dir):
   - `consolidated_model.json` – merged entity schemas
   - `consolidated_data.json` – consolidated data with computed fields and change record

@@ -1,22 +1,22 @@
 ---
 name: xframe-model
-description: Create or edit YAML model and data files for xFrame consolidation. Use when authoring entity schemas, model YAML, data YAML, or any input to the xframe-consolidate skill.
+description: Create or edit JSON model and data files for xFrame consolidation. Use when authoring entity schemas, model JSON, data JSON, or any input to the xframe-consolidate skill.
 ---
 
 # xframe-model
 
-Create YAML files that define the **model** (entity schemas) and **data** (entity records) consumed by [xframe-consolidate](https://github.com/exergy-connect/xFrame). After authoring, run the consolidate skill to validate and produce JSON/JS output.
+Create JSON files that define the **model** (entity schemas) and **data** (entity records) consumed by [xframe-consolidate](https://github.com/exergy-connect/xFrame). After authoring, run the consolidate skill to validate and produce JSON/JS output.
 
 ## When to use
 
 - User wants to **define entities**, **model schema**, or **data** for xFrame.
-- User is creating or editing **YAML** under a `model/` or `data/` layout for consolidation.
+- User is creating or editing **JSON** under a `model/` or `data/` layout for consolidation.
 - User mentions **xFrame model**, **entity**, **primary key**, **foreign key**, or **consolidate input**.
 
 ## Directory layout
 
-- **model/** – One or more YAML files defining entities and fields. All are merged into a single schema.
-- **data/** – One or more YAML files with entity data, keyed by entity name. Often a single file (e.g. `sample_data.yaml`) with multiple entity keys.
+- **model/** – One or more JSON files defining entities and fields. All are merged into a single schema.
+- **data/** – One or more JSON files with entity data, keyed by entity name. Often a single file (e.g. `sample_data.json`) with multiple entity keys.
 
 ## Version
 
@@ -25,72 +25,95 @@ Installed: `.cursor/skills/.xframe-latest`
 bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh) [--check|--update]
 ```
 
-## Model YAML structure
+## Model JSON structure
 
 Top-level:
 
-```yaml
-name: "My Model"
-version: "25.01.01.1" # format: YY.MM.DD.N where YY is 2-digit year, MM is month, DD is day, and N is sequence number
-author: "Author Name"
-entities:
-  - name: <entity_name>
-    brief: "Short description"
-    description: "Optional longer description"
-    primary_key: <field_name>   # or composite (see below)
-    fields:
-      - name: <field_name>
-        type: string | integer | number | boolean | date | datetime | duration_in_days | array | composite
-        required: true | false
-        description: "Optional"
-        # For references to another entity (parent or peer):
-        foreignKeys:
-          - entity: <other_entity>
-            parent_array: <array_field_on_other_entity>  # optional (for parent nesting)
-        # For array fields: use one of
-        item_type:
-          entity: <child_entity>
-          # or
-          primitive: string | integer | number | boolean | date | ...
-        # For computed fields:
-        computed:
-          operation: add | subtraction | multiplication | division | min | max
-          fields:
-            - field: <field_name>
-            # Optional cross-entity:
-            - field: <field_name>
-              entity: <entity_name>
-        # For composite fields
-        composite:
-          - name: <part_name>
-            type: <type>
+```json
+{
+  "name": "My Model",
+  "version": "25.01.01.1",
+  "author": "Author Name",
+  "source": "Optional model-level data source (e.g. URL, Excel file, API endpoint)",
+  "entities": [
+    {
+      "name": "<entity_name>",
+      "brief": "Short description",
+      "description": "Optional longer description",
+      "source": "Optional entity-level data source (e.g. table, sheet, API path)",
+      "primary_key": "<field_name>",
+      "fields": [
+        {
+          "name": "<field_name>",
+          "type": "string | integer | number | boolean | date | datetime | duration_in_days | array | composite",
+          "required": true,
+          "description": "Optional",
+          "source": "Optional field-level data source (e.g. column name, JSON path, API path)",
+          "foreignKeys": [
+            {
+              "entity": "<other_entity>",
+              "parent_array": "<array_field_on_other_entity>"
+            }
+          ],
+          "item_type": {
+            "entity": "<child_entity>"
+          },
+          "computed": {
+            "operation": "add | subtraction | multiplication | division | min | max",
+            "fields": [
+              { "field": "<field_name>" },
+              { "field": "<field_name>", "entity": "<entity_name>" }
+            ]
+          },
+          "composite": [
+            {
+              "name": "<part_name>",
+              "type": "<type>"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
 ```
 
-- **primary_key**: Single field name, or use a `type: composite` field and set `primary_key` to that field name; the `composite` list defines the key parts.
+- **primary_key**: Single field name, or use a `"type": "composite"` field and set `"primary_key"` to that field name; the `composite` list defines the key parts.
+- **source (model)**: Optional documentation of where the overall model data comes from (for example, an Excel workbook, CSV bundle, or upstream API).
+- **source (entity)**: Optional documentation of where this entity's data comes from (for example, a specific sheet, table, or API endpoint).
+- **source (field/composite sub-field)**: Optional documentation of where each field's data comes from (for example, a column name, JSON pointer, or API path). Use this to keep a clear mapping back to the original system of record.
 - **foreignKeys**: Link this field to another entity; `parent_array` is the array field on the parent that contains these records (for nesting).
-- **item_type.entity** or **item_type.primitive**: For `type: array`, the type of each element.
-- **computed**: Consolidator fills these from other fields; do not put values in data YAML.
+- **item_type.entity** or **item_type.primitive**: For `"type": "array"`, the type of each element.
+- **computed**: Consolidator fills these from other fields; do not put values in data JSON.
 
-## Data YAML structure
+## Data JSON structure
 
 Use **entity name** as the top-level key; value is a **list of records**. Nested children go under the same key as the model’s array field.
 
-```yaml
-company:
-  - company_id: "acme"
-    company_name: "ACME Corp"
-    departments:
-      - department_id: "eng"
-        department_name: "Engineering"
-        employees:
-          - employee_id: "alice"
-            employee_name: "Alice"
-          - employee_id: "bob"
-            employee_name: "Bob"
-            manager_id: "alice"
-  - company_id: "other"
-    company_name: "Other Co"
-    departments: []
+```json
+{
+  "company": [
+    {
+      "company_id": "acme",
+      "company_name": "ACME Corp",
+      "departments": [
+        {
+          "department_id": "eng",
+          "department_name": "Engineering",
+          "employees": [
+            { "employee_id": "alice", "employee_name": "Alice" },
+            { "employee_id": "bob", "employee_name": "Bob", "manager_id": "alice" }
+          ]
+        }
+      ]
+    },
+    {
+      "company_id": "other",
+      "company_name": "Other Co",
+      "departments": []
+    }
+  ]
+}
 ```
 
 - Primary key and foreign key values must match the model and reference existing records where required.
@@ -102,5 +125,5 @@ Run the **xframe-consolidate** skill (or script) with the same `model/` and `dat
 
 ## References
 
-- Example model and data: `assets/example-model.yaml`, `assets/example-data.yaml` (Company → Department → Employee).
+- Example model and data: `assets/example-model.jsonc`, `assets/example-data.jsonc` (Company → Department → Employee, JSONC with comments).
 - Consolidation: use the **xframe-consolidate** skill or `skills/xframe-consolidate/scripts/consolidate.min.js`.
