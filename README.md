@@ -6,8 +6,8 @@ Public repository of **Cursor agent skills** for [xFrame](https://github.com/exe
 
 | Skill | Description |
 |-------|-------------|
+| **xframe-model** | Model authoring and schema guidance for xFrame. |
 | **xframe-consolidate** | Normalize and consolidate YAML model and data files into validated JSON (and optional JS). Run the consolidator from the command line or let the agent run it when you ask to consolidate or validate model/data. |
-| **xframe-model** | *(Planned)* Model authoring and schema guidance for xFrame. |
 
 ## Install (Cursor)
 
