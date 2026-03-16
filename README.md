@@ -15,10 +15,10 @@ Public repository of **Cursor agent skills** for [xFrame](https://github.com/exe
 
 Use Cursor’s built-in support for remote skills ([docs](https://cursor.com/docs/skills#installing-skills-from-github)):
 
-1. Open **Cursor Settings → Rules**
-2. In **Project Rules**, click **Add Rule**
-3. Select **Remote Rule (Github)**
-4. Enter this repo’s URL: `https://github.com/exergy-connect/xFrame.ai`
+1. Open **Cursor Settings → Rules, Skills, Subagents**
+2. Select the appropriate tab (All, user or specific project), then under **Rules**, click **+ New**
+3. Select **Add from Github**
+4. Enter this repo’s URL: `https://github.com/exergy-connect/xFrame.ai.git`
 
 Skills are loaded from the repo; ensure each skill folder (e.g. `skills/xframe-consolidate/`) contains `SKILL.md` and any `scripts/` the skill needs.
 
