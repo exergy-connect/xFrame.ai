@@ -1,9 +1,11 @@
 // Example xFrame model: Company -> Department -> Employee
 // JSONC (JSON with comments) for documentation. Remove comments for actual input JSON.
+// Shape matches the YANG meta-model: use field_type (not legacy top-level "type") for fields.
 {
   "name": "Example Model",
   "version": "25.03.16.1", // YY.MM.DD.N format: 2-digit year, month, day, sequence number
   "author": "xFrame",
+  "description": "Sample hierarchical model for documentation. Required at model root by the meta-model.",
   "source": "Excel workbook: companies.xlsx", // Model-level data source (e.g. file, API, URL)
   "entities": [
     {
@@ -16,21 +18,21 @@
         {
           "name": "company_id",
           "description": "Unique identifier for the company.",
-          "type": "string",
+          "field_type": { "primitive": "string" },
           "required": true,
           "source": "Column: Company ID" // Field-level source
         },
         {
           "name": "company_name",
           "description": "Human-readable name of the company.",
-          "type": "string",
+          "field_type": { "primitive": "string" },
           "required": true,
           "source": "Column: Company Name"
         },
         {
           "name": "departments", // Nested departments under each company
           "description": "List of departments that belong to this company.",
-          "type": "array",
+          "field_type": { "array": null },
           "required": false,
           "item_type": {
             "entity": "department"
@@ -39,7 +41,7 @@
         {
           "name": "source",
           "description": "Free-text description of where this company record comes from (system or file).",
-          "type": "string",
+          "field_type": { "primitive": "string" },
           "required": true
         }
       ]
@@ -54,21 +56,21 @@
         {
           "name": "department_id",
           "description": "Unique identifier for the department within a company.",
-          "type": "string",
+          "field_type": { "primitive": "string" },
           "required": true,
           "source": "Column: Department ID"
         },
         {
           "name": "department_name",
           "description": "Human-readable name of the department.",
-          "type": "string",
+          "field_type": { "primitive": "string" },
           "required": true,
           "source": "Column: Department Name"
         },
         {
           "name": "company_id", // Foreign key back to company; also used for nesting under company.departments
           "description": "Foreign key reference to the parent company that owns this department.",
-          "type": "string",
+          "field_type": { "primitive": "string" },
           "required": true,
           "source": "Column: Company ID (FK)",
           "foreignKeys": [
@@ -81,7 +83,7 @@
         {
           "name": "employees", // Nested employees under each department
           "description": "List of employees that work in this department.",
-          "type": "array",
+          "field_type": { "array": null },
           "required": false,
           "item_type": {
             "entity": "employee"
@@ -99,21 +101,21 @@
         {
           "name": "employee_id",
           "description": "Unique identifier for the employee.",
-          "type": "string",
+          "field_type": { "primitive": "string" },
           "required": true,
           "source": "Column: Employee ID"
         },
         {
           "name": "employee_name",
           "description": "Full name of the employee.",
-          "type": "string",
+          "field_type": { "primitive": "string" },
           "required": true,
           "source": "Column: Employee Name"
         },
         {
           "name": "department_id", // Foreign key back to department; also used for nesting under department.employees
           "description": "Foreign key reference to the department where the employee works.",
-          "type": "string",
+          "field_type": { "primitive": "string" },
           "required": true,
           "source": "Column: Department ID (FK)",
           "foreignKeys": [
@@ -126,7 +128,7 @@
         {
           "name": "email",
           "description": "Work email address for the employee.",
-          "type": "string",
+          "field_type": { "primitive": "string" },
           "required": false,
           "source": "Column: Email"
         }
