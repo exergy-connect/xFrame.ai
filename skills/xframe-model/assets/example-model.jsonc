@@ -32,11 +32,14 @@
         {
           "name": "departments", // Nested departments under each company
           "description": "List of departments that belong to this company.",
-          "field_type": { "array": null },
-          "required": false,
-          "item_type": {
-            "entity": "department"
-          }
+          "field_type": {
+            "array": {
+              "item_type": {
+                "entity": "department"
+              }
+            }
+          },
+          "required": false
         },
         {
           "name": "source",
@@ -83,11 +86,14 @@
         {
           "name": "employees", // Nested employees under each department
           "description": "List of employees that work in this department.",
-          "field_type": { "array": null },
-          "required": false,
-          "item_type": {
-            "entity": "employee"
-          }
+          "field_type": {
+            "array": {
+              "item_type": {
+                "entity": "employee"
+              }
+            }
+          },
+          "required": false
         }
       ]
     },
