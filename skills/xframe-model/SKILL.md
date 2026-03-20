@@ -43,7 +43,7 @@ Each field must express its type via **`field_type`** (not a legacy top-level `"
 
 ### Primitives
 
-`string`, `integer`, `number`, `boolean`, `date`, `datetime`, `duration_in_days`, `year` (integer 1801–2099), and qualified variants as allowed by the meta-model.
+`string`, `integer`, `number`, `boolean`, `date`, `datetime`, `duration_in_days`, `year` (integer 1801–2099 when present; no year → omit the field, do not use `0`), and qualified variants as allowed by the meta-model.
 
 ```json
 "field_type": { "primitive": "string" }
