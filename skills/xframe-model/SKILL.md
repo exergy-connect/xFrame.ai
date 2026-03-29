@@ -11,7 +11,7 @@ Author **model** files (entity schemas) and **data** files (entity records) for 
 
 - User wants to **define entities**, **model schema**, or **data** for xFrame.
 - User is creating or editing files under `model/` or `data/` for consolidation.
-- User mentions **xFrame model**, **entity**, **field_type**, **primary key**, **foreign key**, or **consolidate input**.
+- User mentions **xFrame model**, **entity**, **`type`** (field type container), **primary key**, **foreign key**, or **consolidate input**.
 
 ## Directory layout
 
@@ -25,88 +25,123 @@ Installed: `.cursor/skills/.xframe-latest`
 bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh) [--check|--update]
 ```
 
-## Meta-model rules (YANG)
+## Meta-model rules (YANG / JSON Schema)
 
-These are **mandatory** for valid models:
+These match **`src/xframe/yang/meta-model.yang`** and the exported **`meta-model.yang.json`** (JSON Schema with `x-yang` hints; e.g. under `examples/` in the xYang repo).
 
 | Level | Requirement |
 |--------|----------------|
-| **Data model** | `name`, `version`, `author`, **`description`** |
+| **Data model** | `name`, **`version`** (`YY.MM.DD.N`, pattern `^\d{2}\.\d{2}\.\d{2}\.\d+$`), `author`, **`description`** |
 | **Entity** | `name`, **`description`**, `primary_key`, `fields` (and usually `brief`) |
-| **Field** | `name`, **`description`**, and a type source (see **field_type** below) |
+| **Field** | `name`, **`description`**, and a **`type`** object (see below) |
 
 Optional: `source` at model, entity, or field level (where the data comes from).
 
-## Field types: use `field_type` (canonical)
+Model files on disk are **unwrapped** (`name`, `version`, `entities`, …); the consolidator wraps them under `data-model` for YANG validation.
 
-Each field must express its type via **`field_type`** (not a legacy top-level `"type"` on the field). 
+## Field types: `type` container (canonical)
+
+Each entity field uses a **`type`** object: exactly one branch of **`definition`**, **`primitive`** (+ optional constraints), **`array`**, or **`composite`**. This is what **`meta-model.yang.json`** describes under `entities[].fields[].type`.
+
+**`foreignKeys`** (and optional **`parent_array`**) belong **inside `type`**, next to **`primitive`** or **`definition`**, not as a sibling of `type`.
+
+xFrame loads this shape and **normalizes** it internally to `field_type` / `item_type` / top-level `foreignKeys` for JSON Schema generation (`convert_yang_type_container_to_legacy` in `metamodel.py`). You may still encounter **`field_type`** + **`item_type`** in docs or legacy files; prefer **`type`** for new authoring.
 
 ### Primitives
 
-`string`, `integer`, `number`, `boolean`, `date`, `datetime`, `duration_in_days`, `year` (integer 1801–2099 when present; no year → omit the field, do not use `0`), and qualified variants as allowed by the meta-model.
+Allowed **`primitive`** values (typedef `primitive-type-name`): `string`, `integer`, `number`, `boolean`, `array`, `datetime`, `date`, `duration_in_days`, `qualified_string`, `qualified_integer`, `qualified_number`.
 
 ```json
-"field_type": { "primitive": "string" }
+"type": { "primitive": "string" }
 ```
 
 ### Arrays
 
-With explicit **`field_type`**, **`array`** is a **container** in the meta-model: JSON uses an **object** whose only child is mandatory **`item_type`** (primitive or entity).
+**`type.array`** is an object with exactly one inner branch: **`entity`** (leafref to another entity), **`primitive`** (+ optional `enum`, `min`, `max`, …), or **`composite`** (list of subfields).
 
 ```json
-"field_type": {
+"type": {
   "array": {
-    "item_type": { "entity": "department" }
+    "entity": "department"
   }
 }
 ```
 
-or `item_type`: `{ "primitive": "string" }`, etc.
+```json
+"type": {
+  "array": {
+    "primitive": "string",
+    "min": 1,
+    "max": 64
+  }
+}
+```
 
-If you use legacy top-level **`type`: `"array"`** on the field, you may keep **`item_type`** as a **sibling** of **`field_type`** instead; when both that sibling and **`field_type.array.item_type`** exist, the **field-level** **`item_type`** wins for tooling that resolves effective item type.
+There is **no** `item_type` key in the YANG-shaped JSON; that name appears only on the **normalized** / legacy structure.
 
 ### Composite primary keys / structured fields
 
-```json
-"field_type": { "composite": null },
-"composite": [
-  { "name": "part_a", "field_type": { "primitive": "string" }, "description": "…" }
-]
-```
+Subcomponents are full generic-fields: each has **`name`**, **`description`**, and **`type`**.
 
-(Subcomponents use **`field_type`** the same way; each needs a **`description`**.)
+```json
+"type": {
+  "composite": [
+    {
+      "name": "part_a",
+      "description": "First segment of the composite key.",
+      "type": { "primitive": "string" }
+    },
+    {
+      "name": "part_b",
+      "description": "Second segment.",
+      "type": { "primitive": "integer" }
+    }
+  ]
+}
+```
 
 ### Reusable definitions (`field_definitions` on an entity)
 
 ```json
-"field_type": { "definition": "positive_number" }
+"type": { "definition": "positive_number" }
 ```
 
-Inline `min`/`max`/… must not duplicate the definition’s constraints when referencing a definition (enforced in consolidated validation).
+Optional **`foreignKeys`** on the same `type` object when the field references another entity by PK type. Do not chain `definition` → `definition` inside `field_definitions` (meta-model `must`).
+
+### Foreign keys (scalar fields)
+
+```json
+"type": {
+  "primitive": "string",
+  "foreignKeys": [
+    {
+      "entity": "company",
+      "parent_array": "departments"
+    }
+  ]
+}
+```
+
+**`parent_array`** names the parent entity’s **array** field used for hierarchical nesting; it must point at a field whose **`type`** has a direct **`array`** branch (not only a `definition` indirection), when consolidated validation runs.
 
 ### Outliers (sigma flagging)
 
-Only on numeric or date/datetime primitives, as a sibling of `primitive` inside `field_type`:
+Inside **`type`** with a numeric or date/datetime **`primitive`**:
 
 ```json
-"field_type": {
+"type": {
   "primitive": "integer",
   "outlier": 1.0
 }
 ```
 
-Range `0.1`–`4.0` (see `meta-model.yang`). Omit `outlier` to disable.
+Range `0.1`–`4.0`. Omit `outlier` to disable.
 
 ### Enumerations (`enum`)
 
-Add an **`enum`** array on a field (sibling of **`field_type`**, not inside it) when the field behaves like a **closed set of codes** rather than arbitrary text or a continuous numeric range.
+In **`meta-model.yang.json`**, **`enum`** is a **leaf-list inside `type`**, alongside **`primitive`**, when the primitive is `string`, `integer`, or `number`. xFrame may **hoist** `enum` to the field after load for JSON Schema paths.
 
-**Heuristic:** If you sample the source column (or a representative extract) and see **only a handful of distinct values**—on the order of **fewer than about 10**—that is a strong signal to model the field with `enum`, provided those values are **stable domain codes** (status letters, type codes, small grade scales), not accidental duplicates in a tiny sample.
-
-- **String fields:** List every allowed string exactly as it appears in data after your normal trim/padding rules (consolidation validates membership).
-- **Integer / number fields:** List allowed numeric values in the same JSON type you use in `field_type` (e.g. integers as JSON numbers without quotes).
-- **When to prefer an open type instead:** Free text, user notes, identifiers, timestamps, money, measurements, or columns where a **full** file would obviously yield **many** distinct values—leave **`enum`** off and use `min`/`max` or documentation in **`description`** only.
-- **Maintenance:** Any new value in future data must be added to **`enum`** (or the field relaxed to a plain primitive), or consolidation will fail validation—treat **`enum`** as a deliberate contract with the source.
+**Heuristic:** Only use `enum` when values are a **small, stable** closed set (on the order of fewer than about ten distinct codes), not free text or high-cardinality IDs.
 
 Example (string codes):
 
@@ -114,32 +149,37 @@ Example (string codes):
 {
   "name": "status_cd",
   "description": "Lifecycle status; closed set from source system.",
-  "field_type": { "primitive": "string" },
-  "required": true,
-  "enum": ["A", "P", "C", "X"]
+  "type": { "primitive": "string", "enum": ["A", "P", "C", "X"] },
+  "required": true
 }
 ```
 
-Example (small integer codes):
+Example (integer codes):
 
 ```json
 {
   "name": "priority",
   "description": "1=low, 2=medium, 3=high.",
-  "field_type": { "primitive": "integer" },
-  "required": true,
-  "enum": [1, 2, 3]
+  "type": { "primitive": "integer", "enum": [1, 2, 3] },
+  "required": true
 }
 ```
 
+You may also place **`enum`** at field level in some pipelines; consolidation normalizes toward the internal shape.
+
+### Legacy shapes
+
+- Top-level string **`type`**: `"string"`, `"array"`, `"composite"`, or a definition name — converted to **`field_type`**.
+- Explicit **`field_type`** + **`field_type.array.item_type`** — still accepted; **`type`** as a **dict** is preferred for strict alignment with **`meta-model.yang.json`**.
+
 ## Model file shape (JSON)
 
-Top-level:
+Top-level keys of the file (same as inner `data-model` in the JSON Schema):
 
 ```json
 {
   "name": "My Model",
-  "version": "25.01.01.1",
+  "version": "26.03.29.1",
   "author": "Author Name",
   "description": "Required: what this model is for and main entities.",
   "source": "Optional model-level data source (e.g. URL, Excel file, API endpoint)",
@@ -155,15 +195,9 @@ Top-level:
         {
           "name": "<field_name>",
           "description": "Required: field semantics and constraints.",
-          "field_type": { "primitive": "string" },
+          "type": { "primitive": "string" },
           "required": true,
           "source": "Optional field-level data source",
-          "foreignKeys": [
-            {
-              "entity": "<other_entity>",
-              "parent_array": "Optional <array_field_on_parent> for nesting"
-            }
-          ],
           "computed": {
             "operation": "add | subtraction | multiplication | division | min | max | average",
             "fields": [
@@ -178,15 +212,15 @@ Top-level:
 }
 ```
 
-- **primary_key**: Name of the PK field (string). For composite PKs, the field is usually `field_type: { composite }` with a `composite` subcomponent list.
-- **foreignKeys**: Link this field to another entity; **`parent_array`** is the parent’s array field used for nesting (required for parent/child hierarchies).
-- **item_type**: For array fields, either nested as **`field_type.array.item_type`** (preferred with explicit `field_type`) or a field-level sibling when using legacy **`type`: `"array"`**; discriminated union: `entity`, `primitive`, or `foreignKey` list shape per meta-model.
-- **enum**: Optional list of allowed values for string or numeric primitives when cardinality is small and stable (see **Enumerations** above).
-- **computed**: Filled at consolidation; omit from data JSON.
+Use **`type.foreignKeys`** (inside `type`) for FK scalars instead of a top-level **`foreignKeys`** key in new models.
+
+- **primary_key**: Name of the PK field (string). Composite PK: one field whose **`type`** is **`composite`**.
+- **computed**: Defined on the field; omit from data JSON.
+- **allow_unlimited_fields**: In JSON Schema this is an **empty object** `{}` when present (YANG `empty`).
 
 ## Data JSON structure
 
-Use the **entity name** as the top-level key; value is a **list of records**. Nested children sit under the parent’s array field name (same shape as the model).
+Use the **entity name** as the top-level key; value is a **list of records**. Nested children sit under the parent’s array field name. If scalar FK fields are **`required: true`** in the model, include them on nested rows (e.g. `company_id` on each department, `department_id` on each employee).
 
 ```json
 {
@@ -198,9 +232,13 @@ Use the **entity name** as the top-level key; value is a **list of records**. Ne
         {
           "department_id": "eng",
           "department_name": "Engineering",
+          "company_id": "acme",
           "employees": [
-            { "employee_id": "alice", "employee_name": "Alice" },
-            { "employee_id": "bob", "employee_name": "Bob" }
+            {
+              "employee_id": "alice",
+              "employee_name": "Alice",
+              "department_id": "eng"
+            }
           ]
         }
       ]
@@ -219,5 +257,6 @@ Run **xframe-consolidate** (skill or `skills/xframe-consolidate/scripts/consolid
 ## References
 
 - Example model + data: `assets/example-model.jsonc`, `assets/example-data.jsonc` (Company → Department → Employee; JSONC with comments).
-- Authoritative schema: `src/xframe/yang/meta-model.yang` in the xFrame repo.
+- Authoritative YANG: `src/xframe/yang/meta-model.yang` in the xFrame repo.
+- JSON Schema export (same module, property names for **`type`**, **`foreignKeys`**, **`array`**, etc.): `meta-model.yang.json` (e.g. `examples/meta-model.yang.json` in the [xYang](https://github.com/exergy-connect/xYang) repo, generated from the YANG).
 - Consolidation: **xframe-consolidate** skill or project consolidator CLI.

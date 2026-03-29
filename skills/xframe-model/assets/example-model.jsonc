@@ -1,9 +1,11 @@
 // Example xFrame model: Company -> Department -> Employee
 // JSONC (JSON with comments) for documentation. Remove comments for actual input JSON.
-// Shape matches the YANG meta-model: use field_type (not legacy top-level "type") for fields.
+// Shape matches meta-model.yang / meta-model.yang.json: each field uses a `type` object
+// (primitive | array | composite | definition). foreignKeys live inside `type` with primitives.
+// xFrame loads this and normalizes to internal field_type/item_type for schema generation.
 {
   "name": "Example Model",
-  "version": "25.03.16.1", // YY.MM.DD.N format: 2-digit year, month, day, sequence number
+  "version": "26.03.29.1", // YY.MM.DD.N — see $defs/version-string in meta-model.yang.json
   "author": "xFrame",
   "description": "Sample hierarchical model for documentation. Required at model root by the meta-model.",
   "source": "Excel workbook: companies.xlsx", // Model-level data source (e.g. file, API, URL)
@@ -18,25 +20,23 @@
         {
           "name": "company_id",
           "description": "Unique identifier for the company.",
-          "field_type": { "primitive": "string" },
+          "type": { "primitive": "string" },
           "required": true,
           "source": "Column: Company ID" // Field-level source
         },
         {
           "name": "company_name",
           "description": "Human-readable name of the company.",
-          "field_type": { "primitive": "string" },
+          "type": { "primitive": "string" },
           "required": true,
           "source": "Column: Company Name"
         },
         {
           "name": "departments", // Nested departments under each company
           "description": "List of departments that belong to this company.",
-          "field_type": {
+          "type": {
             "array": {
-              "item_type": {
-                "entity": "department"
-              }
+              "entity": "department"
             }
           },
           "required": false
@@ -44,7 +44,7 @@
         {
           "name": "source",
           "description": "Free-text description of where this company record comes from (system or file).",
-          "field_type": { "primitive": "string" },
+          "type": { "primitive": "string" },
           "required": true
         }
       ]
@@ -59,38 +59,38 @@
         {
           "name": "department_id",
           "description": "Unique identifier for the department within a company.",
-          "field_type": { "primitive": "string" },
+          "type": { "primitive": "string" },
           "required": true,
           "source": "Column: Department ID"
         },
         {
           "name": "department_name",
           "description": "Human-readable name of the department.",
-          "field_type": { "primitive": "string" },
+          "type": { "primitive": "string" },
           "required": true,
           "source": "Column: Department Name"
         },
         {
-          "name": "company_id", // Foreign key back to company; also used for nesting under company.departments
+          "name": "company_id", // Foreign key back to company; parent_array ties nesting to company.departments
           "description": "Foreign key reference to the parent company that owns this department.",
-          "field_type": { "primitive": "string" },
+          "type": {
+            "primitive": "string",
+            "foreignKeys": [
+              {
+                "entity": "company",
+                "parent_array": "departments"
+              }
+            ]
+          },
           "required": true,
-          "source": "Column: Company ID (FK)",
-          "foreignKeys": [
-            {
-              "entity": "company",
-              "parent_array": "departments"
-            }
-          ]
+          "source": "Column: Company ID (FK)"
         },
         {
           "name": "employees", // Nested employees under each department
           "description": "List of employees that work in this department.",
-          "field_type": {
+          "type": {
             "array": {
-              "item_type": {
-                "entity": "employee"
-              }
+              "entity": "employee"
             }
           },
           "required": false
@@ -107,34 +107,36 @@
         {
           "name": "employee_id",
           "description": "Unique identifier for the employee.",
-          "field_type": { "primitive": "string" },
+          "type": { "primitive": "string" },
           "required": true,
           "source": "Column: Employee ID"
         },
         {
           "name": "employee_name",
           "description": "Full name of the employee.",
-          "field_type": { "primitive": "string" },
+          "type": { "primitive": "string" },
           "required": true,
           "source": "Column: Employee Name"
         },
         {
-          "name": "department_id", // Foreign key back to department; also used for nesting under department.employees
+          "name": "department_id", // Foreign key back to department; parent_array ties nesting to department.employees
           "description": "Foreign key reference to the department where the employee works.",
-          "field_type": { "primitive": "string" },
+          "type": {
+            "primitive": "string",
+            "foreignKeys": [
+              {
+                "entity": "department",
+                "parent_array": "employees"
+              }
+            ]
+          },
           "required": true,
-          "source": "Column: Department ID (FK)",
-          "foreignKeys": [
-            {
-              "entity": "department",
-              "parent_array": "employees"
-            }
-          ]
+          "source": "Column: Department ID (FK)"
         },
         {
           "name": "email",
           "description": "Work email address for the employee.",
-          "field_type": { "primitive": "string" },
+          "type": { "primitive": "string" },
           "required": false,
           "source": "Column: Email"
         }
@@ -142,4 +144,3 @@
     }
   ]
 }
-
