@@ -49,6 +49,7 @@ node .cursor/skills/xframe-consolidate/scripts/consolidate.min.js <data_dir> --m
 | `--jsz` | Also write `consolidated.schema.gz.js` and `consolidated_data.gz.js` (gzip+base64 loaders). |
 | `--log-level <level>` | `DEBUG` \| `INFO` \| `WARNING` \| `ERROR` (default `INFO`). |
 | `--clean` | Ignore prior `output/*.json` for version tracking and do not infer `--js` / `--jsz` from existing files. |
+| `--close-fk-enums` | After load + flatten, set JSON Schema `enum` on foreign-key fields from distinct primary-key values **present in the loaded data** for the referenced entity. Replaces any model `enum` on those properties. Defers writing `consolidated.schema.json` until then; output includes `x-fkEnumFromData: true`. Validation still runs explicit **FK existence** checks unless the entity uses `validation: warn` / `skip`. |
 
 ## Version
 
