@@ -1,12 +1,12 @@
 ---
 name: xframe-consolidate
-description: Normalizes and consolidates JSON model and data into validated JSON Schema plus consolidated data (optional JS/JSZ). Use when the user wants to consolidate models and data, normalize entity data, validate, generate consolidated.schema.json / consolidated_data.json, or run the consolidate script.
+description: Normalizes and consolidates JSON model and data into validated JSON Schema plus consolidated data (optional JS/JSZ, optional --close-fk-enums). Use when the user wants to consolidate models and data, normalize entity data, validate, generate consolidated.schema.json / consolidated_data.json, close foreign-key fields to enums from loaded data, or run the consolidate script.
 disable-model-invocation: true
 ---
 
 # Consolidate (xFrame)
 
-Normalize JSON model fragments and JSON data into a **JSON Schema** describing the merged model, plus **consolidated data** with computed fields and a change record. Flow: load model → emit `consolidated.schema.json` → load data → validate / outliers / computed fields → version tracking → write `consolidated_data.json`.
+Normalize JSON model fragments and JSON data into a **JSON Schema** describing the merged model, plus **consolidated data** with computed fields and a change record. Default flow: load model → emit `consolidated.schema.json` → load data → validate / outliers / computed fields → version tracking → write `consolidated_data.json`. With **`--close-fk-enums`**, the first schema write is deferred until after data load so foreign-key properties get `enum` values from distinct primary keys present in that data; the merged schema then includes `x-fkEnumFromData: true`.
 
 ## When to use
 
@@ -14,6 +14,7 @@ Normalize JSON model fragments and JSON data into a **JSON Schema** describing t
 - User mentions **xFrame**, **consolidator**, **consolidated.schema.json**, **consolidated_data**, or legacy names **consolidated_model** / **consolidated_data**.
 - User has **model/** and **data/** (or equivalent paths) and wants schema + data JSON output.
 - User wants **validation** and a single **JSON Schema** artifact for the merged entity definitions.
+- User wants **FK enum closure**: tighten foreign-key fields in the emitted schema to the set of referenced primary keys actually loaded (pass **`--close-fk-enums`**).
 
 ## How to run
 
@@ -64,7 +65,7 @@ bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh) 
 - **Model directory**: One or more `.json` files; each file is a data-model document with `entities: [ … ]`. Merged into one **JSON Schema** (`$defs` per entity). Alternatively, `--model-dir` may point at one `consolidated.schema.json` file.
 - **Data directory**: `.json` files; each top-level array key is a normalized entity name; elements are records (nested children are hoisted per parent/foreign-key rules).
 - **Output** (`<model_dir>/../output/`):
-  - `consolidated.schema.json` – JSON Schema for the merged model (`$schema` 2020-12, entity defs under `$defs`).
+  - `consolidated.schema.json` – JSON Schema for the merged model (`$schema` 2020-12, entity defs under `$defs`). With **`--close-fk-enums`**, includes root `x-fkEnumFromData: true` and `enum` on FK properties derived from loaded data.
   - `consolidated_data.json` – wrapper with `version`, `timestamp`, optional `model` metadata, `data` (nested entity tree), and `change`.
   - `consolidation_log.txt` – step log (when not in a browser-like environment).
   - With `--js`: `consolidated.schema.js`, `consolidated_data.js`.
@@ -78,6 +79,14 @@ Paths may be absolute or relative; `output/` is created if missing.
 node skills/xframe-consolidate/scripts/consolidate.min.js ./data --model-dir ./model \
   --note "Add field_reserves composites; update lifecycle dates from source" \
   --author "ci" --git-commit-hash "$(git rev-parse HEAD)" --js
+```
+
+**Example with FK enum closure** (schema enums on FK fields match primary keys in the loaded dataset; re-run after data changes):
+
+```bash
+node skills/xframe-consolidate/scripts/consolidate.min.js ./data --model-dir ./model \
+  --note "Reconsolidate with FK enums closed to PKs present in loaded data" \
+  --author "ci" --git-commit-hash "$(git rev-parse HEAD)" --js --close-fk-enums
 ```
 
 Artifacts appear under `./output/` (sibling of `./model`).
