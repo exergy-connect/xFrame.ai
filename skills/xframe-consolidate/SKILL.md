@@ -1,6 +1,6 @@
 ---
 name: xframe-consolidate
-description: Normalizes and consolidates JSON model and data into validated JSON Schema plus consolidated data (optional JS/JSZ, optional --close-fk-enums). Use when the user wants to consolidate models and data, normalize entity data, validate, generate consolidated.schema.json / consolidated_data.json, close foreign-key fields to enums from loaded data, or run the consolidate script.
+description: Normalizes and consolidates JSON model and data into validated JSON Schema plus consolidated data (optional --js, optional --close-fk-enums). Use when the user wants to consolidate models and data, normalize entity data, validate, generate consolidated.schema.json / consolidated_data.json, close foreign-key fields to enums from loaded data, or run the consolidate script.
 disable-model-invocation: true
 ---
 
@@ -46,10 +46,9 @@ node .cursor/skills/xframe-consolidate/scripts/consolidate.min.js <data_dir> --m
 |--------|-------------|
 | `--author <name>` | Author on the change record (default: OS username). |
 | `--git-commit-hash <hash>` | Commit hash on the change record. |
-| `--js` | Also write ES modules next to the JSON: `consolidated.schema.js` (`export const consolidatedModel = …`) and `consolidated_data.js` (`export const consolidatedData = …`). |
-| `--jsz` | Also write `consolidated.schema.gz.js` and `consolidated_data.gz.js` (gzip+base64 loaders). |
+| `--js` | Also write `consolidated.schema.js` and `consolidated_data.js`: same format as the Python consolidator (base64 gzip payload + `getConsolidatedModel` / `getConsolidatedData` and `…Sync` with pako). |
 | `--log-level <level>` | `DEBUG` \| `INFO` \| `WARNING` \| `ERROR` (default `INFO`). |
-| `--clean` | Ignore prior `output/*.json` for version tracking and do not infer `--js` / `--jsz` from existing files. |
+| `--clean` | Ignore prior `output/*.json` for version tracking and do not infer `--js` from existing files. |
 | `--close-fk-enums` | After load + flatten, set JSON Schema `enum` on foreign-key fields from distinct primary-key values **present in the loaded data** for the referenced entity. Replaces any model `enum` on those properties. Defers writing `consolidated.schema.json` until then; output includes `x-fkEnumFromData: true`. Validation still runs explicit **FK existence** checks unless the entity uses `validation: warn` / `skip`. |
 
 ## Version
@@ -69,7 +68,6 @@ bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh) 
   - `consolidated_data.json` – wrapper with `version`, `timestamp`, optional `model` metadata, `data` (nested entity tree), and `change`.
   - `consolidation_log.txt` – step log (when not in a browser-like environment).
   - With `--js`: `consolidated.schema.js`, `consolidated_data.js`.
-  - With `--jsz`: `consolidated.schema.gz.js`, `consolidated_data.gz.js`.
 
 Paths may be absolute or relative; `output/` is created if missing.
 
