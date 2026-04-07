@@ -1,0 +1,164 @@
+module xframe-program-structure {
+  yang-version 1.1;
+  namespace "urn:xframe:program-structure";
+  prefix "xps";
+
+  organization "xFrame";
+  contact "https://github.com/exergy-connect/xFrame";
+
+  description
+    "High-level program layout for tools and AI (packages, classes, interfaces, methods, fields). Regenerate program-structure.yang.json with xYang.";
+
+  container program {
+    description
+      "Root document. JSON root key matches this name; any module-level root name is allowed in the x-yang profile.";
+
+    leaf schema-version {
+      type string;
+      default "1.0.0";
+      description "Schema asset version.";
+    }
+
+    container definition {
+      description "Logical program: identity, modules, and declared types.";
+      leaf name {
+        type string;
+        mandatory true;
+      }
+      leaf version {
+        type string;
+      }
+      leaf language {
+        type string;
+        description "Preferred implementation language label (free text, e.g. Java, TypeScript, Go).";
+      }
+      leaf repository {
+        type string;
+        description "Source repo or origin (URI or prose).";
+      }
+
+      list packages {
+        key name;
+        description "Modules, namespaces, or folders grouping types.";
+        leaf name {
+          type string;
+          mandatory true;
+        }
+        leaf path {
+          type string;
+          description "Optional path or import prefix.";
+        }
+        leaf doc {
+          type string;
+        }
+
+        list types {
+          key name;
+          description "A class, interface, enumeration, or module-level function.";
+          leaf name {
+            type string;
+            mandatory true;
+          }
+          leaf qualified-name {
+            type string;
+            description "Stable logical name (e.g. dotted qualifier).";
+          }
+          leaf doc {
+            type string;
+          }
+
+          choice kind {
+            mandatory true;
+            description "Which high-level shape this type has.";
+
+            case class-type {
+              container class {
+                presence "Object-oriented type with methods and fields.";
+                leaf-list extends {
+                  type string;
+                  description "Supertype names.";
+                }
+                leaf-list implements {
+                  type string;
+                  description "Interface names this class implements.";
+                }
+                list methods {
+                  key name;
+                  description "Operation on this type.";
+                  leaf name {
+                    type string;
+                    mandatory true;
+                  }
+                  leaf doc {
+                    type string;
+                  }
+                }
+                list fields {
+                  key name;
+                  description "State or data members.";
+                  leaf name {
+                    type string;
+                    mandatory true;
+                  }
+                  leaf doc {
+                    type string;
+                  }
+                }
+              }
+            }
+
+            case interface-type {
+              container interface {
+                presence "Contract: abstract operations.";
+                list methods {
+                  key name;
+                  leaf name {
+                    type string;
+                    mandatory true;
+                  }
+                  leaf doc {
+                    type string;
+                  }
+                }
+              }
+            }
+
+            case enum-type {
+              container enumeration {
+                presence "Named constants.";
+                list members {
+                  key name;
+                  leaf name {
+                    type string;
+                    mandatory true;
+                  }
+                }
+              }
+            }
+
+            case function-type {
+              container function {
+                presence "Callable not tied to a class (module-level or similar).";
+                leaf doc {
+                  type string;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      list top-level {
+        key name;
+        description "Callables or values declared outside any package (e.g. scripts, entrypoints).";
+        leaf name {
+          type string;
+          mandatory true;
+        }
+        leaf doc {
+          type string;
+        }
+      }
+    }
+  }
+}

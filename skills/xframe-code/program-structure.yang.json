@@ -1,0 +1,475 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:xframe:program-structure",
+  "description": "High-level program layout for tools and AI (packages, classes, interfaces, methods, fields). Regenerate program-structure.yang.json with xYang.",
+  "x-yang": {
+    "module": "xframe-program-structure",
+    "yang-version": "1.1",
+    "namespace": "urn:xframe:program-structure",
+    "prefix": "xps",
+    "organization": "xFrame",
+    "contact": "https://github.com/exergy-connect/xFrame"
+  },
+  "type": "object",
+  "properties": {
+    "program": {
+      "type": "object",
+      "description": "Root document. JSON root key matches this name; any module-level root name is allowed in the x-yang profile.",
+      "x-yang": {
+        "type": "container"
+      },
+      "properties": {
+        "schema-version": {
+          "type": "string",
+          "description": "Schema asset version.",
+          "x-yang": {
+            "type": "leaf"
+          },
+          "default": "1.0.0"
+        },
+        "definition": {
+          "type": "object",
+          "description": "Logical program: identity, modules, and declared types.",
+          "x-yang": {
+            "type": "container"
+          },
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "",
+              "x-yang": {
+                "type": "leaf"
+              }
+            },
+            "version": {
+              "type": "string",
+              "description": "",
+              "x-yang": {
+                "type": "leaf"
+              }
+            },
+            "language": {
+              "type": "string",
+              "description": "Preferred implementation language label (free text, e.g. Java, TypeScript, Go).",
+              "x-yang": {
+                "type": "leaf"
+              }
+            },
+            "repository": {
+              "type": "string",
+              "description": "Source repo or origin (URI or prose).",
+              "x-yang": {
+                "type": "leaf"
+              }
+            },
+            "packages": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "",
+                    "x-yang": {
+                      "type": "leaf"
+                    }
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "Optional path or import prefix.",
+                    "x-yang": {
+                      "type": "leaf"
+                    }
+                  },
+                  "doc": {
+                    "type": "string",
+                    "description": "",
+                    "x-yang": {
+                      "type": "leaf"
+                    }
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "qualified-name": {
+                              "type": "string",
+                              "description": "Stable logical name (e.g. dotted qualifier).",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "doc": {
+                              "type": "string",
+                              "description": "",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "class": {
+                              "type": "object",
+                              "description": "",
+                              "x-yang": {
+                                "type": "container",
+                                "presence": "Object-oriented type with methods and fields."
+                              },
+                              "properties": {
+                                "extends": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Supertype names.",
+                                  "x-yang": {
+                                    "type": "leaf-list"
+                                  }
+                                },
+                                "implements": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Interface names this class implements.",
+                                  "x-yang": {
+                                    "type": "leaf-list"
+                                  }
+                                },
+                                "methods": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string",
+                                        "description": "",
+                                        "x-yang": {
+                                          "type": "leaf"
+                                        }
+                                      },
+                                      "doc": {
+                                        "type": "string",
+                                        "description": "",
+                                        "x-yang": {
+                                          "type": "leaf"
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "name"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "description": "Operation on this type.",
+                                  "x-yang": {
+                                    "type": "list",
+                                    "key": "name"
+                                  }
+                                },
+                                "fields": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string",
+                                        "description": "",
+                                        "x-yang": {
+                                          "type": "leaf"
+                                        }
+                                      },
+                                      "doc": {
+                                        "type": "string",
+                                        "description": "",
+                                        "x-yang": {
+                                          "type": "leaf"
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "name"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "description": "State or data members.",
+                                  "x-yang": {
+                                    "type": "list",
+                                    "key": "name"
+                                  }
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "class",
+                            "name"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "qualified-name": {
+                              "type": "string",
+                              "description": "Stable logical name (e.g. dotted qualifier).",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "doc": {
+                              "type": "string",
+                              "description": "",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "interface": {
+                              "type": "object",
+                              "description": "",
+                              "x-yang": {
+                                "type": "container",
+                                "presence": "Contract: abstract operations."
+                              },
+                              "properties": {
+                                "methods": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string",
+                                        "description": "",
+                                        "x-yang": {
+                                          "type": "leaf"
+                                        }
+                                      },
+                                      "doc": {
+                                        "type": "string",
+                                        "description": "",
+                                        "x-yang": {
+                                          "type": "leaf"
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "name"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "description": "",
+                                  "x-yang": {
+                                    "type": "list",
+                                    "key": "name"
+                                  }
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "interface",
+                            "name"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "qualified-name": {
+                              "type": "string",
+                              "description": "Stable logical name (e.g. dotted qualifier).",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "doc": {
+                              "type": "string",
+                              "description": "",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "enumeration": {
+                              "type": "object",
+                              "description": "",
+                              "x-yang": {
+                                "type": "container",
+                                "presence": "Named constants."
+                              },
+                              "properties": {
+                                "members": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "name": {
+                                        "type": "string",
+                                        "description": "",
+                                        "x-yang": {
+                                          "type": "leaf"
+                                        }
+                                      }
+                                    },
+                                    "required": [
+                                      "name"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  "description": "",
+                                  "x-yang": {
+                                    "type": "list",
+                                    "key": "name"
+                                  }
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "enumeration",
+                            "name"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "qualified-name": {
+                              "type": "string",
+                              "description": "Stable logical name (e.g. dotted qualifier).",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "doc": {
+                              "type": "string",
+                              "description": "",
+                              "x-yang": {
+                                "type": "leaf"
+                              }
+                            },
+                            "function": {
+                              "type": "object",
+                              "description": "",
+                              "x-yang": {
+                                "type": "container",
+                                "presence": "Callable not tied to a class (module-level or similar)."
+                              },
+                              "properties": {
+                                "doc": {
+                                  "type": "string",
+                                  "description": "",
+                                  "x-yang": {
+                                    "type": "leaf"
+                                  }
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "function",
+                            "name"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "description": "A class, interface, enumeration, or module-level function.",
+                    "x-yang": {
+                      "type": "list",
+                      "key": "name",
+                      "choice": {
+                        "name": "kind",
+                        "description": "Which high-level shape this type has.",
+                        "mandatory": true
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "description": "Modules, namespaces, or folders grouping types.",
+              "x-yang": {
+                "type": "list",
+                "key": "name"
+              }
+            },
+            "top-level": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "",
+                    "x-yang": {
+                      "type": "leaf"
+                    }
+                  },
+                  "doc": {
+                    "type": "string",
+                    "description": "",
+                    "x-yang": {
+                      "type": "leaf"
+                    }
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "description": "Callables or values declared outside any package (e.g. scripts, entrypoints).",
+              "x-yang": {
+                "type": "list",
+                "key": "name"
+              }
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

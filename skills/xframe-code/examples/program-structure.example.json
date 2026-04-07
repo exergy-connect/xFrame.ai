@@ -1,0 +1,38 @@
+{
+  "program": {
+    "schema-version": "1.0.0",
+    "definition": {
+      "name": "example-service",
+      "version": "0.1.0",
+      "language": "typescript",
+      "repository": "https://example.com/repo",
+      "packages": [
+        {
+          "name": "app.api",
+          "path": "src/app/api",
+          "doc": "HTTP-facing layer",
+          "types": [
+            {
+              "name": "Handler",
+              "qualified-name": "app.api.Handler",
+              "doc": "Request handler abstraction",
+              "class": {
+                "extends": ["BaseHandler"],
+                "implements": ["RequestSink"],
+                "methods": [
+                  { "name": "handle", "doc": "Process one request" }
+                ],
+                "fields": [
+                  { "name": "deps", "doc": "Injected collaborators" }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "top-level": [
+        { "name": "bootstrap", "doc": "Application entry" }
+      ]
+    }
+  }
+}
