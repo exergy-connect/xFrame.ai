@@ -173,7 +173,7 @@
     <h1>Gulf of America — host facilities (deep / ultra-deep)</h1>
     <p class="sub">Same cohort as the static play-gradient map. Animation: each point appears at effective discovery (discovery, else FID, award, or production). Grey = discovered, not yet onstream; color = play (rainbow by age) after production start.</p>
     <div class="controls">
-      <button type="button" class="primary" id="btn-play">Speedup</button>
+      <button type="button" class="primary" id="btn-play">Play</button>
       <button type="button" id="btn-pause">Pause</button>
       <button type="button" id="btn-reset">Reset</button>
       <span class="time-readout" id="time-readout">—</span>
@@ -318,6 +318,7 @@
   }
 
   const readout = document.getElementById('time-readout');
+  const btnPlay = document.getElementById('btn-play');
   const scrub = document.getElementById('scrub');
   const SCRUB_STEPS = 1000;
   scrub.min = '0';
@@ -498,6 +499,7 @@
     }
     ensureBackgroundMusic();
     playing = true;
+    btnPlay.textContent = 'Speedup';
     lastPerf = 0;
     if (currentMs >= tMaxMs) {
       clearDiscoveryFlashState();
@@ -519,6 +521,7 @@
     maybeAnnounceDiscoveries(tMinMs - 1, tMinMs);
     currentMs = tMinMs;
     speedMultiplier = 1;
+    btnPlay.textContent = 'Play';
     paint();
   });
 
