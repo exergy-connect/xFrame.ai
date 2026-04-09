@@ -558,8 +558,8 @@
       line3.textContent = 'Halo size ∝ reserves';
       if (legendPlays.length) {
         const pt = L.DomUtil.create('div', 'legend-plays-title', d);
-        pt.textContent = 'Play (oldest → youngest)';
-        legendPlays.forEach(function (entry) {
+        pt.textContent = 'Play (youngest → oldest)';
+        legendPlays.slice().reverse().forEach(function (entry) {
           const row = L.DomUtil.create('div', 'legend-play-row', d);
           const sw = L.DomUtil.create('span', 'swatch', row);
           sw.style.background = entry.color;
