@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <title>Gulf host facilities — discovery → onstream</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      font-family: system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+    }
+    header {
+      flex-shrink: 0;
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1rem;
+    }
+    h1 { font-size: 1.1rem; margin: 0; font-weight: 600; }
+    .sub { font-size: 0.8rem; color: #8b949e; margin: 0; flex: 1 1 280px; }
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+    button {
+      background: #21262d;
+      color: #e6edf3;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 0.4rem 0.85rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    button:hover { background: #30363d; }
+    button.primary { background: #238636; border-color: #238636; }
+    button.primary:hover { background: #2ea043; }
+    #map {
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+    }
+    .time-readout {
+      font-variant-numeric: tabular-nums;
+      min-width: 9rem;
+      font-size: 0.9rem;
+      color: #58a6ff;
+    }
+    input[type="range"] { width: min(420px, 55vw); vertical-align: middle; }
+    .legend {
+      background: rgba(22, 27, 34, 0.92);
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #30363d;
+      font-size: 11px;
+      line-height: 1.45;
+      max-width: 220px;
+    }
+    .legend b { color: #fff; }
+    .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; border: 1px solid #484f58; flex-shrink: 0; }
+    .legend-plays-title { margin-top: 8px; font-size: 11px; font-weight: 600; color: #fff; }
+    .legend-play-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 11px; line-height: 1.35; color: #e6edf3; }
+    .leaflet-tooltip.discovery-flash-wrap {
+      background: rgba(22, 27, 34, 0.96) !important;
+      border: 1px solid #58a6ff !important;
+      border-radius: 6px !important;
+      color: #e6edf3 !important;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+      padding: 7px 11px !important;
+      font-size: 12px !important;
+      line-height: 1.35 !important;
+      max-width: 260px;
+    }
+    .discovery-flash-title { font-weight: 700; margin-bottom: 3px; }
+    .discovery-flash-op { color: #8b949e; font-size: 11px; }
+    #yt-bg-music {
+      position: fixed;
+      bottom: 12px;
+      right: 12px;
+      width: min(288px, 42vw);
+      z-index: 10050;
+      background: rgba(22, 27, 34, 0.97);
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+    }
+    #yt-bg-music .yt-bg-music-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 6px 8px;
+      border-bottom: 1px solid #30363d;
+    }
+    #yt-bg-music .yt-bg-hint {
+      font-size: 10px;
+      color: #8b949e;
+      line-height: 1.3;
+      flex: 1;
+      min-width: 100px;
+    }
+    #yt-bg-music .yt-sound-btn {
+      background: #21262d;
+      color: #e6edf3;
+      border: 1px solid #58a6ff;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    #yt-bg-music .yt-sound-btn:hover { background: #30363d; }
+    #yt-bg-music iframe {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      height: auto;
+      border: 0;
+      vertical-align: top;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Gulf of America — host facilities (deep / ultra-deep)</h1>
+    <p class="sub">Same cohort as the static play-gradient map. Animation: each point appears at effective discovery (discovery, else FID, award, or production). Grey = discovered, not yet onstream; color = play (rainbow by age) after production start.</p>
+    <div class="controls">
+      <button type="button" class="primary" id="btn-play">Play animation</button>
+      <button type="button" id="btn-pause">Pause</button>
+      <button type="button" id="btn-reset">Reset</button>
+      <span class="time-readout" id="time-readout">—</span>
+      <label for="scrub">Scrub</label>
+      <input type="range" id="scrub" min="0" max="1000" value="0" />
+    </div>
+  </header>
+  <div id="map"></div>
+  <script type="application/json" id="map-config">{"features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[-89.929614,28.546431]},"properties":{"fieldId":8447,"label":"Alabaster","fieldName":"Alabaster (MC 397)","originalOperator":"Exxon","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":53.640817600000005,"radiusNorm":0.5344775797227115,"isGasOnly":false,"dateDiscovery":"1984-04-04","dateProductionStart":"1992-04-01","effectiveDiscovery":"1984-04-04"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.28034071,27.69839617]},"properties":{"fieldId":8448,"label":"Allegheny","fieldName":"Allegheny (GC 254)","originalOperator":"Exxon","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":69.803244,"radiusNorm":0.5534051688298295,"isGasOnly":false,"dateDiscovery":"1991-11-15","dateProductionStart":"1999-10-01","effectiveDiscovery":"1991-11-15"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-91.18999522,27.22646916]},"properties":{"fieldId":46142,"label":"Anchor","fieldName":"Anchor (GC 807)","originalOperator":"Chevron","playName":"Paleogene West","onstreamColor":"#d76425","reserveMmboe":447.9180136,"radiusNorm":0.788598799041516,"isGasOnly":false,"dateDiscovery":"2014-12-29","dateProductionStart":"2024-08-11","effectiveDiscovery":"2014-12-29"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-87.93421264,28.57350034]},"properties":{"fieldId":38427,"label":"Appomattox Hub","fieldName":"Appomattox (MC 392)","originalOperator":"Shell","playName":"Jurassic East","onstreamColor":"#c0392b","reserveMmboe":350.3970304,"radiusNorm":0.7437022682635799,"isGasOnly":false,"dateDiscovery":"2009-12-29","dateProductionStart":"2019-05-23","effectiveDiscovery":"2009-12-29"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.2685,27.1885]},"properties":{"fieldId":46108,"label":"Argos Mad Dog","fieldName":"Mad Dog South (GC 826)","originalOperator":"BHP Billiton","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":257.9873728,"radiusNorm":0.6949180914996189,"isGasOnly":false,"dateDiscovery":"2009-06-18","dateProductionStart":"2023-04-13","effectiveDiscovery":"2009-06-18"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.02698449,27.19545638]},"properties":{"fieldId":8453,"label":"Atlantis","fieldName":"Atlantis (GC 699)","originalOperator":"BP (pre-1999)","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":864.0984952,"radiusNorm":0.9397390176048018,"isGasOnly":false,"dateDiscovery":"1998-05-26","dateProductionStart":"2007-10-01","effectiveDiscovery":"1998-05-26"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-92.44329374,27.54594688]},"properties":{"fieldId":8455,"label":"Auger","fieldName":"Auger (GB 426)","originalOperator":"Shell","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":393.0202704,"radiusNorm":0.764006940910801,"isGasOnly":false,"dateDiscovery":"1987-11-16","dateProductionStart":"1994-04-01","effectiveDiscovery":"1987-11-16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-91.99361647,27.73335401]},"properties":{"fieldId":8457,"label":"Baldpate","fieldName":"Baldpate (GB 260)","originalOperator":"Amerada Hess","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":125.2599496,"radiusNorm":0.6054983343757023,"isGasOnly":false,"dateDiscovery":"1991-11-13","dateProductionStart":"1998-09-01","effectiveDiscovery":"1991-11-13"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.52082006,26.93203794]},"properties":{"fieldId":21942,"label":"Big Foot","fieldName":"Big Foot (WR 29)","originalOperator":"Chevron","playName":"Subsalt Miocene West","onstreamColor":"#e88f1d","reserveMmboe":263.008976,"radiusNorm":0.6977744800788037,"isGasOnly":false,"dateDiscovery":"2006-01-01","dateProductionStart":"2018-10-15","effectiveDiscovery":"2006-01-01"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.20180278,28.30777222]},"properties":{"fieldId":13594,"label":"Blind Faith","fieldName":"Blind Faith (MC 696)","originalOperator":"BP","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":125.838764,"radiusNorm":0.6059725813444853,"isGasOnly":false,"dateDiscovery":"2001-06-07","dateProductionStart":"2008-11-01","effectiveDiscovery":"2001-06-07"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-94.62531327,27.35356527]},"properties":{"fieldId":8461,"label":"Boomvang","fieldName":"North Boomvang (EB 643)","originalOperator":"Reading & Bates","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":46.6855576,"radiusNorm":0.5254565859677008,"isGasOnly":false,"dateDiscovery":"1997-09-18","dateProductionStart":"2002-08-01","effectiveDiscovery":"1997-09-18"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.64754125,27.79523773]},"properties":{"fieldId":8462,"label":"Brutus","fieldName":"Brutus (GC 158)","originalOperator":"Shell","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":154.9181112,"radiusNorm":0.6285352973411835,"isGasOnly":false,"dateDiscovery":"1989-04-10","dateProductionStart":"2001-08-01","effectiveDiscovery":"1989-04-10"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.90151639,27.88309663]},"properties":{"fieldId":8463,"label":"Bullwinkle","fieldName":"Bullwinkle (GC 65)","originalOperator":"Shell","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":168.3552576,"radiusNorm":0.6382404669556931,"isGasOnly":false,"dateDiscovery":"1983-10-10","dateProductionStart":"1990-01-01","effectiveDiscovery":"1983-10-10"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.49187366,26.73782219]},"properties":{"fieldId":15228,"label":"Cascade","fieldName":"Cascade (WR 206)","originalOperator":"BHP Billiton","playName":"Paleogene West","onstreamColor":"#d76425","reserveMmboe":23.287196,"radiusNorm":0.48860552212384883,"isGasOnly":false,"dateDiscovery":"2002-06-04","dateProductionStart":"2012-02-25","effectiveDiscovery":"2002-06-04"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.9574,27.2855]},"properties":{"fieldId":15791,"label":"Constitution","fieldName":"Constitution (GC 680)","originalOperator":"Kerr-McGee","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":39.0296168,"radiusNorm":0.5147094859332569,"isGasOnly":false,"dateDiscovery":"2001-11-05","dateProductionStart":"2006-03-01","effectiveDiscovery":"2001-11-05"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-92.18969085,27.62428816]},"properties":{"fieldId":9190,"label":"Cooper","fieldName":"Cooper (GB 388)","originalOperator":"Exxon","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":2.1083072,"radiusNorm":0.4266605519174063,"isGasOnly":false,"dateDiscovery":"1989-03-16","dateProductionStart":"1995-09-01","effectiveDiscovery":"1989-03-16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-94.68872137,26.93905139]},"properties":{"fieldId":8497,"label":"DDCV Hoover","fieldName":"Hoover (AC 25)","originalOperator":"Exxon","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":102.8980264,"radiusNorm":0.5862540445527966,"isGasOnly":false,"dateDiscovery":"1997-01-22","dateProductionStart":"2000-09-01","effectiveDiscovery":"1997-01-22"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.1757,28.6834]},"properties":{"fieldId":43520,"label":"Delta House","fieldName":"Marmalard (MC 300)","originalOperator":"LLOG Exploration","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":142.5305352,"radiusNorm":0.6192078728549762,"isGasOnly":false,"dateDiscovery":"2012-05-03","dateProductionStart":"2015-04-16","effectiveDiscovery":"2012-05-03"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.77373709,28.23720363]},"properties":{"fieldId":10766,"label":"Devils Tower","fieldName":"Devils Tower (MC 773)","originalOperator":"Mariner Energy","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":69.5640864,"radiusNorm":0.5531421474524015,"isGasOnly":false,"dateDiscovery":"1999-12-29","dateProductionStart":"2004-05-05","effectiveDiscovery":"1999-12-29"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-89.90908560376,28.48190983234]},"properties":{"fieldId":8515,"label":"Ewing Bank 482","fieldName":"Mississippi Canyon 441","originalOperator":"Conoco","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":12.85058,"radiusNorm":0.46582086034201314,"isGasOnly":false,"dateDiscovery":"1986-05-04","dateProductionStart":null,"effectiveDiscovery":"1986-05-04"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-95.57315047,27.3466694]},"properties":{"fieldId":12971,"label":"Falcon Nest","fieldName":"Falcon (EB 579)","originalOperator":"Mariner Energy","playName":"Miocene West","onstreamColor":"#8ab838","reserveMmboe":45.0467904,"radiusNorm":0.52323501328017,"isGasOnly":false,"dateDiscovery":"2001-04-14","dateProductionStart":null,"effectiveDiscovery":"2001-04-14"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.4657,27.6352]},"properties":{"fieldId":12620,"label":"Front Runner","fieldName":"Front Runner N (GC 338)","originalOperator":"Murphy Oil","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":28.4774768,"radiusNorm":0.4979834987964762,"isGasOnly":false,"dateDiscovery":"2001-02-07","dateProductionStart":"2004-12-01","effectiveDiscovery":"2001-02-07"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.51890764,27.77925703]},"properties":{"fieldId":8487,"label":"Genesis","fieldName":"Genesis (GC 205)","originalOperator":"Exxon","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":156.0504152,"radiusNorm":0.6293689645807428,"isGasOnly":false,"dateDiscovery":"1988-11-19","dateProductionStart":"1999-01-01","effectiveDiscovery":"1988-11-19"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.498825,27.946993]},"properties":{"fieldId":8484,"label":"Green Canyon 029","fieldName":"Green Canyon 29 (GC 29)","originalOperator":"Placid","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":0.1071288,"radiusNorm":0.4060097348308526,"isGasOnly":false,"dateDiscovery":"1984-01-27","dateProductionStart":"1989-01-01","effectiveDiscovery":"1984-01-27"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-93.53830635,27.30383941]},"properties":{"fieldId":13940,"label":"Gunnison","fieldName":"Gunnison (GB 668)","originalOperator":"Kerr-McGee","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":68.17313200000001,"radiusNorm":0.551603355284995,"isGasOnly":false,"dateDiscovery":"2000-05-30","dateProductionStart":"2003-12-11","effectiveDiscovery":"2000-05-30"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.76396349,27.11142926]},"properties":{"fieldId":36313,"label":"Heidelberg","fieldName":"Heidelberg (GC 859)","originalOperator":"Anadarko","playName":"Subsalt Miocene West","onstreamColor":"#e88f1d","reserveMmboe":46.1850272,"radiusNorm":0.524782244078189,"isGasOnly":false,"dateDiscovery":"2009-02-02","dateProductionStart":"2016-01-14","effectiveDiscovery":"2009-02-02"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.53546944,27.32122996]},"properties":{"fieldId":9172,"label":"Holstein","fieldName":"Holstein (GC 644)","originalOperator":"BP Amoco","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":172.6113008,"radiusNorm":0.641233047067159,"isGasOnly":false,"dateDiscovery":"1999-02-11","dateProductionStart":"2004-12-01","effectiveDiscovery":"1999-02-11"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.0529,28.8584]},"properties":{"fieldId":9401,"label":"Horn Mountain","fieldName":"Horn Mountain (MC 127)","originalOperator":"Vastar Resources","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":280.7444016,"radiusNorm":0.707650582811389,"isGasOnly":false,"dateDiscovery":"1999-07-29","dateProductionStart":"2002-11-01","effectiveDiscovery":"1999-07-29"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.15300616,27.95048235]},"properties":{"fieldId":14681,"label":"Independence Hub","fieldName":"Merganser (AT 37)","originalOperator":"Kerr-McGee","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":17.2208256,"radiusNorm":0.47619547382902794,"isGasOnly":true,"dateDiscovery":"2002-01-04","dateProductionStart":"2007-08-01","effectiveDiscovery":"2002-01-04"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-89.61507167,28.22065524]},"properties":{"fieldId":8489,"label":"Innovator","fieldName":"Gomez (MC 755)","originalOperator":"Union Pacific Resources","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":27.6183088,"radiusNorm":0.4964940934660399,"isGasOnly":false,"dateDiscovery":"1997-09-26","dateProductionStart":"2006-03-01","effectiveDiscovery":"1997-09-26"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-91.0926,26.2975]},"properties":{"fieldId":20862,"label":"Jack/St Malo Joint Hub","fieldName":"Jack (WR 759)","originalOperator":"ChevronTexaco","playName":"Paleogene West","onstreamColor":"#d76425","reserveMmboe":274.0904344,"radiusNorm":0.7039828828943537,"isGasOnly":false,"dateDiscovery":"2004-07-29","dateProductionStart":"2014-12-02","effectiveDiscovery":"2004-07-29"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-91.51609,27.767356]},"properties":{"fieldId":8499,"label":"Jolliet","fieldName":"Jolliet (GC 184)","originalOperator":"Conoco","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":61.4158936,"radiusNorm":0.54389396423441,"isGasOnly":false,"dateDiscovery":"1981-08-04","dateProductionStart":"1989-11-01","effectiveDiscovery":"1981-08-04"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-92.5654,26.6979]},"properties":{"fieldId":29713,"label":"Kaskida","fieldName":"Kaskida (KC 292)","originalOperator":"BP","playName":"Paleogene West","onstreamColor":"#d76425","reserveMmboe":275.0033808,"radiusNorm":0.7044887184423695,"isGasOnly":false,"dateDiscovery":"2006-05-31","dateProductionStart":"2029-06-01","effectiveDiscovery":"2006-05-31"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.1036,27.5955]},"properties":{"fieldId":50164,"label":"Kings Quay","fieldName":"Khaleesi (GC 389)","originalOperator":"LLOG Exploration","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":118.7936216,"radiusNorm":0.6001238047805268,"isGasOnly":false,"dateDiscovery":"2017-02-12","dateProductionStart":"2022-04-06","effectiveDiscovery":"2017-02-12"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-92.04008253,26.13196228]},"properties":{"fieldId":38176,"label":"Lucius","fieldName":"Lucius (KC 875)","originalOperator":"Anadarko","playName":"Subsalt Plio/Mio West","onstreamColor":"#309dbe","reserveMmboe":191.6538208,"radiusNorm":0.6541914454340012,"isGasOnly":false,"dateDiscovery":"2009-12-17","dateProductionStart":"2015-01-16","effectiveDiscovery":"2009-12-17"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.26871119,27.18836886]},"properties":{"fieldId":46090,"label":"Mad Dog","fieldName":"Mad Dog (GC 826)","originalOperator":"Amoco","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":505.0505088,"radiusNorm":0.812638357706581,"isGasOnly":false,"dateDiscovery":"1998-12-29","dateProductionStart":"2005-01-13","effectiveDiscovery":"1998-12-29"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-92.20260063,27.20385147]},"properties":{"fieldId":9257,"label":"Magnolia","fieldName":"Magnolia (GB 783)","originalOperator":"Conoco","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":62.9782888,"radiusNorm":0.5457127712367021,"isGasOnly":false,"dateDiscovery":"1999-05-03","dateProductionStart":"2004-12-01","effectiveDiscovery":"1999-05-03"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.18138623,27.36212111]},"properties":{"fieldId":11135,"label":"Marco Polo","fieldName":"Marco Polo (GC 608)","originalOperator":"Anadarko","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":19.823784,"radiusNorm":0.4817514507486281,"isGasOnly":false,"dateDiscovery":"2000-05-02","dateProductionStart":"2004-07-01","effectiveDiscovery":"2000-05-02"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-87.94362203,29.10755646]},"properties":{"fieldId":8512,"label":"Marlin","fieldName":"Marlin (VK 915)","originalOperator":"Amoco","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":77.8306144,"radiusNorm":0.5619859768518707,"isGasOnly":false,"dateDiscovery":"1993-06-07","dateProductionStart":"1999-11-01","effectiveDiscovery":"1993-06-07"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-91.509397,27.898897]},"properties":{"fieldId":8513,"label":"Marquette","fieldName":"Marquette (GC 52)","originalOperator":"Conoco","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":19.7318928,"radiusNorm":0.4815617552619434,"isGasOnly":false,"dateDiscovery":"1984-07-14","dateProductionStart":"1990-05-01","effectiveDiscovery":"1984-07-14"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-89.222876,28.169524]},"properties":{"fieldId":8514,"label":"Mars","fieldName":"Mars (MC 807)","originalOperator":"Shell","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":1067.8201728,"radiusNorm":1.0,"isGasOnly":false,"dateDiscovery":"1989-04-18","dateProductionStart":"1996-07-01","effectiveDiscovery":"1989-04-18"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.8256,28.7423]},"properties":{"fieldId":8520,"label":"Matterhorn","fieldName":"Matterhorn (MC 243)","originalOperator":"Conoco","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":30.4913496,"radiusNorm":0.5013889238726263,"isGasOnly":false,"dateDiscovery":"1990-10-14","dateProductionStart":"2003-11-11","effectiveDiscovery":"1990-10-14"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-89.45346089,28.39240104]},"properties":{"fieldId":9860,"label":"Medusa","fieldName":"Medusa (MC 582)","originalOperator":"Murphy Oil","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":78.5864792,"radiusNorm":0.5627706530420573,"isGasOnly":false,"dateDiscovery":"1999-10-25","dateProductionStart":"2003-11-24","effectiveDiscovery":"1999-10-25"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.0228,28.0348]},"properties":{"fieldId":8519,"label":"Morpeth","fieldName":"Morpeth (EW 921)","originalOperator":"Shell","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":28.7737008,"radiusNorm":0.4984917947769044,"isGasOnly":false,"dateDiscovery":"1991-02-14","dateProductionStart":"1998-10-01","effectiveDiscovery":"1991-02-14"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.3173,28.5647]},"properties":{"fieldId":8451,"label":"Na Kika","fieldName":"Ariel (MC 429)","originalOperator":"Amoco","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":101.6167304,"radiusNorm":0.5850907854273149,"isGasOnly":false,"dateDiscovery":"1996-01-20","dateProductionStart":"2004-04-01","effectiveDiscovery":"1996-01-20"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-94.46765355,27.3671371]},"properties":{"fieldId":9855,"label":"Nansen","fieldName":"Nansen (EB 602)","originalOperator":"Kerr-McGee","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":144.60532080000002,"radiusNorm":0.6207975888263405,"isGasOnly":false,"dateDiscovery":"1999-09-25","dateProductionStart":"2002-01-01","effectiveDiscovery":"1999-09-25"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.0443,29.151]},"properties":{"fieldId":9188,"label":"Neptune","fieldName":"Neptune East (VK 826)","originalOperator":"Amerada Hess","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":69.210328,"radiusNorm":0.5527522596899286,"isGasOnly":false,"dateDiscovery":"1989-07-17","dateProductionStart":"1997-03-01","effectiveDiscovery":"1989-07-17"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-89.92402389,27.3700796]},"properties":{"fieldId":8523,"label":"Neptune","fieldName":"Neptune (AT 575)","originalOperator":"BP (pre-1999)","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":59.978932,"radiusNorm":0.5422006409754864,"isGasOnly":false,"dateDiscovery":"1995-09-26","dateProductionStart":"2008-07-01","effectiveDiscovery":"1995-09-26"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-92.2233,27.0452]},"properties":{"fieldId":43804,"label":"North Platte","fieldName":"Sparta (GB 959)","originalOperator":"Cobalt International Energy","playName":"Paleogene West","onstreamColor":"#d76425","reserveMmboe":240.3237088,"radiusNorm":0.6846429938585945,"isGasOnly":false,"dateDiscovery":"2012-12-05","dateProductionStart":"2028-04-01","effectiveDiscovery":"2012-12-05"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-89.222876,28.169524]},"properties":{"fieldId":53219,"label":"Olympus","fieldName":"Mars B (MC 807)","originalOperator":"Shell","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":462.1956752,"radiusNorm":0.7947436282246985,"isGasOnly":false,"dateDiscovery":"1989-04-18","dateProductionStart":"2016-03-01","effectiveDiscovery":"1989-04-18"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-94.89791489,26.12890071]},"properties":{"fieldId":35096,"label":"Perdido Host","fieldName":"Great White (AC 857)","originalOperator":"Shell","playName":"Paleogene West","onstreamColor":"#d76425","reserveMmboe":535.12728,"radiusNorm":0.8247474061989954,"isGasOnly":false,"dateDiscovery":"2002-05-31","dateProductionStart":"2010-03-01","effectiveDiscovery":"2002-05-31"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-87.78096836,29.22900348]},"properties":{"fieldId":8528,"label":"Petronius","fieldName":"Petronius (VK 786)","originalOperator":"Texaco","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":185.4988608,"radiusNorm":0.6500764601501228,"isGasOnly":false,"dateDiscovery":"1995-08-25","dateProductionStart":"2000-07-01","effectiveDiscovery":"1995-08-25"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-91.0947,27.7326]},"properties":{"fieldId":8546,"label":"Phoenix","fieldName":"Phoenix (GC 236)","originalOperator":"Chevron (pre-2001)","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":63.815352000000004,"radiusNorm":0.5466779306953307,"isGasOnly":false,"dateDiscovery":"1998-05-15","dateProductionStart":"2001-07-01","effectiveDiscovery":"1998-05-15"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.6203,28.9864]},"properties":{"fieldId":8530,"label":"Pompano","fieldName":"Pompano I (VK 990)","originalOperator":"BP (pre-1999)","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":131.5643376,"radiusNorm":0.6106062627582497,"isGasOnly":false,"dateDiscovery":"1985-04-27","dateProductionStart":"1994-10-01","effectiveDiscovery":"1985-04-27"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.32581513,27.99267674]},"properties":{"fieldId":8540,"label":"Prince","fieldName":"Prince (EW 958)","originalOperator":"Tatham Offshore","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":14.9992816,"radiusNorm":0.471111103687264,"isGasOnly":false,"dateDiscovery":"1994-08-01","dateProductionStart":"2001-10-01","effectiveDiscovery":"1994-08-01"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.09172006,29.06062965]},"properties":{"fieldId":8533,"label":"Ram-Powell","fieldName":"Ram-Powell (VK 912)","originalOperator":"Shell","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":273.2978008,"radiusNorm":0.7035430253406139,"isGasOnly":false,"dateDiscovery":"1985-05-24","dateProductionStart":"1997-09-01","effectiveDiscovery":"1985-05-24"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-91.92205964,27.12124841]},"properties":{"fieldId":13987,"label":"Red Hawk","fieldName":"Red Hawk (GB 877)","originalOperator":"Kerr-McGee","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":22.0163328,"radiusNorm":0.48615384817320084,"isGasOnly":true,"dateDiscovery":"2001-08-24","dateProductionStart":"2004-07-01","effectiveDiscovery":"2001-08-24"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-92.6644,26.3446]},"properties":{"fieldId":46020,"label":"Salamanca","fieldName":"Leon (KC 642)","originalOperator":"Repsol","playName":"Paleogene West","onstreamColor":"#d76425","reserveMmboe":101.919292,"radiusNorm":0.5853661325094216,"isGasOnly":false,"dateDiscovery":"2014-10-14","dateProductionStart":"2025-09-29","effectiveDiscovery":"2014-10-14"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-91.53565848,26.8933138]},"properties":{"fieldId":36316,"label":"Shenandoah","fieldName":"Shenandoah (WR 52)","originalOperator":"Anadarko","playName":"Paleogene West","onstreamColor":"#d76425","reserveMmboe":378.0890376,"radiusNorm":0.7570254971626418,"isGasOnly":false,"dateDiscovery":"2009-02-04","dateProductionStart":"2025-07-25","effectiveDiscovery":"2009-02-04"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.13500113,27.30062339]},"properties":{"fieldId":15735,"label":"Shenzi","fieldName":"Shenzi (GC 654)","originalOperator":"BHP Billiton","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":460.2862032,"radiusNorm":0.793927380850413,"isGasOnly":false,"dateDiscovery":"2002-11-17","dateProductionStart":"2009-03-01","effectiveDiscovery":"2002-11-17"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.55632364,27.50899334]},"properties":{"fieldId":23597,"label":"Stampede","fieldName":"Pony (GC 468)","originalOperator":"Amerada Hess","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":39.213702399999995,"radiusNorm":0.5149796848957378,"isGasOnly":false,"dateDiscovery":"2006-09-22","dateProductionStart":"2018-01-07","effectiveDiscovery":"2006-09-22"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.7721,26.454]},"properties":{"fieldId":21411,"label":"Stones","fieldName":"Stones (WR 508)","originalOperator":"BP","playName":"Paleogene West","onstreamColor":"#d76425","reserveMmboe":158.222912,"radiusNorm":0.6309600561330716,"isGasOnly":false,"dateDiscovery":"2005-04-07","dateProductionStart":"2016-09-06","effectiveDiscovery":"2005-04-07"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-90.74042944,27.31457917]},"properties":{"fieldId":14633,"label":"Tahiti","fieldName":"Tahiti (GC 640)","originalOperator":"ChevronTexaco","playName":"Subsalt Miocene West","onstreamColor":"#e88f1d","reserveMmboe":769.6762008000001,"radiusNorm":0.9093968074703359,"isGasOnly":false,"dateDiscovery":"2002-04-11","dateProductionStart":"2009-05-01","effectiveDiscovery":"2002-04-11"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.46801667,28.24103611]},"properties":{"fieldId":20443,"label":"Thunder Hawk","fieldName":"Thunder Hawk (MC 734)","originalOperator":"Dominion Resources","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":36.5106584,"radiusNorm":0.5109460953377123,"isGasOnly":false,"dateDiscovery":"2004-05-11","dateProductionStart":"2009-07-01","effectiveDiscovery":"2004-05-11"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.55858284,28.21598271]},"properties":{"fieldId":9171,"label":"Thunder Horse","fieldName":"Thunder Horse S (MC 778)","originalOperator":"BP Amoco","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":731.9834208,"radiusNorm":0.8967670845888256,"isGasOnly":false,"dateDiscovery":"1999-05-04","dateProductionStart":"2008-06-01","effectiveDiscovery":"1999-05-04"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-93.2391,26.8724]},"properties":{"fieldId":37385,"label":"Tiber","fieldName":"Tiber (KC 102)","originalOperator":"BP","playName":"Paleogene West","onstreamColor":"#d76425","reserveMmboe":272.11101279999997,"radiusNorm":0.7028832447739803,"isGasOnly":false,"dateDiscovery":"2009-08-27","dateProductionStart":"2030-07-01","effectiveDiscovery":"2009-08-27"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-93.2941,27.8145]},"properties":{"fieldId":8506,"label":"Tick-GB189","fieldName":"Ladybug (GB 409)","originalOperator":"Texaco","playName":"Pleisto/Plio West","onstreamColor":"#5777c8","reserveMmboe":0.0,"radiusNorm":0.4,"isGasOnly":false,"dateDiscovery":"1997-05-13","dateProductionStart":"2001-09-01","effectiveDiscovery":"1997-05-13"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-89.1154,28.0373]},"properties":{"fieldId":8549,"label":"Titan","fieldName":"Mirage (MC 941)","originalOperator":"Vastar Resources","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":16.8393688,"radiusNorm":0.47534684886856493,"isGasOnly":false,"dateDiscovery":"1998-12-06","dateProductionStart":"2010-10-11","effectiveDiscovery":"1998-12-06"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-88.852,28.2741]},"properties":{"fieldId":16942,"label":"Tubular  Bells Gulfstar","fieldName":"Tubular Bells (MC 725)","originalOperator":"BP","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":76.8107464,"radiusNorm":0.5609211703675497,"isGasOnly":false,"dateDiscovery":"2003-11-01","dateProductionStart":"2014-11-17","effectiveDiscovery":"2003-11-01"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-89.10355357,28.15402604]},"properties":{"fieldId":8547,"label":"Ursa","fieldName":"Ursa (MC 810)","originalOperator":"Shell","playName":"Miocene East","onstreamColor":"#28aa70","reserveMmboe":617.6307584,"radiusNorm":0.8563169991639455,"isGasOnly":false,"dateDiscovery":"1990-11-20","dateProductionStart":"1999-03-01","effectiveDiscovery":"1990-11-20"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-89.20920265,28.02538187]},"properties":{"fieldId":37283,"label":"Vito","fieldName":"Vito (MC 984)","originalOperator":"Anadarko","playName":"Subsalt Miocene East","onstreamColor":"#efbb11","reserveMmboe":251.130512,"radiusNorm":0.6909724902181738,"isGasOnly":false,"dateDiscovery":"2009-07-30","dateProductionStart":"2023-02-16","effectiveDiscovery":"2009-07-30"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-94.67357195,26.22344022]},"properties":{"fieldId":50669,"label":"Whale","fieldName":"Whale (AC 772)","originalOperator":"Shell","playName":"Paleogene West","onstreamColor":"#d76425","reserveMmboe":478.5332208,"radiusNorm":0.8016596784396846,"isGasOnly":false,"dateDiscovery":"2017-05-21","dateProductionStart":"2025-01-09","effectiveDiscovery":"2017-05-21"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-89.01135614,28.46076759]},"properties":{"fieldId":34746,"label":"Who Dat","fieldName":"Who Dat (MC 503)","originalOperator":"LLOG Exploration","playName":"Pleisto/Plio East","onstreamColor":"#8e44ad","reserveMmboe":183.260748,"radiusNorm":0.6485632491489796,"isGasOnly":false,"dateDiscovery":"2007-12-25","dateProductionStart":"2011-12-09","effectiveDiscovery":"2007-12-25"}}],"tMin":"1981-08-04","tMax":"2030-07-01","legendPlays":[{"name":"Jurassic East","color":"#c0392b"},{"name":"Paleogene West","color":"#d76425"},{"name":"Subsalt Miocene West","color":"#e88f1d"},{"name":"Subsalt Miocene East","color":"#efbb11"},{"name":"Miocene West","color":"#8ab838"},{"name":"Miocene East","color":"#28aa70"},{"name":"Subsalt Plio/Mio West","color":"#309dbe"},{"name":"Pleisto/Plio West","color":"#5777c8"},{"name":"Pleisto/Plio East","color":"#8e44ad"}]}</script>
+  <script>
+(function () {
+  const cfg = JSON.parse(document.getElementById('map-config').textContent);
+  const GREY = '#9e9e9e';
+  const features = cfg.features;
+  const legendPlays = cfg.legendPlays || [];
+  const tMin = cfg.tMin;
+  const tMax = cfg.tMax;
+  const tMinMs = Date.parse(tMin + 'T12:00:00');
+  const tMaxMs = Date.parse(tMax + 'T12:00:00');
+  const span = Math.max(1, tMaxMs - tMinMs);
+
+  function parseDay(s) {
+    if (!s) return null;
+    const t = Date.parse(s.slice(0, 10) + 'T12:00:00');
+    return Number.isNaN(t) ? null : t;
+  }
+
+  (function tileReferrerPolicy() {
+    var policy = 'strict-origin-when-cross-origin';
+    var origCreate = L.TileLayer.prototype.createTile;
+    L.TileLayer.prototype.createTile = function (coords, done) {
+      var tile = origCreate.call(this, coords, done);
+      if (tile && tile.tagName === 'IMG') tile.referrerPolicy = policy;
+      return tile;
+    };
+  })();
+
+  const map = L.map('map', { preferCanvas: true });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  const layers = [];
+  const bounds = [];
+  features.forEach(function (f) {
+    const p = f.properties;
+    const c = f.geometry.coordinates;
+    const latlng = [c[1], c[0]];
+    bounds.push(latlng);
+    const disc = parseDay(p.effectiveDiscovery);
+    const prod = parseDay(p.dateProductionStart);
+    const r = 4 + p.radiusNorm * 14;
+    const halos = [];
+    [14000, 9500, 6000].forEach(function (meters, i) {
+      const circle = L.circle(latlng, {
+        radius: meters * p.radiusNorm,
+        stroke: false,
+        fillColor: GREY,
+        fillOpacity: 0.12 + i * 0.12,
+        interactive: false
+      });
+      halos.push(circle);
+    });
+    const dot = L.circleMarker(latlng, {
+      radius: r,
+      stroke: true,
+      color: '#111',
+      weight: 1.5,
+      fillColor: GREY,
+      fillOpacity: 0.95
+    });
+    let flag = null;
+    if (p.isGasOnly) {
+      flag = L.circleMarker([latlng[0] + 0.02, latlng[1]], {
+        radius: Math.max(r * 0.55, 5),
+        stroke: true,
+        color: '#fff',
+        weight: 1.2,
+        fillColor: '#c62828',
+        fillOpacity: 1
+      });
+    }
+    const tip = [
+      '<b>', String(p.label || '').replace(/</g, '&lt;'), '</b><br/>',
+      (p.fieldName || '').replace(/</g, '&lt;'), '<br/>',
+      'Play: ', (p.playName || '—'), '<br/>',
+      'Discovery: ', (p.dateDiscovery || '—'), '<br/>',
+      'Onstream: ', (p.dateProductionStart || '—'), '<br/>',
+      'Reserves (mmboe): ', (p.reserveMmboe != null ? p.reserveMmboe.toFixed(1) : '—')
+    ].join('');
+    dot.bindPopup(tip);
+    halos.forEach(function (h) { h.addTo(map); });
+    dot.addTo(map);
+    if (flag) flag.addTo(map);
+    layers.push({
+      halos: halos,
+      dot: dot,
+      flag: flag,
+      disc: disc,
+      prod: prod,
+      color: p.onstreamColor,
+      fieldName: p.fieldName || '',
+      originalOperator: p.originalOperator || '',
+      discoveryAnnounced: false,
+      _discoveryFlashTimer: null
+    });
+  });
+
+  if (bounds.length) {
+    map.fitBounds(L.latLngBounds(bounds), { padding: [28, 28] });
+  }
+
+  function styleForTime(nowMs) {
+    layers.forEach(function (row) {
+      const visible = row.disc != null && nowMs >= row.disc;
+      const onstream = row.prod != null && nowMs >= row.prod;
+      const fill = visible ? (onstream ? row.color : GREY) : GREY;
+      const opacity = visible ? 0.95 : 0;
+      row.dot.setStyle({ fillColor: fill, fillOpacity: opacity });
+      row.halos.forEach(function (h, i) {
+        if (!visible) {
+          h.setStyle({ fillOpacity: 0 });
+          return;
+        }
+        const base = onstream ? row.color : GREY;
+        h.setStyle({ fillColor: base, fillOpacity: onstream ? (0.14 + i * 0.14) : (0.08 + i * 0.06) });
+      });
+      if (row.flag) {
+        row.flag.setStyle({ fillOpacity: visible ? 1 : 0, stroke: visible });
+      }
+    });
+  }
+
+  const readout = document.getElementById('time-readout');
+  const scrub = document.getElementById('scrub');
+  const SCRUB_STEPS = 1000;
+  scrub.min = '0';
+  scrub.max = String(SCRUB_STEPS);
+  scrub.step = '1';
+  let scrubProgrammatic = false;
+  let currentMs = tMinMs;
+  let playing = false;
+  let raf = null;
+  let lastPerf = 0;
+  const WALL_SEC_FULL_PLAY = 90;
+  const speedSimMsPerWallMs = span / (WALL_SEC_FULL_PLAY * 1000);
+  const DISCOVERY_FLASH_MS = 3800;
+  let bgMusicStarted = false;
+  var bgMusicIframe = null;
+  function ytEmbedSrc() {
+    /* nocookie + no embed origin param: avoids YouTube Error 153 when Referer/origin mismatch */
+    return 'https://www.youtube-nocookie.com/embed/rdB13lFexNk?list=RDrdB13lFexNk&autoplay=1&mute=1&playsinline=1&enablejsapi=1&controls=1';
+  }
+  function ytPostCommand(func, args) {
+    if (!bgMusicIframe || !bgMusicIframe.contentWindow) return;
+    try {
+      bgMusicIframe.contentWindow.postMessage(JSON.stringify({
+        event: 'command',
+        func: func,
+        args: args !== undefined ? args : []
+      }), '*');
+    } catch (e) { /* ignore */ }
+  }
+  function ensureBackgroundMusic() {
+    if (bgMusicStarted) return;
+    bgMusicStarted = true;
+    var wrap = document.createElement('div');
+    wrap.id = 'yt-bg-music';
+    wrap.setAttribute('role', 'region');
+    wrap.setAttribute('aria-label', 'Background music');
+    var bar = document.createElement('div');
+    bar.className = 'yt-bg-music-bar';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'yt-sound-btn';
+    btn.textContent = 'Sound on';
+    btn.addEventListener('click', function () {
+      function fire() {
+        ytPostCommand('unMute', []);
+        ytPostCommand('setVolume', [100]);
+        ytPostCommand('playVideo', []);
+      }
+      fire();
+      setTimeout(fire, 300);
+    });
+    var hint = document.createElement('span');
+    hint.className = 'yt-bg-hint';
+    hint.textContent = 'Starts muted (browser policy). Click Sound on or unmute in the player.';
+    bar.appendChild(btn);
+    bar.appendChild(hint);
+    var ifr = document.createElement('iframe');
+    ifr.src = ytEmbedSrc();
+    ifr.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen');
+    ifr.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+    ifr.setAttribute('loading', 'eager');
+    ifr.title = 'YouTube background playlist';
+    bgMusicIframe = ifr;
+    wrap.appendChild(bar);
+    wrap.appendChild(ifr);
+    document.body.appendChild(wrap);
+  }
+
+  function fmt(ms) {
+    const d = new Date(ms);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function escHtml(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function clearDiscoveryFlashState() {
+    layers.forEach(function (row) {
+      row.discoveryAnnounced = false;
+      if (row._discoveryFlashTimer) {
+        clearTimeout(row._discoveryFlashTimer);
+        row._discoveryFlashTimer = null;
+      }
+      row.dot.closeTooltip();
+      row.dot.unbindTooltip();
+    });
+  }
+
+  function showDiscoveryFlash(row) {
+    var op = row.originalOperator ? row.originalOperator : '—';
+    var html = '<div class="discovery-flash"><div class="discovery-flash-title">' + escHtml(row.fieldName) +
+      '</div><div class="discovery-flash-op">' + escHtml(op) + '</div></div>';
+    row.dot.unbindTooltip();
+    row.dot.bindTooltip(html, {
+      permanent: true,
+      direction: 'top',
+      offset: [0, -8],
+      className: 'discovery-flash-wrap',
+      opacity: 1,
+      interactive: false
+    });
+    row.dot.openTooltip();
+    if (row._discoveryFlashTimer) clearTimeout(row._discoveryFlashTimer);
+    row._discoveryFlashTimer = setTimeout(function () {
+      row.dot.closeTooltip();
+      row.dot.unbindTooltip();
+      row._discoveryFlashTimer = null;
+    }, DISCOVERY_FLASH_MS);
+  }
+
+  function maybeAnnounceDiscoveries(oldMs, newMs) {
+    layers.forEach(function (row) {
+      if (row.disc == null) return;
+      if (newMs < row.disc) {
+        row.discoveryAnnounced = false;
+        return;
+      }
+      if (oldMs < row.disc && newMs >= row.disc && !row.discoveryAnnounced) {
+        row.discoveryAnnounced = true;
+        showDiscoveryFlash(row);
+      }
+    });
+  }
+
+  function syncScrubFromTime() {
+    const frac = span <= 0 ? 0 : (currentMs - tMinMs) / span;
+    const v = String(Math.round(Math.min(SCRUB_STEPS, Math.max(0, frac * SCRUB_STEPS))));
+    scrubProgrammatic = true;
+    scrub.value = v;
+    scrubProgrammatic = false;
+  }
+
+  function paint() {
+    readout.textContent = fmt(currentMs);
+    syncScrubFromTime();
+    styleForTime(currentMs);
+  }
+
+  scrub.addEventListener('input', function () {
+    if (scrubProgrammatic) return;
+    const x = parseFloat(scrub.value);
+    if (Number.isNaN(x)) return;
+    const frac = Math.min(1, Math.max(0, x / SCRUB_STEPS));
+    const oldMs = currentMs;
+    currentMs = tMinMs + frac * span;
+    maybeAnnounceDiscoveries(oldMs, currentMs);
+    paint();
+  });
+
+  function tick(ts) {
+    if (!playing) return;
+    if (!lastPerf) lastPerf = ts;
+    const dt = ts - lastPerf;
+    lastPerf = ts;
+    const oldMs = currentMs;
+    currentMs += dt * speedSimMsPerWallMs;
+    if (currentMs > tMaxMs) {
+      currentMs = tMaxMs;
+      playing = false;
+    }
+    maybeAnnounceDiscoveries(oldMs, currentMs);
+    paint();
+    if (playing) raf = requestAnimationFrame(tick);
+  }
+
+  document.getElementById('btn-play').addEventListener('click', function () {
+    ensureBackgroundMusic();
+    playing = true;
+    lastPerf = 0;
+    if (currentMs >= tMaxMs) {
+      clearDiscoveryFlashState();
+      maybeAnnounceDiscoveries(tMinMs - 1, tMinMs);
+      currentMs = tMinMs;
+    }
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(tick);
+  });
+  document.getElementById('btn-pause').addEventListener('click', function () {
+    playing = false;
+    if (raf) cancelAnimationFrame(raf);
+  });
+  document.getElementById('btn-reset').addEventListener('click', function () {
+    playing = false;
+    if (raf) cancelAnimationFrame(raf);
+    clearDiscoveryFlashState();
+    maybeAnnounceDiscoveries(tMinMs - 1, tMinMs);
+    currentMs = tMinMs;
+    paint();
+  });
+
+  const LegendCtrl = L.Control.extend({
+    options: { position: 'topright' },
+    onAdd: function () {
+      const d = L.DomUtil.create('div', 'legend leaflet-control');
+      const title = L.DomUtil.create('b', '', d);
+      title.textContent = 'Legend';
+      d.appendChild(document.createElement('br'));
+      const line1 = L.DomUtil.create('div', '', d);
+      line1.innerHTML = '<span class="swatch" style="background:' + GREY + '"></span> Discovered, not onstream';
+      const line2 = L.DomUtil.create('div', '', d);
+      line2.style.marginTop = '4px';
+      line2.innerHTML = '<span class="swatch" style="background:linear-gradient(90deg,#c0392b,#e67e22,#f1c40f,#27ae60,#3498db,#8e44ad)"></span> Onstream (play color)';
+      const line3 = L.DomUtil.create('small', '', d);
+      line3.style.display = 'block';
+      line3.style.marginTop = '4px';
+      line3.textContent = 'Halo size ∝ reserves';
+      if (legendPlays.length) {
+        const pt = L.DomUtil.create('div', 'legend-plays-title', d);
+        pt.textContent = 'Play (oldest → youngest)';
+        legendPlays.forEach(function (entry) {
+          const row = L.DomUtil.create('div', 'legend-play-row', d);
+          const sw = L.DomUtil.create('span', 'swatch', row);
+          sw.style.background = entry.color;
+          sw.style.borderColor = '#30363d';
+          const lab = L.DomUtil.create('span', '', row);
+          lab.textContent = entry.name;
+        });
+      }
+      return d;
+    }
+  });
+  map.addControl(new LegendCtrl());
+
+  paint();
+})();
+  </script>
+</body>
+</html>
