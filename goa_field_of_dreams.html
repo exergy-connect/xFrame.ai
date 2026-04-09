@@ -319,6 +319,7 @@
 
   const readout = document.getElementById('time-readout');
   const btnPlay = document.getElementById('btn-play');
+  const btnPause = document.getElementById('btn-pause');
   const scrub = document.getElementById('scrub');
   const SCRUB_STEPS = 1000;
   scrub.min = '0';
@@ -486,6 +487,7 @@
     if (currentMs > tMaxMs) {
       currentMs = tMaxMs;
       playing = false;
+      btnPause.textContent = 'Pause';
     }
     maybeAnnounceDiscoveries(oldMs, currentMs);
     paint();
@@ -500,6 +502,7 @@
     ensureBackgroundMusic();
     playing = true;
     btnPlay.textContent = 'Speedup';
+    btnPause.textContent = 'Pause';
     lastPerf = 0;
     if (currentMs >= tMaxMs) {
       clearDiscoveryFlashState();
@@ -510,9 +513,20 @@
     if (raf) cancelAnimationFrame(raf);
     raf = requestAnimationFrame(tick);
   });
-  document.getElementById('btn-pause').addEventListener('click', function () {
-    playing = false;
+  btnPause.addEventListener('click', function () {
+    if (playing) {
+      playing = false;
+      if (raf) cancelAnimationFrame(raf);
+      btnPause.textContent = 'Resume';
+      return;
+    }
+    if (btnPause.textContent !== 'Resume') return;
+    ensureBackgroundMusic();
+    playing = true;
+    btnPause.textContent = 'Pause';
+    lastPerf = 0;
     if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(tick);
   });
   document.getElementById('btn-reset').addEventListener('click', function () {
     playing = false;
@@ -522,6 +536,7 @@
     currentMs = tMinMs;
     speedMultiplier = 1;
     btnPlay.textContent = 'Play';
+    btnPause.textContent = 'Pause';
     paint();
   });
 
