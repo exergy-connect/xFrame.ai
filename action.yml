@@ -1,19 +1,15 @@
 name: 'xFrame consolidate'
 description: >-
-  Run the xFrame minified JS consolidator: merge JSON model fragments and entity data into
-  consolidated.schema.json and consolidated_data.json (under output/ next to the model dir).
-  Requires Node.js 18+ on the runner.
+  Run the xFrame minified JS consolidator. Expects <working-dir>/data, <working-dir>/model;
+  writes to <working-dir>/output. Requires Node.js 18+ on the runner.
 
 inputs:
-  data-dir:
+  working-dir:
     description: >-
-      Directory of entity `.json` data files (top-level keys = entity names). Same semantics as
-      `consolidate.min.js` first argument.
-    required: true
-  model-dir:
-    description: >-
-      Directory of model `.json` fragments, or a single `consolidated.schema.json` path.
-    required: true
+      Project root relative to the repository (unless absolute). Subdirectories must be data/,
+      model/, and output/ is created for artifacts.
+    required: false
+    default: 'xframe'
   note:
     description: >-
       Non-empty change note for this run (stored in consolidated output metadata).
@@ -52,8 +48,7 @@ runs:
       shell: bash
       env:
         ACTION_PATH: ${{ github.action_path }}
-        DATA_DIR: ${{ inputs.data-dir }}
-        MODEL_DIR: ${{ inputs.model-dir }}
+        WORKING_DIR: ${{ inputs.working-dir }}
         NOTE: ${{ inputs.note }}
         AUTHOR: ${{ inputs.author }}
         GIT_HASH: ${{ inputs.git-commit-hash }}
@@ -68,7 +63,7 @@ runs:
           echo "::error file=${script}::Consolidator script missing (expected bundled xframe-consolidate asset)."
           exit 1
         fi
-        cmd=(node "$script" "$DATA_DIR" --model-dir "$MODEL_DIR" --note "$NOTE")
+        cmd=(node "$script" --working-dir "$WORKING_DIR" --note "$NOTE")
         author_resolved="${AUTHOR}"
         [[ -z "${author_resolved}" ]] && author_resolved="${GITHUB_ACTOR:-runner}"
         cmd+=(--author "$author_resolved")
