@@ -108,6 +108,8 @@ Subcomponents are full generic-fields: each has **`name`**, **`description`**, a
 
 Optional **`foreignKeys`** on the same `type` object when the field references another entity by PK type. Do not chain `definition` → `definition` inside `field_definitions` (meta-model `must`).
 
+If an entity has no reusable definitions, **omit** `field_definitions`; do **not** use an empty array `[]` (meta-model treats an empty list as invalid).
+
 ### Foreign keys (scalar fields)
 
 ```json
@@ -190,7 +192,6 @@ Top-level keys of the file (same as inner `data-model` in the JSON Schema):
       "description": "Required: AI-friendly entity description.",
       "source": "Optional entity-level data source",
       "primary_key": "<field_name>",
-      "field_definitions": [],
       "fields": [
         {
           "name": "<field_name>",
@@ -214,6 +215,7 @@ Top-level keys of the file (same as inner `data-model` in the JSON Schema):
 
 Use **`type.foreignKeys`** (inside `type`) for FK scalars instead of a top-level **`foreignKeys`** key in new models.
 
+- **field_definitions**: Include only when you define at least one reusable type; otherwise omit the key (never `[]`).
 - **primary_key**: Name of the PK field (string). Composite PK: one field whose **`type`** is **`composite`**.
 - **computed**: Defined on the field; omit from data JSON.
 - **allow_unlimited_fields**: In JSON Schema this is an **empty object** `{}` when present (YANG `empty`).
