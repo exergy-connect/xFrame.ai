@@ -1,0 +1,82 @@
+name: 'xFrame consolidate'
+description: >-
+  Run the xFrame minified JS consolidator: merge JSON model fragments and entity data into
+  consolidated.schema.json and consolidated_data.json (under output/ next to the model dir).
+  Requires Node.js 18+ on the runner.
+
+inputs:
+  data-dir:
+    description: >-
+      Directory of entity `.json` data files (top-level keys = entity names). Same semantics as
+      `consolidate.min.js` first argument.
+    required: true
+  model-dir:
+    description: >-
+      Directory of model `.json` fragments, or a single `consolidated.schema.json` path.
+    required: true
+  note:
+    description: >-
+      Non-empty change note for this run (stored in consolidated output metadata).
+    required: true
+  author:
+    description: >-
+      Author on the change record. If omitted or empty, `GITHUB_ACTOR` (the user or app that triggered the workflow) is used.
+    required: false
+    default: ''
+  git-commit-hash:
+    description: >-
+      Commit hash on the change record. If omitted or empty, `GITHUB_SHA` for this workflow run is used (same as `github.sha`).
+    required: false
+    default: ''
+  log-level:
+    description: 'One of DEBUG, INFO, WARNING, ERROR (optional; consolidator default applies if empty).'
+    required: false
+    default: ''
+  js:
+    description: 'Set to `true` to also write consolidated.schema.js and consolidated_data.js.'
+    required: false
+    default: 'false'
+  clean:
+    description: 'Set to `true` to pass `--clean` (no carry-over from prior output/).'
+    required: false
+    default: 'false'
+  close-fk-enums:
+    description: 'Set to `true` to pass `--close-fk-enums` (FK enums derived from loaded data PKs).'
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Run consolidate.min.js
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        DATA_DIR: ${{ inputs.data-dir }}
+        MODEL_DIR: ${{ inputs.model-dir }}
+        NOTE: ${{ inputs.note }}
+        AUTHOR: ${{ inputs.author }}
+        GIT_HASH: ${{ inputs.git-commit-hash }}
+        LOG_LEVEL: ${{ inputs.log-level }}
+        WANT_JS: ${{ inputs.js }}
+        WANT_CLEAN: ${{ inputs.clean }}
+        WANT_CLOSE_FK: ${{ inputs.close-fk-enums }}
+      run: |
+        set -euo pipefail
+        script="${ACTION_PATH}/skills/xframe-consolidate/scripts/consolidate.min.js"
+        if [[ ! -f "$script" ]]; then
+          echo "::error file=${script}::Consolidator script missing (expected bundled xframe-consolidate asset)."
+          exit 1
+        fi
+        cmd=(node "$script" "$DATA_DIR" --model-dir "$MODEL_DIR" --note "$NOTE")
+        author_resolved="${AUTHOR}"
+        [[ -z "${author_resolved}" ]] && author_resolved="${GITHUB_ACTOR:-runner}"
+        cmd+=(--author "$author_resolved")
+        hash_resolved="${GIT_HASH}"
+        [[ -z "${hash_resolved}" ]] && hash_resolved="${GITHUB_SHA:-}"
+        [[ -n "${hash_resolved}" ]] && cmd+=(--git-commit-hash "$hash_resolved")
+        [[ -n "${LOG_LEVEL}" ]] && cmd+=(--log-level "$LOG_LEVEL")
+        [[ "${WANT_JS}" == "true" ]] && cmd+=(--js)
+        [[ "${WANT_CLEAN}" == "true" ]] && cmd+=(--clean)
+        [[ "${WANT_CLOSE_FK}" == "true" ]] && cmd+=(--close-fk-enums)
+        "${cmd[@]}"
