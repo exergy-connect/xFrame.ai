@@ -12,38 +12,44 @@ Normalize JSON model fragments and JSON data into a **JSON Schema** describing t
 
 - User wants to **consolidate** or **normalize** JSON model and/or data.
 - User mentions **xFrame**, **consolidator**, **consolidated.schema.json**, **consolidated_data**, or legacy names **consolidated_model** / **consolidated_data**.
-- User has **model/** and **data/** (or equivalent paths) and wants schema + data JSON output.
+- User has **model/** and **data/** under one project root and wants schema + data JSON output.
 - User wants **validation** and a single **JSON Schema** artifact for the merged entity definitions.
 - User wants **FK enum closure**: tighten foreign-key fields in the emitted schema to the set of referenced primary keys actually loaded (pass **`--close-fk-enums`**).
 
 ## How to run
 
-From the repo root, with Node (ESM, Node ≥18):
+From the repo root, with Node (ESM, Node ≥18). The only path knob is **`--working-dir`** (default **`xframe`**, relative to cwd unless absolute). The consolidator always uses:
+
+| Path | Location |
+|------|----------|
+| Data | `<working-dir>/data` |
+| Model | `<working-dir>/model` |
+| Output | `<working-dir>/output` |
 
 **xFrame layout (this repo):**
 
 ```bash
-node skills/xframe-consolidate/scripts/consolidate.min.js <data_dir> --model-dir <model_dir> --note "<note>" [options]
+node skills/xframe-consolidate/scripts/consolidate.min.js --note "<note>" [options]
+# optional: --working-dir myproj   # uses myproj/data, myproj/model, myproj/output
 ```
 
 **Cursor install layout** (skills under `.cursor/skills/`):
 
 ```bash
-node .cursor/skills/xframe-consolidate/scripts/consolidate.min.js <data_dir> --model-dir <model_dir> --note "<note>" [options]
+node .cursor/skills/xframe-consolidate/scripts/consolidate.min.js --note "<note>" [options]
 ```
 
 **Required:**
 
 | Argument | Description |
 |----------|-------------|
-| `<data_dir>` | Directory of `.json` data files (top-level keys = entity names, values = arrays of records). Recursive; skips dot-dirs and subdirs named `model` or `output`. |
-| `--model-dir <dir>` | Directory of `.json` model fragments **or** a single existing `consolidated.schema.json` path to load entity defs from `$defs`. |
 | `--note "<text>"` | **Reason for this run** (required, non-empty). Stored in `change`; describe the real delta (e.g. new entities, field changes, data corrections). Avoid generic *"Consolidate"* / *"Sync"*. |
 
 **Optional:**
 
 | Option | Description |
 |--------|-------------|
+| `--working-dir <dir>` | Project root containing `data/` and `model/` (default: `xframe`). |
 | `--author <name>` | Author on the change record (default: OS username). |
 | `--git-commit-hash <hash>` | Commit hash on the change record. |
 | `--js` | Also write `consolidated.schema.js` and `consolidated_data.js`: same format as the Python consolidator (base64 gzip payload + `getConsolidatedModel` / `getConsolidatedData` and `…Sync` with pako). |
@@ -61,36 +67,32 @@ bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh) 
 
 ## Directory layout
 
-- **Model directory**: One or more `.json` files; each file is a data-model document with `entities: [ … ]`. Merged into one **JSON Schema** (`$defs` per entity). Alternatively, `--model-dir` may point at one `consolidated.schema.json` file.
-- **Data directory**: `.json` files; each top-level array key is a normalized entity name; elements are records (nested children are hoisted per parent/foreign-key rules).
-- **Output** (`<model_dir>/../output/`):
+- **Model directory**: `<working-dir>/model` — one or more `.json` files; each file is a data-model document with `entities: [ … ]`. Merged into one **JSON Schema** (`$defs` per entity).
+- **Data directory**: `<working-dir>/data` — `.json` files; each top-level array key is a normalized entity name; elements are records (nested children are hoisted per parent/foreign-key rules).
+- **Output** (`<working-dir>/output/`):
   - `consolidated.schema.json` – JSON Schema for the merged model (`$schema` 2020-12, entity defs under `$defs`). With **`--close-fk-enums`**, includes root `x-fkEnumFromData: true` and `enum` on FK properties derived from loaded data.
   - `consolidated_data.json` – wrapper with `version`, `timestamp`, optional `model` metadata, `data` (nested entity tree), and `change`.
   - `consolidation_log.txt` – step log (when not in a browser-like environment).
   - With `--js`: `consolidated.schema.js`, `consolidated_data.js`.
 
-Paths may be absolute or relative; `output/` is created if missing.
+`output/` is created if missing.
 
 ## Example
 
 ```bash
-node skills/xframe-consolidate/scripts/consolidate.min.js ./data --model-dir ./model \
-  --note "Add field_reserves composites; update lifecycle dates from source" \
+node skills/xframe-consolidate/scripts/consolidate.min.js --note "Add field_reserves composites; update lifecycle dates from source" \
   --author "ci" --git-commit-hash "$(git rev-parse HEAD)" --js
 ```
 
 **Example with FK enum closure** (schema enums on FK fields match primary keys in the loaded dataset; re-run after data changes):
 
 ```bash
-node skills/xframe-consolidate/scripts/consolidate.min.js ./data --model-dir ./model \
-  --note "Reconsolidate with FK enums closed to PKs present in loaded data" \
+node skills/xframe-consolidate/scripts/consolidate.min.js --note "Reconsolidate with FK enums closed to PKs present in loaded data" \
   --author "ci" --git-commit-hash "$(git rev-parse HEAD)" --js --close-fk-enums
 ```
 
-Artifacts appear under `./output/` (sibling of `./model`).
-
 ## Errors
 
-- Missing or invalid `--model-dir` / `<data_dir>` → exit 1.
+- Missing `data/` or `model/` under the working directory → exit 1.
 - Consolidation or I/O failure → logged; exit 1.
 - Success → exit 0; paths logged as above.
