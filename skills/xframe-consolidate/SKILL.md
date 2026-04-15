@@ -1,6 +1,6 @@
 ---
 name: xframe-consolidate
-description: Normalizes and consolidates JSON model and data into validated JSON Schema plus consolidated data (optional --js, optional --close-fk-enums). Use when the user wants to consolidate models and data, normalize entity data, validate, generate consolidated.schema.json / consolidated_data.json, close foreign-key fields to enums from loaded data, or run the consolidate script.
+description: Normalizes and consolidates JSON model and data into validated JSON Schema plus consolidated data (optional --js, optional --close-fk-enums, optional --data-include regex filters). Use when the user wants to consolidate models and data, normalize entity data, validate, generate consolidated.schema.json / consolidated_data.json, close foreign-key fields to enums from loaded data, load a subset of data files by path, or run the consolidate script.
 disable-model-invocation: true
 ---
 
@@ -15,6 +15,7 @@ Normalize JSON model fragments and JSON data into a **JSON Schema** describing t
 - User has **model/** and **data/** under one project root and wants schema + data JSON output.
 - User wants **validation** and a single **JSON Schema** artifact for the merged entity definitions.
 - User wants **FK enum closure**: tighten foreign-key fields in the emitted schema to the set of referenced primary keys actually loaded (pass **`--close-fk-enums`**).
+- User wants to **load a subset of data JSON** by path under `data/` (pass one or more **`--data-include`** regex patterns; paths are relative to `data/`, POSIX-style, e.g. `^fields/` for only the `fields/` subtree).
 
 ## How to run
 
@@ -56,6 +57,7 @@ node .cursor/skills/xframe-consolidate/scripts/consolidate.min.js --note "<note>
 | `--log-level <level>` | `DEBUG` \| `INFO` \| `WARNING` \| `ERROR` (default `INFO`). |
 | `--clean` | Ignore prior `output/*.json` for version tracking and do not infer `--js` from existing files. |
 | `--close-fk-enums` | After load + flatten, set JSON Schema `enum` on foreign-key fields from distinct primary-key values **present in the loaded data** for the referenced entity. Replaces any model `enum` on those properties. Defers writing `consolidated.schema.json` until then; output includes `x-fkEnumFromData: true`. Validation still runs explicit **FK existence** checks unless the entity uses `validation: warn` / `skip`. |
+| `--data-include <regex>` | Repeatable, or use `--data-include=<regex>`. When any are set, only `.json` files under `data/` whose path **relative to `data/`** matches **at least one** pattern are loaded. Matching uses JavaScript `RegExp` with the same effect as `String.search` on the relative path (forward slashes). Example: `--data-include '^fields/'` loads only `data/fields/...json`. Omitting this flag loads all data JSON as before. |
 
 ## Version
 
@@ -94,5 +96,6 @@ node skills/xframe-consolidate/scripts/consolidate.min.js --note "Reconsolidate 
 ## Errors
 
 - Missing `data/` or `model/` under the working directory → exit 1.
+- Invalid `--data-include` regex → exit 1.
 - Consolidation or I/O failure → logged; exit 1.
 - Success → exit 0; paths logged as above.
