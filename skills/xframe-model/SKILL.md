@@ -169,11 +169,6 @@ Example (integer codes):
 
 You may also place **`enum`** at field level in some pipelines; consolidation normalizes toward the internal shape.
 
-### Legacy shapes
-
-- Top-level string **`type`**: `"string"`, `"array"`, `"composite"`, or a definition name — converted to **`field_type`**.
-- Explicit **`field_type`** + **`field_type.array.item_type`** — still accepted; **`type`** as a **dict** is preferred for strict alignment with **`meta-model.yang.json`**.
-
 ## Model file shape (JSON)
 
 Top-level keys of the file (same as inner `data-model` in the JSON Schema):
