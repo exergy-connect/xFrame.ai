@@ -32,7 +32,7 @@ These match **`src/xframe/yang/meta-model.yang`** and the exported **`meta-model
 | Level | Requirement |
 |--------|----------------|
 | **Data model** | `name`, **`version`** (`YY.MM.DD.N`, pattern `^\d{2}\.\d{2}\.\d{2}\.\d+$`), `author`, **`description`** |
-| **Entity** | `name`, **`description`**, `primary_key`, `fields` (and usually `brief`) |
+| **Entity** | `name`, **`description`**, `primary_key`, `fields` (and usually `brief`); optional **`parents`** for hierarchical nesting under a parent’s array field |
 | **Field** | `name`, **`description`**, and a **`type`** object (see below) |
 
 Optional: `source` at model, entity, or field level (where the data comes from).
@@ -43,7 +43,7 @@ Model files on disk are **unwrapped** (`name`, `version`, `entities`, …); the 
 
 Each entity field uses a **`type`** object: exactly one branch of **`definition`**, **`primitive`** (+ optional constraints), **`array`**, or **`composite`**. This is what **`meta-model.yang.json`** describes under `entities[].fields[].type`.
 
-**`foreignKeys`** (and optional **`parent_array`**) belong **inside `type`**, next to **`primitive`** or **`definition`**, not as a sibling of `type`.
+**`foreignKeys`** belong **inside `type`**, next to **`primitive`** or **`definition`**, not as a sibling of `type`. Each `foreignKeys` entry is **`entity`** plus optional **`field`** (alternate key on the referenced entity; must not be the referenced primary key). **Do not** put **`parent_array`** on `foreignKeys` anymore (removed in YANG revision **2026-05-12**; see **`entities[].parents`** below).
 
 xFrame loads this shape and **normalizes** it internally to `field_type` / `item_type` / top-level `foreignKeys` for JSON Schema generation (`convert_yang_type_container_to_legacy` in `metamodel.py`). You may still encounter **`field_type`** + **`item_type`** in docs or legacy files; prefer **`type`** for new authoring.
 
@@ -110,21 +110,65 @@ Optional **`foreignKeys`** on the same `type` object when the field references a
 
 If an entity has no reusable definitions, **omit** `field_definitions`; do **not** use an empty array `[]` (meta-model treats an empty list as invalid).
 
-### Foreign keys (scalar fields)
+### Foreign keys (scalar and composite subfields)
+
+Reference another entity by primary key (default) or by a **`unique`** field named in **`foreignKeys[].field`**.
 
 ```json
 "type": {
   "primitive": "string",
-  "foreignKeys": [
-    {
-      "entity": "company",
-      "parent_array": "departments"
-    }
-  ]
+  "foreignKeys": [{ "entity": "company" }]
 }
 ```
 
-**`parent_array`** names the parent entity’s **array** field used for hierarchical nesting; it must point at a field whose **`type`** has a direct **`array`** branch (not only a `definition` indirection), when consolidated validation runs.
+Alternate key (non-PK field on `company` marked `unique: true`):
+
+```json
+"foreignKeys": [{ "entity": "company", "field": "external_code" }]
+```
+
+The same `foreignKeys` shape applies on a **composite** subfield’s `type` when that subcomponent carries the FK (including composite PKs and composite non-PK fields).
+
+### Entity-level `parents` (hierarchical nesting)
+
+As of **`meta-model.yang`** revision **2026-05-12**, **where** a child nests under a parent is declared on the **child entity**, not on the FK:
+
+- Add **`parents`**: a list of `{ "entity": "<parent_entity>", "parent_array": "<array_field_on_parent>" }`.
+- Keep the **materializing FK** on the child: exactly **one** field path on that child must reference the same parent `entity`—either a top-level field, an **inline** composite subfield, or a **one-hop** composite inside a `field_definitions` entry referenced by `type.definition` (YANG counts all three). That FK’s `type` matches the parent’s primary key (or `field` if used); it does **not** repeat `parent_array`.
+
+**`parents.parent_array`** must name a field on the parent entity whose **`type.array.entity`** equals the **child** entity’s `name` (validated in YANG). Prefer a direct **`type.array`** branch on that parent field so the array’s item entity is explicit.
+
+**`entity.index`**: omit **`parents`** on the same entity if you use per-PK sharding `index` (mutually exclusive in YANG).
+
+**Multiple nesting edges**: A child may list several **`parents`** entries (distinct parent **`entity`** values). The consolidator builds the materializing FK field list in **`parents` declaration order** (Python `ConsolidatedModel.parent_fk_map`); nesting then follows that order together with reverse topological processing. See **`tests/integration/composite_fk_parent_array`** and **`tests/integration/basecase`** in the xFrame repo.
+
+Example (department under `company.departments`, FK on `company_id`):
+
+```yaml
+# child entity
+name: department
+primary_key: department_id
+parents:
+  - entity: company
+    parent_array: departments
+fields:
+  - name: company_id
+    description: FK to parent company; nesting uses parents above, not parent_array on foreignKeys.
+    type:
+      primitive: string
+      foreignKeys:
+        - entity: company
+    required: true
+  # ... other fields including type.array -> employee if nested
+```
+
+JSON equivalent for `parents`:
+
+```json
+"parents": [{ "entity": "company", "parent_array": "departments" }]
+```
+
+**Legacy:** Older models and docs may show **`parent_array` inside each `foreignKeys` object**. Replace that with **`parents`** on the child entity and `foreignKeys` entries that only declare **`entity`** (and optional **`field`**) so validation matches current YANG and the Node consolidator meta-model.
 
 ### Outliers (sigma flagging)
 
@@ -208,8 +252,9 @@ Top-level keys of the file (same as inner `data-model` in the JSON Schema):
 }
 ```
 
-Use **`type.foreignKeys`** (inside `type`) for FK scalars instead of a top-level **`foreignKeys`** key in new models.
+Use **`type.foreignKeys`** (inside `type`) for FK scalars instead of a top-level **`foreignKeys`** key in new models. Use **`entities[].parents`** for nesting; do not put **`parent_array`** on `foreignKeys`.
 
+- **parents**: Optional on a child entity; each entry names the parent **`entity`** and the parent’s child-owning **`parent_array`** field. Requires exactly one matching FK path on that child to that parent, per YANG `must` rules.
 - **field_definitions**: Include only when you define at least one reusable type; otherwise omit the key (never `[]`).
 - **primary_key**: Name of the PK field (string). Composite PK: one field whose **`type`** is **`composite`**.
 - **computed**: Defined on the field; omit from data JSON.
