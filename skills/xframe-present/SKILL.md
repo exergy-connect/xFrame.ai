@@ -45,6 +45,7 @@ node .cursor/skills/xframe-present/scripts/present.min.js <input.md> [options]
 | `-t, --title <title>` | Deck title (used in `<title>`). Overrides front-matter `title`. |
 | `--author <name>` | Author metadata (`<meta name="author">`). Overrides front-matter `author`. |
 | `--theme <name>` | Visual theme: `light` or `dark`. Overrides front-matter `theme`. Invalid values exit non-zero. |
+| `--data <url>` | URL or local path to a consolidated xFrame JSON data file. Overrides front-matter `data`. See **Consolidated data & graphs** below. |
 | `--no-embed-images` | Disable image embedding. By **default**, images are inlined as base64 `data:` URIs for a fully self-contained deck: `http(s)://` images are fetched and local paths (relative to the deck's directory) are read; `data:` URIs are left as-is, and unreachable images are warned about and left with their original `src`. Use this flag to keep original `src` values instead. |
 | `-h, --help` | Show usage. |
 
@@ -71,7 +72,7 @@ Some **Markdown** content.
 Note: these are speaker notes (kept out of the visible slide)
 ```
 
-- **Front matter** (optional): a block delimited by lines containing only `---` at the very top of the file, with simple `key: value` pairs. Recognized keys: `title`, `theme`, `author`, `header`, `footer`.
+- **Front matter** (optional): a block delimited by lines containing only `---` at the very top of the file, with simple `key: value` pairs. Recognized keys: `title`, `theme`, `author`, `header`, `footer`, `data`.
 - **Header / footer layout** (optional): set `header` and/or `footer` in the front matter to give every slide a consistent framed layout — a **10%** header band (slide's own title on the left, the `header` text on the right), an **80%** content area, and a **10%** footer band (the `footer` text on the left, the slide number `n / total` on the right). The slide's first heading is lifted into the header band so it isn't duplicated in the body. If neither is set, slides use the default full-bleed layout.
 - **Slides** are separated by a line containing only `---` (three or more dashes). Empty slides are dropped.
 - **Speaker notes**: a line starting with `Note:` marks the rest of the slide as notes; they are embedded as an HTML comment, not shown on the slide.
@@ -83,6 +84,67 @@ Note: these are speaker notes (kept out of the visible slide)
   ```
 
   Images without the marker render normally, and a normal title (e.g. `"A caption"`) is kept as-is. The lightbox styles/script are only embedded when a deck has at least one zoomable image.
+
+## Consolidated data & graphs
+
+A deck can be bound to a **consolidated xFrame JSON data** file (the output of **xframe-consolidate**, e.g. `output/consolidated_data.json`) and draw interactive graphs from it.
+
+### Binding data
+
+Set the `data` front-matter key (or pass `--data`) to a URL or local path. Local paths resolve relative to the deck's directory; `http(s)://` URLs are fetched at compile time.
+
+```markdown
+---
+title: Portfolio Review
+header: xFrame Present
+footer: © Example LLC
+data: ../../consolidate/examples/output/consolidated_data.json
+---
+```
+
+- The whole consolidated document is resolved and kept intact; it is embedded once in the output for client-side graphs.
+- The **first slide's footer** automatically shows the data provenance as `<model name> · v<version> · <timestamp>` (from the document's `model.name`, `version`, and `timestamp`).
+- If the data can't be read/fetched, a warning is printed and the deck still compiles (no footer provenance, empty graphs).
+
+### Graph slides
+
+Add a graph with a fenced code block whose info string is **`xframe-graph`**; the block body is a **JSON spec**. It is validated at compile time and rendered client-side as dependency-free inline SVG against the bound data. Graph styles/script are only embedded when a deck contains at least one graph.
+
+````markdown
+## Project timelines
+
+```xframe-graph
+{
+  "type": "timeline",
+  "title": "Subsea tieback lifecycles",
+  "entity": "project",
+  "rowLabel": "name",
+  "barSize": "budget",
+  "events": {
+    "path": "milestones",
+    "date": "date",
+    "category": "milestone_key.phase"
+  },
+  "categories": ["discovery", "appraisal", "FID", "first_oil", "end_of_life"]
+}
+```
+````
+
+Spec fields:
+
+| Field | Description |
+|-------|-------------|
+| `type` | Graph type. Currently **`timeline`**. |
+| `title` | Optional graph title. |
+| `entity` | Entity to plot; rows come from `data.<entity>` in the consolidated document (one row per record). |
+| `rowLabel` | Field path on each record used as the Y-axis row label. |
+| `barSize` | Optional numeric field path; scales each bar's thickness (and its markers) across rows (e.g. `budget`). |
+| `events.path` | Array field on each record holding the dated events (e.g. `milestones`). |
+| `events.date` | Field path on each event with a date (`YYYY-MM-DD`). |
+| `events.category` | Field path on each event for its category; **dotted paths** work (e.g. `milestone_key.phase` for a composite-key subfield). |
+| `categories` | Optional ordered category list; fixes legend order and color assignment. |
+
+The **`timeline`** type draws one horizontal stacked bar per row (Y axis = `rowLabel`), placing each event by its date along a shared X axis with year gridlines. Segments between consecutive events are colored by the earlier event's category, every event gets a marker, and hovering a segment, marker or bar shows details. **Clicking a row label** isolates that row and zooms the X axis to its date range; **clicking a segment** focuses every row on that segment's time window. The `‹ reset` control (shown while a selection/focus is active) restores the full view. A `data` binding is required for graphs to have something to render.
 
 ## Viewing the output
 
