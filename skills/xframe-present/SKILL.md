@@ -134,7 +134,7 @@ Spec fields:
 
 | Field | Description |
 |-------|-------------|
-| `type` | Graph type: **`timeline`** or **`linegraph`**. |
+| `type` | Graph type: **`timeline`** or **`timeseries`**. |
 | `title` | Optional graph title. |
 | `entity` | Entity to plot; rows come from `data.<entity>` in the consolidated document (one row per record). |
 
@@ -153,21 +153,21 @@ Spec fields:
 
 The **`timeline`** type draws one horizontal stacked bar per row (Y axis = `rowLabel`), placing each event by its date along a shared X axis with year gridlines. Segments between consecutive events are colored by the earlier event's category, every event gets a marker, and hovering a segment, marker or bar shows details. **Clicking a row label** isolates that row and zooms the X axis to its date range; **clicking a segment** focuses every row on that segment's time window. The `‹ reset` control (shown while a selection/focus is active) restores the full view. A `data` binding is required for graphs to have something to render.
 
-**`linegraph`** fields:
+**`timeseries`** fields:
 
 | Field | Description |
 |-------|-------------|
 | `seriesLabel` | Field path on each record used as the series name (one series per record, colored from the palette). |
 | `points.path` | Array field on each record holding the per-point records (e.g. `production`). |
 | `points.x` | Field path on each point for the X value (e.g. `production_key.year`; dotted paths work). |
-| `points.y` | Ordered list of metrics, each `{ "field": <path>, "axis": "primary" \| "secondary", "label": <text> }`. |
+| `points.y` | Ordered list of metrics, each `{ "field": <path>, "axis": "primary" \| "secondary", "label": <text>, "style": "line" \| "bar" }`. `style` defaults to `line`. |
 | `axes` | Optional axis titles: `{ "primary": { "label": … }, "secondary": { "label": … } }`. |
 
-The **`linegraph`** type draws a multi-series line chart. Each entity row is one series (one palette color); each `points.y` metric is its own line — **solid** on the primary (left) axis, **dashed** on the secondary (right) axis — so *rows × metrics* lines are drawn (e.g. 3 projects × {oil, gas} = 6 lines). Missing metric values are skipped; hovering a point shows its series, X value and metric value.
+The **`timeseries`** type draws a multi-series chart. Each entity row is one series (one palette color); each `points.y` metric is drawn in its own `style` — **`line`** (solid on the primary/left axis, dashed on the secondary/right axis) or **`bar`** — so *rows × metrics* series are drawn (e.g. 3 projects × {oil, gas} = 6 series). Bars sharing an X value are grouped side by side. Missing metric values are skipped; hovering a point or bar shows its series, X value and metric value.
 
 ```xframe-graph
 {
-  "type": "linegraph",
+  "type": "timeseries",
   "title": "Annual oil & gas production",
   "entity": "project",
   "seriesLabel": "name",
@@ -175,8 +175,8 @@ The **`linegraph`** type draws a multi-series line chart. Each entity row is one
     "path": "production",
     "x": "production_key.year",
     "y": [
-      { "field": "oil_kbbd", "axis": "primary", "label": "Oil (kbbd)" },
-      { "field": "gas_mmscfd", "axis": "secondary", "label": "Gas (MMscfd)" }
+      { "field": "oil_kbbd", "axis": "primary", "label": "Oil (kbbd)", "style": "bar" },
+      { "field": "gas_mmscfd", "axis": "secondary", "label": "Gas (MMscfd)", "style": "line" }
     ]
   },
   "axes": {
