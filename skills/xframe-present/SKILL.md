@@ -71,7 +71,8 @@ Some **Markdown** content.
 Note: these are speaker notes (kept out of the visible slide)
 ```
 
-- **Front matter** (optional): a block delimited by lines containing only `---` at the very top of the file, with simple `key: value` pairs. Recognized keys: `title`, `theme`, `author`.
+- **Front matter** (optional): a block delimited by lines containing only `---` at the very top of the file, with simple `key: value` pairs. Recognized keys: `title`, `theme`, `author`, `header`, `footer`.
+- **Header / footer layout** (optional): set `header` and/or `footer` in the front matter to give every slide a consistent framed layout — a **10%** header band (slide's own title on the left, the `header` text on the right), an **80%** content area, and a **10%** footer band (the `footer` text on the left, the slide number `n / total` on the right). The slide's first heading is lifted into the header band so it isn't duplicated in the body. If neither is set, slides use the default full-bleed layout.
 - **Slides** are separated by a line containing only `---` (three or more dashes). Empty slides are dropped.
 - **Speaker notes**: a line starting with `Note:` marks the rest of the slide as notes; they are embedded as an HTML comment, not shown on the slide.
 - Slide bodies are rendered as **GitHub-Flavored Markdown** (headings, lists, code blocks, tables, blockquotes, images, links).
