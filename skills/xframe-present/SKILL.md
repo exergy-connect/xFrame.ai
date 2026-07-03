@@ -138,7 +138,9 @@ Spec fields:
 | `title` | Optional graph title. |
 | `entity` | Entity to plot; rows come from `data.<entity>` in the consolidated document (one row per record). |
 | `rowLabel` | Field path on each record used as the Y-axis row label. |
+| `sort` | Row order: `timeline` (default, by earliest event date) or `alphabetical` (by `rowLabel`). |
 | `barSize` | Optional numeric field path; scales each bar's thickness (and its markers) across rows (e.g. `budget`). |
+| `rowDetails` | Optional list of field paths shown as a tooltip when hovering the row label (e.g. `["partners"]`); arrays/nested objects are summarized. |
 | `events.path` | Array field on each record holding the dated events (e.g. `milestones`). |
 | `events.date` | Field path on each event with a date (`YYYY-MM-DD`). |
 | `events.category` | Field path on each event for its category; **dotted paths** work (e.g. `milestone_key.phase` for a composite-key subfield). |
