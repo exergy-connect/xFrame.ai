@@ -45,6 +45,7 @@ node .cursor/skills/xframe-present/scripts/present.min.js <input.md> [options]
 | `-t, --title <title>` | Deck title (used in `<title>`). Overrides front-matter `title`. |
 | `--author <name>` | Author metadata (`<meta name="author">`). Overrides front-matter `author`. |
 | `--theme <name>` | Visual theme: `light` or `dark`. Overrides front-matter `theme`. Invalid values exit non-zero. |
+| `--no-embed-images` | Disable image embedding. By **default**, images are inlined as base64 `data:` URIs for a fully self-contained deck: `http(s)://` images are fetched and local paths (relative to the deck's directory) are read; `data:` URIs are left as-is, and unreachable images are warned about and left with their original `src`. Use this flag to keep original `src` values instead. |
 | `-h, --help` | Show usage. |
 
 ## Deck format
@@ -74,6 +75,13 @@ Note: these are speaker notes (kept out of the visible slide)
 - **Slides** are separated by a line containing only `---` (three or more dashes). Empty slides are dropped.
 - **Speaker notes**: a line starting with `Note:` marks the rest of the slide as notes; they are embedded as an HTML comment, not shown on the slide.
 - Slide bodies are rendered as **GitHub-Flavored Markdown** (headings, lists, code blocks, tables, blockquotes, images, links).
+- **Click-to-zoom images** (opt-in per image, default off): set an image's Markdown title to `click_to_zoom` to make it clickable — it opens in a full-screen lightbox. Click anywhere or press `Esc` to close.
+
+  ```markdown
+  ![Architecture diagram](diagram.png "click_to_zoom")
+  ```
+
+  Images without the marker render normally, and a normal title (e.g. `"A caption"`) is kept as-is. The lightbox styles/script are only embedded when a deck has at least one zoomable image.
 
 ## Viewing the output
 
