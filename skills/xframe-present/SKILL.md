@@ -81,7 +81,7 @@ Note: these are speaker notes (kept out of the visible slide)
 - **Header / footer layout** (optional): set `header` and/or `footer` in the front matter to give every slide a consistent framed layout — a **10%** header band (slide's own title on the left, the `header` text on the right), an **80%** content area, and a **10%** footer band (the `footer` text on the left, the slide number `n / total` on the right). The slide's first heading is lifted into the header band so it isn't duplicated in the body. Optional **`header-image`** (path to a git-tracked PNG/SVG) renders a logo and is embedded at compile time; **`header-image-alt`** sets the `<img alt>`; **`header-image-align`** (`left` or `right`, default `right`) places the logo on the left band or left of the header text on the right. Optional **`footer-image`** renders a logo left of the footer text and is embedded at compile time; **`footer-image-alt`** sets the `<img alt>`. If `header`, `footer`, `header-image`, and `footer-image` are all unset, slides use the default full-bleed layout.
 - **Slides** are separated by a line containing only `---` (three or more dashes). Empty slides are dropped.
 - **Speaker notes**: a line starting with `Note:` marks the rest of the slide as notes; they are embedded as an HTML comment, not shown on the slide.
-- **Column layout** (optional): put `@layout columns=N [ratio=w1/w2/…] [vertical-align=top|center|bottom] [horizontal-align=left|center|right]` on the first non-empty line of a slide body (after the heading, which is lifted into the header band when framed). Separate column content with `@column [vertical-align=top|center|bottom] [horizontal-align=left|center|right]` on its own line — attributes apply to the column that **follows** the marker. Default vertical and horizontal alignment is **`center`** for both `@layout` and each column. Example — two columns with a 0.9 / 1.25 width ratio:
+- **Column layout** (optional): put `@layout columns=N [ratio=w1/w2/…] [vertical-align=top|center|bottom] [horizontal-align=left|center|right]` anywhere in the slide body (after the heading, which is lifted into the header band when framed). Separate column content with `@column [vertical-align=top|center|bottom] [horizontal-align=left|center|right]` on its own line — attributes apply to the column that **follows** the marker. Content above the `@layout columns=…` line is included in the first column. Default vertical and horizontal alignment is **`center`** for both `@layout` and each column. Example — two columns with a 0.9 / 1.25 width ratio:
 
   ```markdown
   ## Slide title
@@ -96,8 +96,8 @@ Note: these are speaker notes (kept out of the visible slide)
   ```
 
   `ratio` is optional (defaults to equal columns). The number of `@column`-delimited sections must match `columns`. Column CSS is embedded only when a deck uses `@layout`.
-- **Slide-body alignment** (default): slides **without** any `@layout` line center the content block vertically and horizontally in the body (`vertical-align: center`, `horizontal-align: center`). Text and bullets remain left-aligned inside the block. Images are centered within the block. Override with `@layout vertical-align=top|center|bottom horizontal-align=left|center|right` on the first body line (no `columns=` required). Alignment positions the `.fit` block — never `text-align: center` on prose or lists. Column layouts keep their own alignment rules.
-- **Cover layout** (optional): put `@layout cover` on the first non-empty line of a slide body (after the heading, when framed). The slide uses a full-bleed body with no header/footer bands; content fills the slide area and **auto-fit scaling is skipped** (including in print/PDF). Use for title slides or other author-designed full-page layouts. Style the root element with `height: 100%` and flex/grid so content stays within the slide. Example:
+- **Slide-body alignment** (default): slides **without** any `@layout columns=…` line center the content block vertically and horizontally in the body (`vertical-align: center`, `horizontal-align: center`). Text and bullets remain left-aligned inside the block. Images are centered within the block. Override with `@layout vertical-align=top|center|bottom horizontal-align=left|center|right` anywhere in the slide body (no `columns=` required). Alignment positions the `.fit` block — never `text-align: center` on prose or lists. Column layouts keep their own alignment rules.
+- **Cover layout** (optional): put `@layout cover` anywhere in the slide body (after the heading, when framed). The slide uses a full-bleed body with no header/footer bands; content fills the slide area and **auto-fit scaling is skipped** (including in print/PDF). Use for title slides or other author-designed full-page layouts. Style the root element with `height: 100%` and flex/grid so content stays within the slide. Example:
 
   ```markdown
   # Quarterly Review
@@ -110,6 +110,24 @@ Note: these are speaker notes (kept out of the visible slide)
 - **Locale decks**: sibling files `{base}.md` and `{base}.{locale}.md` in the same directory are auto-detected; when two or more exist, a language switcher appears in the HUD (preserves `#slide` hash). Set front-matter `lang` for `<html lang="…">`. Compiling the **base** deck also compiles all locale siblings unless **`--skip-locales`** is passed. Branding fields (`theme`, `footer`, `header-image`, `data`, etc.) inherit from the base deck when omitted — locale files typically only need `title`, `lang`, and translated slide content. CSS is shared from the base deck — see **Styling & CSS**.
 - **Website snapshots**: `xframe-snapshot` fenced JSON with required `url` and git-tracked `image` (PNG path). Renders a clickable thumbnail that opens the URL in a new tab; PNG is embedded like any image. Refresh PNGs with `npm run snapshot -- <deck.md>` in `ts/present/` (Playwright maintainer script, not bundled). CI compiles only — does not re-capture.
 - **Mermaid diagrams**: `xframe-mermaid` fenced JSON with required `image` (SVG path) and exactly one of `source` (`.mmd` file) or `diagram` (inline text). Renders an embedded SVG diagram, click-to-zoom by default. Refresh SVGs with `npm run mermaid -- <deck.md>` in `ts/present/` (`@mermaid-js/mermaid-cli` maintainer script, not bundled). CI compiles only — does not re-render.
+- **Image galleries**: `xframe-gallery` fenced JSON with `"layout": "primary"`, a `primary` image object, and a non-empty `support` array. Renders one dominant image above a row of supporting thumbnails; the support column count follows `support.length`. Each image entry is `{ "src": <path>, "alt": <text>, "zoom": <bool> }`; `zoom` defaults to `true` (click-to-zoom lightbox). Image paths resolve relative to the deck directory and must exist at compile time.
+
+  ````markdown
+  ```xframe-gallery
+  {
+    "layout": "primary",
+    "primary": {
+      "src": "graphs/portfolio.png",
+      "alt": "Recurring pattern across the portfolio"
+    },
+    "support": [
+      { "src": "graphs/asset-a.png", "alt": "Asset A" },
+      { "src": "graphs/asset-b.png", "alt": "Asset B" }
+    ]
+  }
+  ```
+  ````
+
 - Slide bodies are rendered as **GitHub-Flavored Markdown** (headings, lists, code blocks, tables, blockquotes, images, links).
 - **Click-to-zoom images** (opt-in per image, default off): set an image's Markdown title to `click_to_zoom` to make it clickable — it opens in a full-screen lightbox. Click anywhere or press `Esc` to close.
 
@@ -117,7 +135,7 @@ Note: these are speaker notes (kept out of the visible slide)
   ![Architecture diagram](diagram.png "click_to_zoom")
   ```
 
-  Images without the marker render normally, and a normal title (e.g. `"A caption"`) is kept as-is. The lightbox styles/script are only embedded when a deck has at least one zoomable image or mermaid diagram.
+  Images without the marker render normally, and a normal title (e.g. `"A caption"`) is kept as-is. The lightbox styles/script are only embedded when a deck has at least one zoomable image, mermaid diagram, or gallery image with `zoom` enabled (default on).
 
 ## Styling & CSS
 
