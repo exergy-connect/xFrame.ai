@@ -128,6 +128,16 @@ Note: these are speaker notes (kept out of the visible slide)
   ```
   ````
 
+- **Local HTML embeds**: `xframe-embed` fenced JSON with required `src` (git-tracked HTML path relative to the deck). Inlines the fragment into a sandboxed iframe (`srcdoc`) at compile time for offline interactive slides. On framed slides, use the slide heading as the title — do not repeat it in the body or embed spec. Requires `filePath` when compiling.
+
+  ````markdown
+  ## Partner Network
+
+  ```xframe-embed
+  { "src": "widgets/network.html" }
+  ```
+  ````
+
 - Slide bodies are rendered as **GitHub-Flavored Markdown** (headings, lists, code blocks, tables, blockquotes, images, links).
 - **Click-to-zoom images** (opt-in per image, default off): set an image's Markdown title to `click_to_zoom` to make it clickable — it opens in a full-screen lightbox. Click anywhere or press `Esc` to close.
 
