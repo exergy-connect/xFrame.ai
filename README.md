@@ -53,15 +53,22 @@ End-to-end sample under [`examples/`](examples/):
 | [`examples/consolidate/`](examples/consolidate/) | Subsea tieback portfolio — JSON model, sample data, and consolidated output. See [README](examples/consolidate/README.md) for entity layout and how to run the consolidator. |
 | [`examples/present/`](examples/present/) | Demo slide deck (`example-deck.md` → `example-deck.html`) bound to the consolidated data, with timeline and timeseries graphs. |
 
-CI on `main` keeps generated artifacts fresh via [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml): consolidate first, then compile the deck (`needs: consolidate`).
+CI on `main` keeps generated artifacts fresh via [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml): consolidate, compile the deck, and commit once.
 
-## GitHub Action
+## GitHub Actions
 
-This repo publishes a **composite** action, [**xFrame consolidate**](action.yml), that runs the bundled minified consolidator (`skills/xframe-consolidate/scripts/consolidate.min.js`) on the runner. It expects **JSON** model fragments and entity data (same contract as the CLI in the [xframe-consolidate skill](skills/xframe-consolidate/SKILL.md)). **Node.js ≥18** is required on the job runner (`ubuntu-latest` includes a suitable Node).
+This repo publishes two **composite** actions that wrap the bundled minified scripts under `skills/`. **Node.js ≥18** is required on the job runner (`ubuntu-latest` includes a suitable Node). Pin a branch, tag, or SHA (for example `@main`).
 
-Pin a branch, tag, or SHA (for example `@main` or a release tag you publish from this repo).
+| Action | `uses` | Script |
+| --- | --- | --- |
+| [**xFrame consolidate**](action.yml) | `exergy-connect/xFrame.ai@main` | `skills/xframe-consolidate/scripts/consolidate.min.js` |
+| [**xFrame present**](present/action.yml) | `exergy-connect/xFrame.ai/present@main` | `skills/xframe-present/scripts/present.min.js` |
 
-### Example workflow
+[`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses these published refs and is intended as a copyable template.
+
+### xFrame consolidate
+
+Expects **JSON** model fragments and entity data under **`<working-dir>/data`** and **`<working-dir>/model`** (same contract as the [xframe-consolidate](skills/xframe-consolidate/SKILL.md) skill). Writes to **`<working-dir>/output`**.
 
 ```yaml
 on:
@@ -77,12 +84,10 @@ jobs:
         with:
           working-dir: examples/consolidate
           note: 'Reconsolidate after model or data change'
-          js: 'true' # optional: also emit consolidated.schema.js / consolidated_data.js
+          clean: 'true'
 ```
 
-The repository checkout must contain **`<working-dir>/data`** and **`<working-dir>/model`**. Outputs are written to **`<working-dir>/output`**. This repo uses `examples/consolidate` as its working directory; your project can use any layout (for example `xframe/`).
-
-### Inputs
+#### Inputs
 
 | Input | Required | Description |
 | --- | --- | --- |
@@ -95,14 +100,46 @@ The repository checkout must contain **`<working-dir>/data`** and **`<working-di
 | `clean` | no | Set to `true` to pass `--clean`. |
 | `close-fk-enums` | no | Set to `true` to pass `--close-fk-enums`. |
 
-### Outputs
+#### Outputs
 
-See [xframe-consolidate](skills/xframe-consolidate/SKILL.md): **`consolidated.schema.json`**, **`consolidated_data.json`**, and logs under **`<working-dir>/output/`**.
+**`consolidated.schema.json`**, **`consolidated_data.json`**, and logs under **`<working-dir>/output/`** (optional `.js` artifacts when `js: true`).
+
+### xFrame present
+
+Compiles a Markdown deck into one **standalone HTML file** (same contract as the [xframe-present](skills/xframe-present/SKILL.md) skill). Pass **`data`** when the deck uses consolidated JSON for provenance footers or `xframe-graph` blocks.
+
+```yaml
+jobs:
+  present:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: exergy-connect/xFrame.ai/present@main
+        with:
+          input: examples/present/example-deck.md
+          output: examples/present/example-deck.html
+          data: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
+```
+
+#### Inputs
+
+| Input | Required | Description |
+| --- | --- | --- |
+| `input` | yes | Path to the Markdown deck file. |
+| `output` | no | Output HTML path (default: input path with `.html` extension). |
+| `title` | no | Deck title (overrides front matter). |
+| `author` | no | Author metadata (overrides front matter). |
+| `theme` | no | `light` or `dark` (overrides front matter). |
+| `data` | no | URL or path to consolidated xFrame JSON (overrides front matter). Local paths resolve relative to the deck directory unless absolute. |
+| `no-embed-images` | no | Set to `true` to keep original image URLs instead of inlining as base64. |
+
+#### Outputs
+
+The HTML file at **`output`** (or `<input>.html` when `output` is omitted).
 
 ## Requirements
 
 - **xframe-consolidate** / **xframe-present**: Node.js ≥18. Bundled scripts are self-contained; no `npm install` required.
-- **xframe-present**: compile with `node skills/xframe-present/scripts/present.min.js <deck.md>` (see [xframe-present](skills/xframe-present/SKILL.md)).
 
 ## License
 

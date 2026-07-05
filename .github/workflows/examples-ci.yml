@@ -1,5 +1,4 @@
-# Regenerate example consolidated output, then compile the presentation deck.
-# Jobs run sequentially so only one commit/push happens at a time.
+# Regenerate example consolidated output, compile the presentation deck, then commit once.
 name: xFrame examples
 
 on:
@@ -10,6 +9,7 @@ on:
       - "examples/consolidate/model/**"
       - "examples/consolidate/data/**"
       - "examples/present/**"
+      - "present/action.yml"
       - ".github/workflows/examples-ci.yml"
   workflow_dispatch:
 
@@ -21,7 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  consolidate:
+  examples:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -38,56 +38,26 @@ jobs:
         with:
           working-dir: examples/consolidate
           note: "CI consolidate after model/data change (${{ github.sha }})"
-          js: "true"
+          clean: "true"
 
-      - name: Publish consolidated JS into public
-        run: |
-          mkdir -p public
-          cp examples/consolidate/output/consolidated_data.js public/consolidated_data.js
+      - name: Compile example presentation
+        uses: exergy-connect/xFrame.ai/present@main
+        with:
+          input: examples/present/example-deck.md
+          output: examples/present/example-deck.html
+          data: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
 
-      - name: Commit consolidated JSON
+      - name: Commit generated examples
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f \
             examples/consolidate/output/consolidated.schema.json \
             examples/consolidate/output/consolidated_data.json \
-            examples/consolidate/output/consolidated.schema.js \
-            public/consolidated_data.js
+            examples/present/example-deck.html
           if git diff --staged --quiet; then
-            echo "No changes to consolidated schema or data."
+            echo "No changes to generated examples."
           else
-            git commit -m "examples: refresh consolidated schema and data (CI)"
-            git push origin "${GITHUB_REF_NAME}"
-          fi
-
-  present:
-    needs: consolidate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.ref_name }}
-          fetch-depth: 1
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-
-      - name: Compile example presentation
-        run: |
-          node skills/xframe-present/scripts/present.min.js \
-            examples/present/example-deck.md \
-            --output examples/present/example-deck.html
-
-      - name: Commit compiled HTML
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f examples/present/example-deck.html
-          if git diff --staged --quiet; then
-            echo "No changes to compiled presentation."
-          else
-            git commit -m "examples: refresh compiled presentation (CI)"
+            git commit -m "examples: refresh consolidated output and presentation (CI)"
             git push origin "${GITHUB_REF_NAME}"
           fi

@@ -1,0 +1,67 @@
+name: 'xFrame present'
+description: >-
+  Compile a Markdown presentation deck into a single self-contained HTML file.
+  Optional consolidated xFrame JSON data for provenance footers and inline graphs.
+  Requires Node.js 18+ on the runner.
+
+inputs:
+  input:
+    description: Path to the Markdown deck file (relative to the workflow workspace unless absolute).
+    required: true
+  output:
+    description: >-
+      Output HTML path. If omitted, the input path with its extension replaced by `.html` is used.
+    required: false
+    default: ''
+  title:
+    description: Deck title (overrides front matter).
+    required: false
+    default: ''
+  author:
+    description: Author metadata (overrides front matter).
+    required: false
+    default: ''
+  theme:
+    description: 'Visual theme: `light` or `dark` (overrides front matter).'
+    required: false
+    default: ''
+  data:
+    description: >-
+      URL or path to consolidated xFrame JSON data (overrides front matter). Local paths
+      resolve relative to the deck file's directory unless absolute.
+    required: false
+    default: ''
+  no-embed-images:
+    description: 'Set to `true` to pass `--no-embed-images` (keep original image URLs).'
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Run present.min.js
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        INPUT: ${{ inputs.input }}
+        OUTPUT: ${{ inputs.output }}
+        TITLE: ${{ inputs.title }}
+        AUTHOR: ${{ inputs.author }}
+        THEME: ${{ inputs.theme }}
+        DATA: ${{ inputs.data }}
+        NO_EMBED: ${{ inputs.no-embed-images }}
+      run: |
+        set -euo pipefail
+        script="${ACTION_PATH}/skills/xframe-present/scripts/present.min.js"
+        if [[ ! -f "$script" ]]; then
+          echo "::error file=${script}::Present script missing (expected bundled xframe-present asset)."
+          exit 1
+        fi
+        cmd=(node "$script" "$INPUT")
+        [[ -n "${OUTPUT}" ]] && cmd+=(--output "$OUTPUT")
+        [[ -n "${TITLE}" ]] && cmd+=(--title "$TITLE")
+        [[ -n "${AUTHOR}" ]] && cmd+=(--author "$AUTHOR")
+        [[ -n "${THEME}" ]] && cmd+=(--theme "$THEME")
+        [[ -n "${DATA}" ]] && cmd+=(--data "$DATA")
+        [[ "${NO_EMBED}" == "true" ]] && cmd+=(--no-embed-images)
+        "${cmd[@]}"
