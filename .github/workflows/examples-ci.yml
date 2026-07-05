@@ -47,6 +47,11 @@ jobs:
           output: examples/present/example-deck.html
           data: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
 
+      - name: Sync published demo to docs/
+        run: |
+          mkdir -p docs/examples/present
+          cp examples/present/example-deck.html docs/examples/present/example-deck.html
+
       - name: Commit generated examples
         run: |
           git config user.name "github-actions[bot]"
@@ -54,7 +59,8 @@ jobs:
           git add -f \
             examples/consolidate/output/consolidated.schema.json \
             examples/consolidate/output/consolidated_data.json \
-            examples/present/example-deck.html
+            examples/present/example-deck.html \
+            docs/examples/present/example-deck.html
           if git diff --staged --quiet; then
             echo "No changes to generated examples."
           else

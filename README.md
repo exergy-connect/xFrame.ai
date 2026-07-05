@@ -2,6 +2,8 @@
 
 Public repository of **Cursor agent skills** for [xFrame](https://github.com/exergy-connect/xFrame): model-driven data consolidation and related workflows.
 
+**Live demo:** [xFrame Present example deck](https://exergy-connect.github.io/xFrame.ai/examples/present/example-deck.html#1) — subsea tieback portfolio slides with consolidated-data graphs.
+
 ## Skills
 
 | Skill | Description |
@@ -54,6 +56,17 @@ End-to-end sample under [`examples/`](examples/):
 | [`examples/present/`](examples/present/) | Demo slide deck (`example-deck.md` → `example-deck.html`) bound to the consolidated data, with timeline and timeseries graphs. |
 
 CI on `main` keeps generated artifacts fresh via [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml): consolidate, compile the deck, and commit once.
+
+## GitHub Pages
+
+The live site ([exergy-connect.github.io/xFrame.ai](https://exergy-connect.github.io/xFrame.ai)) is published from [`docs/`](docs/) only. Pushes that touch other paths (skills sync, action metadata, README, and so on) do not trigger a Pages rebuild. CI copies the compiled demo deck into `docs/examples/present/` when it changes.
+
+| Path under `docs/` | Served URL |
+| --- | --- |
+| `install-skills.sh` | `/install-skills.sh` |
+| `latest` | `/latest` |
+| `examples/present/example-deck.html` | `/examples/present/example-deck.html` |
+| `LICENSE` | `/LICENSE` |
 
 ## GitHub Actions
 
