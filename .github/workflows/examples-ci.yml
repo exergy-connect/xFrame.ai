@@ -14,8 +14,8 @@ on:
       - "examples/present/diagrams/**"
       - "examples/present/*.png"
       - "skills/xframe-present/**"
-      - "present/action.yml"
-      - "action.yml"
+      - "actions/present/action.yml"
+      - "actions/consolidate/action.yml"
       - ".github/workflows/examples-ci.yml"
   workflow_dispatch:
 
@@ -43,9 +43,9 @@ jobs:
         with:
           node-version: "24"
 
-      # External repos: uses: exergy-connect/xFrame.ai@main
+      # External repos: uses: exergy-connect/xFrame.ai/actions/consolidate@main
       - name: Run xFrame consolidator
-        uses: ./
+        uses: ./actions/consolidate
         with:
           working-dir: examples/consolidate
           note: "CI consolidate after model/data change (${{ github.sha }})"
@@ -54,10 +54,10 @@ jobs:
       - name: Prepare presentation output directory
         run: mkdir -p "$PRESENT_OUT"
 
-      # External repos: uses: exergy-connect/xFrame.ai/present@main
+      # External repos: uses: exergy-connect/xFrame.ai/actions/present@main
       # Compiling the base deck also compiles locale siblings (example-deck.cz.html, …).
       - name: Compile example presentations
-        uses: ./present
+        uses: ./actions/present
         with:
           input: examples/present/example-deck.md
           output: examples/present/output/example-deck.html

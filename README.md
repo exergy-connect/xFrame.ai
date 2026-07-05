@@ -76,10 +76,10 @@ This repo publishes two **composite** actions that wrap the bundled minified scr
 
 | Action | `uses` | Script |
 | --- | --- | --- |
-| [**xFrame consolidate**](action.yml) | `exergy-connect/xFrame.ai@main` | `skills/xframe-consolidate/scripts/consolidate.min.js` |
-| [**xFrame present**](present/action.yml) | `exergy-connect/xFrame.ai/present@main` | `skills/xframe-present/scripts/present.min.js` |
+| [**xFrame consolidate**](actions/consolidate/action.yml) | `exergy-connect/xFrame.ai/actions/consolidate@main` | `skills/xframe-consolidate/scripts/consolidate.min.js` |
+| [**xFrame present**](actions/present/action.yml) | `exergy-connect/xFrame.ai/actions/present@main` | `skills/xframe-present/scripts/present.min.js` |
 
-[`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo composite actions (`./`, `./present`) and is intended as a copyable template. External workflows pin the published refs below.
+[`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo composite actions (`./actions/consolidate`, `./actions/present`) and is intended as a copyable template. External workflows pin the published refs below.
 
 ### xFrame consolidate
 
@@ -95,7 +95,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: exergy-connect/xFrame.ai@main
+      - uses: exergy-connect/xFrame.ai/actions/consolidate@main
         with:
           working-dir: examples/consolidate
           note: 'Reconsolidate after model or data change'
@@ -129,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: exergy-connect/xFrame.ai/present@main
+      - uses: exergy-connect/xFrame.ai/actions/present@main
         with:
           input: examples/present/example-deck.md
           output: examples/present/output/example-deck.html

@@ -40,11 +40,11 @@ Output is written to `output/` under this directory (`consolidated.schema.json`,
 
 The bundled script is the same one used by the
 [xframe-consolidate](https://github.com/exergy-connect/xFrame.ai/blob/main/skills/xframe-consolidate/SKILL.md)
-skill and the repo's [GitHub Action](../../action.yml). In CI, point
+skill and the repo's [GitHub Action](../../actions/consolidate/action.yml). In CI, point
 `working-dir` at this folder:
 
 ```yaml
-- uses: exergy-connect/xFrame.ai@main
+- uses: exergy-connect/xFrame.ai/actions/consolidate@main
   with:
     working-dir: examples/consolidate
     note: 'Subsea tieback example'

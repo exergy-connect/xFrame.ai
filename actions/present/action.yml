@@ -57,7 +57,7 @@ runs:
         SKIP_LOCALES: ${{ inputs.skip-locales }}
       run: |
         set -euo pipefail
-        script="${ACTION_PATH}/../skills/xframe-present/scripts/present.min.js"
+        script="${ACTION_PATH}/../../skills/xframe-present/scripts/present.min.js"
         if [[ ! -f "$script" ]]; then
           echo "::error file=${script}::Present script missing (expected bundled xframe-present asset)."
           exit 1

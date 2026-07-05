@@ -58,7 +58,7 @@ runs:
         WANT_CLOSE_FK: ${{ inputs.close-fk-enums }}
       run: |
         set -euo pipefail
-        script="${ACTION_PATH}/skills/xframe-consolidate/scripts/consolidate.min.js"
+        script="${ACTION_PATH}/../../skills/xframe-consolidate/scripts/consolidate.min.js"
         if [[ ! -f "$script" ]]; then
           echo "::error file=${script}::Consolidator script missing (expected bundled xframe-consolidate asset)."
           exit 1
