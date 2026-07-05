@@ -1,0 +1,50 @@
+# Regenerate examples/present/example-deck.html when the deck or consolidated data changes.
+name: xFrame present
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "examples/present/**"
+      - "examples/consolidate/output/consolidated_data.json"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: xframe-present-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  present:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Compile example presentation
+        run: |
+          node skills/xframe-present/scripts/present.min.js \
+            examples/present/example-deck.md \
+            --output examples/present/example-deck.html
+
+      - name: Commit compiled HTML
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # examples/present/example-deck.html is gitignored; -f stages the compiled deck without .gitignore exceptions.
+          git add -f examples/present/example-deck.html
+          if git diff --staged --quiet; then
+            echo "No changes to compiled presentation."
+          else
+            git commit -m "examples: refresh compiled presentation (CI)"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi

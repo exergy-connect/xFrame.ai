@@ -1,0 +1,256 @@
+{
+  "version": 1,
+  "timestamp": "2026-07-03T17:01:44Z",
+  "model": {
+    "name": "Subsea Tieback Portfolio",
+    "version": "26.07.03.2",
+    "author": "xFrame examples",
+    "description": "A minimal example model for xFrame consolidation: oil & gas subsea tieback development projects, their lifecycle milestones and joint-venture partners. Each project has an operator, a capital budget, an ordered set of dated milestones (discovery, appraisal, FID, first oil, end-of-life) and a set of partners with equity stakes.",
+    "include_x_fields": true,
+    "track_source_files": true,
+    "max_name_underscores": 2,
+    "exclude": null
+  },
+  "sourcefiles": {
+    "000000000001": {
+      "id": 1,
+      "path": "data/sample_data.json"
+    }
+  },
+  "data": {
+    "change": {
+      "000000000001": {
+        "id": 1,
+        "timestamp": "2026-07-03T12:01:44-05:00",
+        "author": "jbemmel",
+        "note": "Add annual production data"
+      }
+    },
+    "project": {
+      "Julia": {
+        "name": "Julia",
+        "operator": "ExxonMobil",
+        "budget": 4000,
+        "milestones": [
+          {
+            "milestone_key": {
+              "phase": "discovery"
+            },
+            "date": "2007-09-15"
+          },
+          {
+            "milestone_key": {
+              "phase": "appraisal"
+            },
+            "date": "2009-06-01"
+          },
+          {
+            "milestone_key": {
+              "phase": "FID"
+            },
+            "date": "2013-06-20"
+          },
+          {
+            "milestone_key": {
+              "phase": "first_oil"
+            },
+            "date": "2016-08-01"
+          },
+          {
+            "milestone_key": {
+              "phase": "end_of_life"
+            },
+            "date": "2046-12-31"
+          }
+        ],
+        "partners": [
+          {
+            "partner_key": {
+              "partner_name": "ExxonMobil"
+            },
+            "participation": 50
+          },
+          {
+            "partner_key": {
+              "partner_name": "Equinor"
+            },
+            "participation": 50
+          }
+        ],
+        "production": [
+          {
+            "production_key": {
+              "year": 2017
+            },
+            "oil_kbbd": 22,
+            "gas_mmscfd": 6.1
+          },
+          {
+            "production_key": {
+              "year": 2019
+            },
+            "oil_kbbd": 31,
+            "gas_mmscfd": 8.4
+          },
+          {
+            "production_key": {
+              "year": 2021
+            },
+            "oil_kbbd": 34,
+            "gas_mmscfd": 9.2
+          },
+          {
+            "production_key": {
+              "year": 2023
+            },
+            "oil_kbbd": 27,
+            "gas_mmscfd": 7.3
+          }
+        ],
+        "c": 1,
+        "v": 1,
+        "f": 1
+      },
+      "Penguins": {
+        "name": "Penguins",
+        "operator": "Shell",
+        "budget": 900,
+        "milestones": [
+          {
+            "milestone_key": {
+              "phase": "discovery"
+            },
+            "date": "1974-05-01"
+          },
+          {
+            "milestone_key": {
+              "phase": "appraisal"
+            },
+            "date": "1997-03-15"
+          },
+          {
+            "milestone_key": {
+              "phase": "FID"
+            },
+            "date": "2018-01-22"
+          },
+          {
+            "milestone_key": {
+              "phase": "first_oil"
+            },
+            "date": "2024-11-01"
+          },
+          {
+            "milestone_key": {
+              "phase": "end_of_life"
+            },
+            "date": "2050-06-30"
+          }
+        ],
+        "partners": [
+          {
+            "partner_key": {
+              "partner_name": "Shell"
+            },
+            "participation": 50
+          },
+          {
+            "partner_key": {
+              "partner_name": "ExxonMobil"
+            },
+            "participation": 50
+          }
+        ],
+        "production": [
+          {
+            "production_key": {
+              "year": 2025
+            },
+            "oil_kbbd": 36,
+            "gas_mmscfd": 34
+          }
+        ],
+        "c": 1,
+        "v": 1,
+        "f": 1
+      },
+      "Kaikias": {
+        "name": "Kaikias",
+        "operator": "Shell",
+        "budget": 580,
+        "milestones": [
+          {
+            "milestone_key": {
+              "phase": "discovery"
+            },
+            "date": "2014-02-10"
+          },
+          {
+            "milestone_key": {
+              "phase": "appraisal"
+            },
+            "date": "2015-09-01"
+          },
+          {
+            "milestone_key": {
+              "phase": "FID"
+            },
+            "date": "2017-02-27"
+          },
+          {
+            "milestone_key": {
+              "phase": "first_oil"
+            },
+            "date": "2018-05-16"
+          },
+          {
+            "milestone_key": {
+              "phase": "end_of_life"
+            },
+            "date": "2043-12-31"
+          }
+        ],
+        "partners": [
+          {
+            "partner_key": {
+              "partner_name": "Shell"
+            },
+            "participation": 80
+          },
+          {
+            "partner_key": {
+              "partner_name": "Mitsui (MOEX)"
+            },
+            "participation": 20
+          }
+        ],
+        "production": [
+          {
+            "production_key": {
+              "year": 2019
+            },
+            "oil_kbbd": 38,
+            "gas_mmscfd": 9.5
+          },
+          {
+            "production_key": {
+              "year": 2021
+            },
+            "oil_kbbd": 34,
+            "gas_mmscfd": 8.2
+          },
+          {
+            "production_key": {
+              "year": 2023
+            },
+            "oil_kbbd": 27,
+            "gas_mmscfd": 6.5
+          }
+        ],
+        "c": 1,
+        "v": 1,
+        "f": 1
+      }
+    }
+  }
+}

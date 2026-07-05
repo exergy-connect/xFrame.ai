@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>xFrame Present — Demo</title>
+  <meta name="author" content="Exergy LLC">
+  <style>
+:root {
+  --bg: #f7f8fa;
+  --slide-bg: #ffffff;
+  --fg: #1a1d24;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --border: #e5e7eb;
+  --code-bg: #f1f5f9;
+}
+[data-theme="dark"] {
+  --bg: #0d1117;
+  --slide-bg: #161b22;
+  --fg: #e6edf3;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --border: #30363d;
+  --code-bg: #1f2630;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.progress {
+  position: fixed; top: 0; left: 0; height: 4px;
+  background: var(--accent); width: 0; transition: width .2s ease; z-index: 10;
+}
+.deck { flex: 1; display: flex; align-items: center; justify-content: center; padding: 3vmin; }
+.slide {
+  display: none;
+  width: min(1100px, 92vw);
+  min-height: min(620px, 78vh);
+  background: var(--slide-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.08);
+  padding: 6vmin;
+  overflow: auto;
+  animation: fade .25s ease;
+}
+.slide.active { display: block; }
+@keyframes fade { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: none; } }
+.slide h1 { font-size: clamp(1.8rem, 4vw, 3rem); margin: 0 0 .6em; line-height: 1.1; }
+.slide h2 { font-size: clamp(1.4rem, 3vw, 2.1rem); margin: 0 0 .5em; }
+.slide h3 { font-size: clamp(1.1rem, 2.4vw, 1.5rem); color: var(--muted); }
+.slide p, .slide li { font-size: clamp(1rem, 1.8vw, 1.4rem); line-height: 1.55; }
+.slide ul, .slide ol { padding-left: 1.4em; }
+.slide a { color: var(--accent); }
+.slide code {
+  background: var(--code-bg); padding: .15em .4em; border-radius: 6px;
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace; font-size: .9em;
+}
+.slide pre {
+  background: var(--code-bg); padding: 1em 1.2em; border-radius: 10px; overflow: auto;
+}
+.slide pre code { background: none; padding: 0; }
+.slide img { max-width: 100%; border-radius: 10px; }
+.slide blockquote {
+  margin: 0 0 1em; padding: .2em 1em; border-left: 4px solid var(--accent); color: var(--muted);
+}
+.hud {
+  position: fixed; bottom: 14px; right: 18px; display: flex; gap: 10px; align-items: center;
+  color: var(--muted); font-size: .85rem; z-index: 10;
+}
+.hud button {
+  background: var(--slide-bg); color: var(--fg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: .85rem;
+}
+.hud button:hover { border-color: var(--accent); color: var(--accent); }
+@media print {
+  body { overflow: visible; }
+  .progress, .hud { display: none; }
+  .deck { display: block; padding: 0; }
+  .slide { display: block !important; page-break-after: always; box-shadow: none; border: none; border-radius: 0; min-height: 100vh; }
+}
+</style>
+</head>
+<body>
+  <div class="progress"></div>
+  <main class="deck">
+    <section class="slide">
+<h1>xFrame Present</h1>
+<p>Compile Markdown into standalone HTML slides.</p>
+<p>Use <code>→</code> / <code>←</code> to navigate, press <code>t</code> to toggle the theme.</p>
+
+    </section>
+    <section class="slide">
+<h2>Why?</h2>
+<ul>
+<li>Zero runtime dependencies in the output</li>
+<li>Self-contained single HTML file</li>
+<li>Works offline, prints to PDF</li>
+</ul>
+
+    </section>
+    <section class="slide">
+      <!-- notes: mention that GFM features like tables and task lists work too. -->
+<h2>Markdown, fully</h2>
+<pre><code class="language-ts">import { compile } from &quot;xframe-present&quot;;
+
+const html = compile(&quot;# Hello\n---\n# World&quot;);
+</code></pre>
+<blockquote>
+<p>Anything Markdown can express, a slide can show.</p>
+</blockquote>
+
+    </section>
+    <section class="slide">
+<h2>Images</h2>
+<p>An inline SVG data URI (already self-contained):</p>
+<p><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iNDUwIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ1MCIgZmlsbD0iIzI1NjNlYiIvPjxjaXJjbGUgY3g9IjQwMCIgY3k9IjIyNSIgcj0iMTIwIiBmaWxsPSIjNThhNmZmIi8+PHRleHQgeD0iNDAwIiB5PSIyNDAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjU2IiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj54RnJhbWU8L3RleHQ+PC9zdmc+" alt="xFrame logo" title="click_to_zoom"></p>
+
+    </section>
+    <section class="slide">
+<h2>Images from a URL</h2>
+<p>A regular PNG referenced by URL. It&#39;s inlined as a base64 data URI by default
+(pass <code>--no-embed-images</code> to keep the original URL) so the deck stays
+offline-capable:</p>
+<p><img src="https://placehold.co/800x450/2563eb/ffffff/png?text=PNG+via+URL" alt="PNG via URL" title="click_to_zoom"></p>
+<p>Add <code>&quot;click_to_zoom&quot;</code> as the image title to make any image clickable — it opens
+in a full-screen lightbox. Click anywhere or press <code>Esc</code> to close.</p>
+
+    </section>
+    <section class="slide">
+<h2>Project timelines</h2>
+<p>A <code>timeline</code> graph over the consolidated <code>project</code> data: one horizontal stacked
+bar per project (Y axis), milestone dates on the X axis, with a marker for each
+lifecycle event. Hover a marker or segment for details. Click a project name to
+isolate and zoom to that project, or click a segment to focus every project on
+that time window (<code>‹ reset</code> restores the full view).</p>
+<pre><code class="language-xframe-graph">{
+  &quot;type&quot;: &quot;timeline&quot;,
+  &quot;title&quot;: &quot;Subsea tieback lifecycles&quot;,
+  &quot;entity&quot;: &quot;project&quot;,
+  &quot;rowLabel&quot;: &quot;name&quot;,
+  &quot;sort&quot;: &quot;timeline&quot;,
+  &quot;barSize&quot;: &quot;budget&quot;,
+  &quot;rowDetails&quot;: [&quot;partners&quot;,&quot;budget&quot;],
+  &quot;events&quot;: {
+    &quot;path&quot;: &quot;milestones&quot;,
+    &quot;date&quot;: &quot;date&quot;,
+    &quot;category&quot;: &quot;milestone_key.phase&quot;
+  },
+  &quot;categories&quot;: [&quot;discovery&quot;, &quot;appraisal&quot;, &quot;FID&quot;, &quot;first_oil&quot;, &quot;end_of_life&quot;]
+}
+</code></pre>
+
+    </section>
+    <section class="slide">
+<h2>Production volumes</h2>
+<p>A <code>timeseries</code> over the same <code>project</code> data: each project&#39;s annual <code>production</code>
+records plotted by year. The per-metric <code>style</code> mixes chart types — oil
+(<code>oil_kbbd</code>, bars) against the primary (left) axis and gas (<code>gas_mmscfd</code>, line)
+against the secondary (right) axis — for all three projects. Hover any bar or
+point for its exact value.</p>
+<pre><code class="language-xframe-graph">{
+  &quot;type&quot;: &quot;timeseries&quot;,
+  &quot;title&quot;: &quot;Annual oil &amp; gas production&quot;,
+  &quot;entity&quot;: &quot;project&quot;,
+  &quot;seriesLabel&quot;: &quot;name&quot;,
+  &quot;points&quot;: {
+    &quot;path&quot;: &quot;production&quot;,
+    &quot;x&quot;: &quot;production_key.year&quot;,
+    &quot;y&quot;: [
+      { &quot;field&quot;: &quot;oil_kbbd&quot;, &quot;axis&quot;: &quot;primary&quot;, &quot;label&quot;: &quot;Oil (kbbd)&quot;, &quot;style&quot;: &quot;bar&quot; },
+      { &quot;field&quot;: &quot;gas_mmscfd&quot;, &quot;axis&quot;: &quot;secondary&quot;, &quot;label&quot;: &quot;Gas (MMscfd)&quot;, &quot;style&quot;: &quot;line&quot; }
+    ]
+  },
+  &quot;axes&quot;: {
+    &quot;primary&quot;: { &quot;label&quot;: &quot;Oil (kbbd)&quot; },
+    &quot;secondary&quot;: { &quot;label&quot;: &quot;Gas (MMscfd)&quot; }
+  }
+}
+</code></pre>
+
+    </section>
+    <section class="slide">
+<h2>Thanks</h2>
+<p>Questions?</p>
+
+    </section>
+  </main>
+  <div class="hud">
+    <button id="prev" title="Previous (←)">←</button>
+    <span id="counter">1 / 8</span>
+    <button id="next" title="Next (→)">→</button>
+    <button id="theme" title="Toggle theme (t)">◐</button>
+  </div>
+  <script>
+(function () {
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var progress = document.querySelector('.progress');
+  var counter = document.getElementById('counter');
+  var index = 0;
+
+  function fromHash() {
+    var n = parseInt((location.hash || '').replace('#', ''), 10);
+    return isNaN(n) ? 0 : Math.min(Math.max(n - 1, 0), slides.length - 1);
+  }
+
+  function show(i) {
+    index = Math.min(Math.max(i, 0), slides.length - 1);
+    slides.forEach(function (s, k) { s.classList.toggle('active', k === index); });
+    if (progress) progress.style.width = ((index + 1) / slides.length * 100) + '%';
+    if (counter) counter.textContent = (index + 1) + ' / ' + slides.length;
+    if (('#' + (index + 1)) !== location.hash) {
+      history.replaceState(null, '', '#' + (index + 1));
+    }
+  }
+
+  function next() { show(index + 1); }
+  function prev() { show(index - 1); }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { next(); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { prev(); e.preventDefault(); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+    else if (e.key === 't' || e.key === 'T') { toggleTheme(); }
+  });
+
+  function toggleTheme() {
+    var root = document.documentElement;
+    root.setAttribute('data-theme', root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  }
+
+  window.addEventListener('hashchange', function () { show(fromHash()); });
+
+  var nextBtn = document.getElementById('next');
+  var prevBtn = document.getElementById('prev');
+  var themeBtn = document.getElementById('theme');
+  if (nextBtn) nextBtn.addEventListener('click', next);
+  if (prevBtn) prevBtn.addEventListener('click', prev);
+  if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+
+  show(fromHash());
+})();
+</script>
+</body>
+</html>

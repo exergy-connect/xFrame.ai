@@ -1,0 +1,184 @@
+{
+  "name": "Subsea Tieback Portfolio",
+  "version": "26.07.03.2",
+  "author": "xFrame examples",
+  "description": "A minimal example model for xFrame consolidation: oil & gas subsea tieback development projects, their lifecycle milestones and joint-venture partners. Each project has an operator, a capital budget, an ordered set of dated milestones (discovery, appraisal, FID, first oil, end-of-life) and a set of partners with equity stakes.",
+  "entities": [
+    {
+      "name": "project",
+      "brief": "Subsea tieback development project",
+      "description": "An oil & gas subsea tieback development, identified by the field/project name. Carries the approved capital budget and the set of lifecycle milestones for the development.",
+      "primary_key": "name",
+      "fields": [
+        {
+          "name": "name",
+          "description": "Project (field) name; primary key. Example: 'Julia' or 'Penguins'.",
+          "type": { "primitive": "string" },
+          "required": true
+        },
+        {
+          "name": "operator",
+          "description": "Name of the company operating the development.",
+          "type": { "primitive": "string" },
+          "required": true
+        },
+        {
+          "name": "budget",
+          "description": "Approved capital budget for the development, in millions of US dollars.",
+          "type": { "primitive": "number" },
+          "required": true
+        },
+        {
+          "name": "milestones",
+          "description": "Lifecycle milestones for this project, from discovery through end-of-life.",
+          "type": { "array": { "entity": "milestone" } },
+          "required": false
+        },
+        {
+          "name": "partners",
+          "description": "Joint-venture partners holding an equity stake in this project.",
+          "type": { "array": { "entity": "partner" } },
+          "required": false
+        },
+        {
+          "name": "production",
+          "description": "Annual production figures for this project, one record per calendar year.",
+          "type": { "array": { "entity": "production" } },
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "milestone",
+      "brief": "Dated project lifecycle milestone",
+      "description": "A dated phase gate in a subsea tieback's life (discovery, appraisal, FID, first oil, end-of-life). Belongs to a project and nests under project.milestones.",
+      "primary_key": "milestone_key",
+      "parents": [{ "entity": "project", "parent_array": "milestones" }],
+      "fields": [
+        {
+          "name": "milestone_key",
+          "description": "Composite primary key: the owning project plus the lifecycle phase, so each project has at most one milestone per recognized phase.",
+          "required": true,
+          "type": {
+            "composite": [
+              {
+                "name": "name",
+                "description": "Owning project name; foreign key to project.name. Matches the parent PK field name so it materializes the nesting under project.milestones.",
+                "required": true,
+                "type": {
+                  "primitive": "string",
+                  "foreignKeys": [{ "entity": "project" }]
+                }
+              },
+              {
+                "name": "phase",
+                "description": "Recognized lifecycle phase this milestone marks.",
+                "required": true,
+                "type": {
+                  "primitive": "string",
+                  "enum": ["discovery", "appraisal", "FID", "first_oil", "end_of_life"]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "date",
+          "description": "Calendar date the milestone is (or is planned to be) reached, as YYYY-MM-DD.",
+          "type": { "primitive": "date" },
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "partner",
+      "brief": "Joint-venture partner in a project",
+      "description": "A company holding an equity stake in a project. Belongs to a project and nests under project.partners. Participation percentages within a project are expected to sum to 100.",
+      "primary_key": "partner_key",
+      "parents": [{ "entity": "project", "parent_array": "partners" }],
+      "fields": [
+        {
+          "name": "partner_key",
+          "description": "Composite primary key: the owning project plus the partner company name, so each partner appears at most once per project.",
+          "required": true,
+          "type": {
+            "composite": [
+              {
+                "name": "name",
+                "description": "Owning project name; foreign key to project.name. Matches the parent PK field name so it materializes the nesting under project.partners.",
+                "required": true,
+                "type": {
+                  "primitive": "string",
+                  "foreignKeys": [{ "entity": "project" }]
+                }
+              },
+              {
+                "name": "partner_name",
+                "description": "Name of the partner company.",
+                "required": true,
+                "type": { "primitive": "string" }
+              }
+            ]
+          }
+        },
+        {
+          "name": "participation",
+          "description": "Partner's equity stake in the project, as a percentage (0-100).",
+          "type": { "primitive": "number" },
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "production",
+      "brief": "Annual production for a project",
+      "description": "Annual production figures for a subsea tieback, one record per calendar year. Belongs to a project and nests under project.production. Individual stream volumes are optional so a year can report any subset of oil, condensate and gas.",
+      "primary_key": "production_key",
+      "parents": [{ "entity": "project", "parent_array": "production" }],
+      "fields": [
+        {
+          "name": "production_key",
+          "description": "Composite primary key: the owning project plus the calendar year, so each project has at most one production record per year.",
+          "required": true,
+          "type": {
+            "composite": [
+              {
+                "name": "name",
+                "description": "Owning project name; foreign key to project.name. Matches the parent PK field name so it materializes the nesting under project.production.",
+                "required": true,
+                "type": {
+                  "primitive": "string",
+                  "foreignKeys": [{ "entity": "project" }]
+                }
+              },
+              {
+                "name": "year",
+                "description": "Calendar year the production figures apply to.",
+                "required": true,
+                "type": { "primitive": "integer" }
+              }
+            ]
+          }
+        },
+        {
+          "name": "oil_kbbd",
+          "description": "Average crude oil production for the year, in thousands of barrels per day (kbbd). Optional; omit if not produced or not reported.",
+          "type": { "primitive": "integer" },
+          "required": false
+        },
+        {
+          "name": "condensate_kbbd",
+          "description": "Average condensate production for the year, in thousands of barrels per day (kbbd). Optional; omit if not produced or not reported.",
+          "type": { "primitive": "integer" },
+          "required": false
+        },
+        {
+          "name": "gas_mmscfd",
+          "description": "Average natural gas production for the year, in millions of standard cubic feet per day (MMscfd). Optional; omit if not produced or not reported.",
+          "type": { "primitive": "number" },
+          "required": false
+        }
+      ]
+    }
+  ]
+}

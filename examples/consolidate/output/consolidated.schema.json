@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft-2020-12/schema",
+  "title": "Consolidated Data Model",
+  "description": "Consolidated entity schemas from data model files",
+  "$defs": {
+    "project": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Project (field) name; primary key. Example: 'Julia' or 'Penguins'."
+        },
+        "operator": {
+          "type": "string",
+          "description": "Name of the company operating the development."
+        },
+        "budget": {
+          "type": "number",
+          "description": "Approved capital budget for the development, in millions of US dollars."
+        },
+        "milestones": {
+          "type": "array",
+          "description": "Lifecycle milestones for this project, from discovery through end-of-life.",
+          "items": {
+            "$ref": "#/$defs/milestone"
+          }
+        },
+        "partners": {
+          "type": "array",
+          "description": "Joint-venture partners holding an equity stake in this project.",
+          "items": {
+            "$ref": "#/$defs/partner"
+          }
+        },
+        "production": {
+          "type": "array",
+          "description": "Annual production figures for this project, one record per calendar year.",
+          "items": {
+            "$ref": "#/$defs/production"
+          }
+        }
+      },
+      "description": "An oil & gas subsea tieback development, identified by the field/project name. Carries the approved capital budget and the set of lifecycle milestones for the development.",
+      "required": [
+        "name",
+        "operator",
+        "budget"
+      ],
+      "x-primaryKey": "name"
+    },
+    "milestone": {
+      "type": "object",
+      "properties": {
+        "milestone_key": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Owning project name; foreign key to project.name. Matches the parent PK field name so it materializes the nesting under project.milestones.",
+              "x-foreignKeys": [
+                {
+                  "entity": "project"
+                }
+              ]
+            },
+            "phase": {
+              "type": "string",
+              "description": "Recognized lifecycle phase this milestone marks.",
+              "enum": [
+                "discovery",
+                "appraisal",
+                "FID",
+                "first_oil",
+                "end_of_life"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "phase"
+          ],
+          "additionalProperties": false,
+          "description": "Composite primary key: the owning project plus the lifecycle phase, so each project has at most one milestone per recognized phase.",
+          "x-foreignKeys": [
+            {
+              "entity": "project"
+            }
+          ]
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "Calendar date the milestone is (or is planned to be) reached, as YYYY-MM-DD."
+        }
+      },
+      "description": "A dated phase gate in a subsea tieback's life (discovery, appraisal, FID, first oil, end-of-life). Belongs to a project and nests under project.milestones.",
+      "required": [
+        "milestone_key",
+        "date"
+      ],
+      "x-primaryKey": "milestone_key",
+      "x-parents": [
+        {
+          "entity": "project",
+          "parent_array": "milestones"
+        }
+      ]
+    },
+    "partner": {
+      "type": "object",
+      "properties": {
+        "partner_key": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Owning project name; foreign key to project.name. Matches the parent PK field name so it materializes the nesting under project.partners.",
+              "x-foreignKeys": [
+                {
+                  "entity": "project"
+                }
+              ]
+            },
+            "partner_name": {
+              "type": "string",
+              "description": "Name of the partner company."
+            }
+          },
+          "required": [
+            "name",
+            "partner_name"
+          ],
+          "additionalProperties": false,
+          "description": "Composite primary key: the owning project plus the partner company name, so each partner appears at most once per project.",
+          "x-foreignKeys": [
+            {
+              "entity": "project"
+            }
+          ]
+        },
+        "participation": {
+          "type": "number",
+          "description": "Partner's equity stake in the project, as a percentage (0-100)."
+        }
+      },
+      "description": "A company holding an equity stake in a project. Belongs to a project and nests under project.partners. Participation percentages within a project are expected to sum to 100.",
+      "required": [
+        "partner_key",
+        "participation"
+      ],
+      "x-primaryKey": "partner_key",
+      "x-parents": [
+        {
+          "entity": "project",
+          "parent_array": "partners"
+        }
+      ]
+    },
+    "production": {
+      "type": "object",
+      "properties": {
+        "production_key": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Owning project name; foreign key to project.name. Matches the parent PK field name so it materializes the nesting under project.production.",
+              "x-foreignKeys": [
+                {
+                  "entity": "project"
+                }
+              ]
+            },
+            "year": {
+              "type": "integer",
+              "description": "Calendar year the production figures apply to."
+            }
+          },
+          "required": [
+            "name",
+            "year"
+          ],
+          "additionalProperties": false,
+          "description": "Composite primary key: the owning project plus the calendar year, so each project has at most one production record per year.",
+          "x-foreignKeys": [
+            {
+              "entity": "project"
+            }
+          ]
+        },
+        "oil_kbbd": {
+          "type": "integer",
+          "description": "Average crude oil production for the year, in thousands of barrels per day (kbbd). Optional; omit if not produced or not reported."
+        },
+        "condensate_kbbd": {
+          "type": "integer",
+          "description": "Average condensate production for the year, in thousands of barrels per day (kbbd). Optional; omit if not produced or not reported."
+        },
+        "gas_mmscfd": {
+          "type": "number",
+          "description": "Average natural gas production for the year, in millions of standard cubic feet per day (MMscfd). Optional; omit if not produced or not reported."
+        }
+      },
+      "description": "Annual production figures for a subsea tieback, one record per calendar year. Belongs to a project and nests under project.production. Individual stream volumes are optional so a year can report any subset of oil, condensate and gas.",
+      "required": [
+        "production_key"
+      ],
+      "x-primaryKey": "production_key",
+      "x-parents": [
+        {
+          "entity": "project",
+          "parent_array": "production"
+        }
+      ]
+    },
+    "change": {
+      "type": "object",
+      "description": "Change log entry describing a versioned modification to the consolidated data model or data.",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique change identifier (monotonically increasing)"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of the change"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author of the change"
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional note describing the change"
+        },
+        "git_commit_hash": {
+          "type": "string",
+          "description": "Git commit hash corresponding to this change"
+        }
+      },
+      "required": [
+        "id",
+        "timestamp"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "project": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/project"
+      }
+    },
+    "milestone": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/milestone"
+      }
+    },
+    "partner": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/partner"
+      }
+    },
+    "production": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/production"
+      }
+    },
+    "change": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/change"
+      }
+    }
+  },
+  "additionalProperties": false
+}

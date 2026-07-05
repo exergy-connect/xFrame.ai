@@ -1,0 +1,61 @@
+# Regenerate examples/consolidate/output when model or sample data changes (keeps
+# consolidated.schema.json in-repo for the present example deck and downstream tooling).
+name: xFrame consolidate
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "examples/consolidate/model/**"
+      - "examples/consolidate/data/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: xframe-consolidate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  consolidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Run xFrame consolidator
+        uses: exergy-connect/xFrame.ai@main
+        with:
+          working-dir: examples/consolidate
+          note: "CI consolidate after model/data change (${{ github.sha }})"
+          js: "true"
+
+      - name: Publish consolidated JS into public
+        run: |
+          mkdir -p public
+          cp examples/consolidate/output/consolidated_data.js public/consolidated_data.js
+
+      - name: Commit consolidated JSON
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # examples/consolidate/output/ is gitignored; -f stages schema + data + JS for the repo without .gitignore exceptions.
+          git add -f \
+            examples/consolidate/output/consolidated.schema.json \
+            examples/consolidate/output/consolidated_data.json \
+            examples/consolidate/output/consolidated.schema.js \
+            public/consolidated_data.js
+          if git diff --staged --quiet; then
+            echo "No changes to consolidated schema or data."
+          else
+            git commit -m "examples: refresh consolidated schema and data (CI)"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
