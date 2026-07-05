@@ -318,7 +318,7 @@ Spec fields:
 
 | Field | Description |
 |-------|-------------|
-| `rowLabel` | Field path on each record used as the Y-axis row label. |
+| `rowLabel` | Field path on each record used as the Y-axis row label. Composite: string array (e.g. `["company_name", "job_title"]`) with optional `rowLabelJoin` (default ` — `), or `{ "fields": [...], "join": " · " }`. Empty parts are omitted. |
 | `sort` | Row order: `timeline` (default, by earliest event date) or `alphabetical` (by `rowLabel`). |
 | `barSize` | Optional numeric field path; scales each bar's thickness (and its markers) across rows (e.g. `budget`). |
 | `rowDetails` | Optional list of field paths shown as a tooltip when hovering the row label (e.g. `["partners"]`); arrays/nested objects are summarized. |
