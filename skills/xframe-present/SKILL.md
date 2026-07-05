@@ -1,17 +1,20 @@
 ---
 name: xframe-present
-description: Compiles a Markdown presentation deck into a single self-contained HTML slideshow (embedded CSS + JS, works offline, prints to PDF). Supports YAML-style front matter (title/theme/author), `---` slide separators, `Note:` speaker notes, light/dark themes, keyboard navigation, and CLI overrides. Use when the user wants to build slides, turn Markdown into a presentation, generate an HTML deck, or run the present script.
+description: Compiles a Markdown presentation deck into HTML slides with generated CSS (presentation.css, optional locale/custom overrides), embedded or linked styles, offline JS, and PDF printing. Supports front matter (title/theme/author/style), slide separators, speaker notes, locale decks, and CLI overrides. Use when building slides, customizing presentation.css or presentation.custom.css, or running the present script.
 disable-model-invocation: true
 ---
 
 # Present (xFrame)
 
-Compile a **Markdown deck** into one **standalone HTML file**. All CSS and JavaScript are embedded, so the output opens in any browser with no network access or build step, and prints cleanly to PDF (one slide per page). Companion tool to **xframe-consolidate**.
+Compile a **Markdown deck** into **HTML slides**. CSS and JavaScript are embedded
+by default (offline-friendly); `--no-embed` links external stylesheets instead.
+Prints cleanly to PDF (one slide per page). Companion tool to **xframe-consolidate**.
 
 ## When to use
 
 - User wants to **build slides** / a **presentation** / a **slideshow** from Markdown.
 - User mentions **xframe-present**, a **deck**, **slides**, or turning **Markdown into HTML slides**.
+- User wants to **customize slide colors**, **`presentation.css`**, or **`presentation.custom.css`**.
 - User has a `.md` file with `---` slide separators and wants a viewable HTML deck.
 - User wants a **self-contained**, offline, printable presentation artifact.
 
@@ -46,7 +49,8 @@ node .cursor/skills/xframe-present/scripts/present.min.js <input.md> [options]
 | `--author <name>` | Author metadata (`<meta name="author">`). Overrides front-matter `author`. |
 | `--theme <name>` | Visual theme: `light` or `dark`. Overrides front-matter `theme`. Invalid values exit non-zero. |
 | `--data <url>` | URL or local path to a consolidated xFrame JSON data file. Overrides front-matter `data`. See **Consolidated data & graphs** below. |
-| `--no-embed-images` | Disable image embedding. By **default**, images are inlined as base64 `data:` URIs for a fully self-contained deck: `http(s)://` images are fetched and local paths (relative to the deck's directory) are read; `data:` URIs are left as-is, and unreachable images are warned about and left with their original `src`. Use this flag to keep original `src` values instead. |
+| `--no-embed-images` | By default, images are inlined as base64 and CSS is embedded in HTML. Pass this flag (alias **`--no-embed`**) to keep original image `src` values and link **`presentation.css`** (+ locale/custom CSS when present) instead of inlining. CSS files are always written beside the HTML output. |
+| `--no-embed` | Alias for `--no-embed-images`. |
 | `-h, --help` | Show usage. |
 
 ## Deck format
@@ -72,12 +76,12 @@ Some **Markdown** content.
 Note: these are speaker notes (kept out of the visible slide)
 ```
 
-- **Front matter** (optional): a block delimited by lines containing only `---` at the very top of the file, with simple `key: value` pairs. Recognized keys: `title`, `theme`, `author`, `header`, `header-image`, `header-image-alt`, `header-image-align`, `footer`, `footer-image`, `footer-image-alt`, `data`.
+- **Front matter** (optional): a block delimited by lines containing only `---` at the very top of the file, with `key: value` pairs and an optional nested **`style:`** block. Recognized keys: `title`, `theme`, `author`, `style`, `header`, `header-image`, `header-image-alt`, `header-image-align`, `footer`, `footer-image`, `footer-image-alt`, `data`, `lang`.
 - **Header / footer layout** (optional): set `header` and/or `footer` in the front matter to give every slide a consistent framed layout — a **10%** header band (slide's own title on the left, the `header` text on the right), an **80%** content area, and a **10%** footer band (the `footer` text on the left, the slide number `n / total` on the right). The slide's first heading is lifted into the header band so it isn't duplicated in the body. Optional **`header-image`** (path to a git-tracked PNG/SVG) renders a logo and is embedded at compile time; **`header-image-alt`** sets the `<img alt>`; **`header-image-align`** (`left` or `right`, default `right`) places the logo on the left band or left of the header text on the right. Optional **`footer-image`** renders a logo left of the footer text and is embedded at compile time; **`footer-image-alt`** sets the `<img alt>`. If `header`, `footer`, `header-image`, and `footer-image` are all unset, slides use the default full-bleed layout.
 - **Slides** are separated by a line containing only `---` (three or more dashes). Empty slides are dropped.
 - **Speaker notes**: a line starting with `Note:` marks the rest of the slide as notes; they are embedded as an HTML comment, not shown on the slide.
 - **Includes**: an `@include` directive on its own line inlines another file before slides are split. Paths resolve relative to the including file. Use `@include path/to/file.md#fragment-id` to pull a named fragment from a registry file (`<!-- @fragment id -->` … `<!-- @end -->`). Includes are recursive; missing files, missing fragments, and circular includes fail the build. Useful for sharing graph specs across locale-specific decks.
-- **Locale decks**: sibling files `{base}.md` and `{base}.{locale}.md` in the same directory are auto-detected; when two or more exist, a language switcher appears in the HUD (preserves `#slide` hash). Set front-matter `lang` for `<html lang="…">`.
+- **Locale decks**: sibling files `{base}.md` and `{base}.{locale}.md` in the same directory are auto-detected; when two or more exist, a language switcher appears in the HUD (preserves `#slide` hash). Set front-matter `lang` for `<html lang="…">`. CSS is shared from the base deck — see **Styling & CSS**.
 - **Website snapshots**: `xframe-snapshot` fenced JSON with required `url` and git-tracked `image` (PNG path). Renders a clickable thumbnail that opens the URL in a new tab; PNG is embedded like any image. Refresh PNGs with `npm run snapshot -- <deck.md>` in `ts/present/` (Playwright maintainer script, not bundled). CI compiles only — does not re-capture.
 - **Mermaid diagrams**: `xframe-mermaid` fenced JSON with required `image` (SVG path) and exactly one of `source` (`.mmd` file) or `diagram` (inline text). Renders an embedded SVG diagram, click-to-zoom by default. Refresh SVGs with `npm run mermaid -- <deck.md>` in `ts/present/` (`@mermaid-js/mermaid-cli` maintainer script, not bundled). CI compiles only — does not re-render.
 - Slide bodies are rendered as **GitHub-Flavored Markdown** (headings, lists, code blocks, tables, blockquotes, images, links).
@@ -87,7 +91,108 @@ Note: these are speaker notes (kept out of the visible slide)
   ![Architecture diagram](diagram.png "click_to_zoom")
   ```
 
-  Images without the marker render normally, and a normal title (e.g. `"A caption"`) is kept as-is. The lightbox styles/script are only embedded when a deck has at least one zoomable image.
+  Images without the marker render normally, and a normal title (e.g. `"A caption"`) is kept as-is. The lightbox styles/script are only embedded when a deck has at least one zoomable image or mermaid diagram.
+
+## Styling & CSS
+
+Compile produces CSS artifacts beside the HTML output. Agents editing decks should follow this model.
+
+### Output files (in the HTML output directory)
+
+| File | Generated? | Source | Included in |
+|------|------------|--------|-------------|
+| `presentation.css` | Yes, every compile | Base deck templates + base `style` front matter | All locale HTML files |
+| `presentation.{locale}.css` | Yes, when locale deck has `style` | Locale deck `style` only (e.g. `presentation.cz.css`) | That locale's HTML only |
+| `presentation.custom.css` | No — user-authored | Deck source directory | All HTML (after generated CSS) |
+
+### Cascade order (lowest → highest priority)
+
+1. `presentation.css` — shared baseline (templates + base deck colors)
+2. `presentation.{locale}.css` — locale color overrides (if present)
+3. `presentation.custom.css` — free-form CSS overrides (if present)
+
+### Where to put styling changes
+
+| Goal | Agent action |
+|------|--------------|
+| Brand colors for entire deck family | Add `style:` block to **base** `{base}.md` |
+| Locale-specific color tweak | Add `style:` block to **`{base}.{locale}.md`** only |
+| Arbitrary CSS (fonts, layout, selectors) | Create/edit **`presentation.custom.css`** next to deck `.md` files |
+| Visual color picking (best UX) | Edit colors in **`presentation.custom.css`** or front-matter `style:` with VS Code picker (see below) |
+| Do NOT edit | `presentation.css` (regenerated each compile; changes lost) |
+
+### Front-matter `style` block (nested YAML-style indent)
+
+Supported keys map to CSS variables: `primary_color` → `--accent`, `background_color` → `--bg`, `slide_background` → `--slide-bg`, `text_color` → `--fg`, `muted_color` → `--muted`, `border_color` → `--border`, `code_background` → `--code-bg`. Optional nested `light:` / `dark:` for per-theme values.
+
+Example (base deck):
+
+```yaml
+---
+style:
+  primary_color: "#2563eb"
+  dark:
+    primary_color: "#58a6ff"
+---
+```
+
+Example (Czech locale override — in `deck.cz.md` front matter only):
+
+```yaml
+style:
+  primary_color: "#dc2626"
+```
+
+### Color picker (VS Code / Cursor)
+
+**Best UX — `presentation.custom.css`:** Open the file; click the color swatch in
+the gutter next to `#`, `rgb()`, or `hsl()` values. Override template variables:
+`--accent`, `--bg`, `--slide-bg`, `--fg`, `--muted`, `--border`, `--code-bg`.
+
+**Front-matter `style:` — schema-assisted picker:** The xFrame repo includes
+`.vscode/schemas/deck-frontmatter.schema.json` mapping `primary_color`, etc. to
+`format: color`. Requires the **YAML** extension (`redhat.vscode-yaml`, recommended
+in `.vscode/extensions.json`). Default schema globs: `ts/present/examples/**/*.md`,
+`**/*.deck.md`. Add user deck paths to `yaml.schemas` in `.vscode/settings.json`.
+Use quoted hex: `primary_color: "#2563eb"`. If swatches are missing, temporarily
+set language mode to YAML for the front-matter block.
+
+When suggesting colors to the user, prefer creating/updating
+`presentation.custom.css` for full picker support, or `style:` keys when they want
+colors in front matter / locale-specific CSS files.
+
+### Locale decks & CSS
+
+- Template modules (zoom, graph, layout, …) are determined by the **base** deck content.
+- All locales share `presentation.css`.
+- `deck.html` never loads `presentation.{locale}.css`.
+- `deck.cz.html` loads `presentation.cz.css` only if `deck.cz.md` defines `style`.
+- Put shared graph/mermaid specs in `@include` fragments or the base deck.
+
+### Embed vs external CSS (default: embed)
+
+Default: CSS inlined in HTML `<style>` blocks; files still written to output dir.
+`--no-embed` / `--no-embed-images`: HTML uses `<link rel="stylesheet">` to `presentation.css` (and locale/custom files when present); images also keep original `src`.
+
+### Typical source layout (agent reference)
+
+```
+my-talk/
+  deck.md                      ← base deck + style for shared colors
+  deck.cz.md                   ← optional locale style → presentation.cz.css
+  presentation.custom.css      ← optional; never overwritten by compile
+  output/
+    deck.html
+    deck.cz.html
+    presentation.css           ← generated
+    presentation.cz.css        ← generated when deck.cz.md has style
+```
+
+### Agent pitfalls
+
+- Never hand-edit `presentation.css` — use `style` front matter or `presentation.custom.css`.
+- Locale `style` does not affect template modules — only color variable overrides.
+- Recompiling a locale without `style` leaves a stale `presentation.{locale}.css` on disk (harmless; optional cleanup).
 
 ## Consolidated data & graphs
 
