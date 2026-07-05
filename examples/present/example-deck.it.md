@@ -59,6 +59,16 @@ apre a schermo intero in un lightbox. Clicca ovunque o premi `Esc` per chiudere.
 
 ---
 
+## Snapshot del sito web
+
+Una PNG tracciata in git di un sito live. Clicca l'immagine per aprire la pagina
+in una nuova scheda. Aggiorna la PNG con `npm run snapshot` in `ts/present/` (non
+a ogni run CI).
+
+@include _shared/snapshots.md#poda-home
+
+---
+
 ## Timeline di progetto
 
 Un grafico `timeline` sui dati consolidati `project`: una barra orizzontale

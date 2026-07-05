@@ -59,6 +59,16 @@ in een lightbox op volledig scherm. Klik ergens of druk op `Esc` om te sluiten.
 
 ---
 
+## Website-snapshot
+
+Een in git bewaarde PNG-snapshot van een live site. Klik op de afbeelding om de
+pagina in een nieuw tabblad te openen. Vernieuw de PNG met `npm run snapshot` in
+`ts/present/` (niet bij elke CI-run).
+
+@include _shared/snapshots.md#poda-home
+
+---
+
 ## Projecttijdlijnen
 
 Een `timeline`-grafiek over de geconsolideerde `project`-data: één horizontale

@@ -59,6 +59,16 @@ in a full-screen lightbox. Click anywhere or press `Esc` to close.
 
 ---
 
+## Website snapshot
+
+A git-tracked PNG snapshot of a live site. Click the image to open the page in a
+new tab. Refresh the PNG with `npm run snapshot` in `ts/present/` (not on every
+CI run).
+
+@include _shared/snapshots.md#poda-home
+
+---
+
 ## Project timelines
 
 A `timeline` graph over the consolidated `project` data: one horizontal stacked

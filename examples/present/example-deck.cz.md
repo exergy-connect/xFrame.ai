@@ -59,6 +59,16 @@ na celou obrazovku v lightboxu. Klikněte kamkoli nebo stiskněte `Esc` pro zav�
 
 ---
 
+## Snímek webu
+
+PNG snímek živého webu uložený v gitu. Kliknutím na obrázek otevřete stránku v
+novém panelu. PNG obnovíte příkazem `npm run snapshot` v `ts/present/` (ne při
+každém běhu CI).
+
+@include _shared/snapshots.md#poda-home
+
+---
+
 ## Časové osy projektů
 
 Graf typu `timeline` nad konsolidovanými daty `project`: jeden horizontální
