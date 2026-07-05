@@ -85,12 +85,35 @@ body {
 }
 .hud button:hover { border-color: var(--accent); color: var(--accent); }
 @media print {
-  body { overflow: visible; }
-  .progress, .hud { display: none; }
+  @page { size: landscape; margin: 0; }
+  html, body {
+    height: auto;
+    overflow: visible;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body { display: block; }
+  .progress, .hud { display: none !important; }
   .deck { display: block; padding: 0; }
-  .slide { display: flex !important; page-break-after: always; box-shadow: none; border: none; border-radius: 0; height: 100vh; }
-  .slide-content { overflow: visible; }
-  .fit { transform: none !important; }
+  .slide {
+    display: flex !important;
+    position: relative;
+    width: 100%;
+    max-width: none;
+    height: 100vh;
+    min-height: 100vh;
+    margin: 0;
+    page-break-after: always;
+    break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    animation: none;
+  }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .slide-content, .slide-body { overflow: hidden; }
 }
 
 .slide img.zoomable { cursor: zoom-in; transition: filter .15s ease; }
@@ -273,6 +296,7 @@ point for its exact value.</p>
     var cs = window.getComputedStyle(container);
     var availW = container.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     var availH = container.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    if (availW <= 0 || availH <= 0) return;
     var w = fit.scrollWidth, h = fit.scrollHeight;
     if (w > 0 && h > 0) {
       var scale = Math.min(1, availW / w, availH / h);
@@ -307,9 +331,23 @@ point for its exact value.</p>
     root.setAttribute('data-theme', root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
   }
 
+  function fitAllSlides(forPrint) {
+    var saved;
+    if (forPrint) {
+      saved = slides.map(function (s) { return s.style.display; });
+      slides.forEach(function (s) { s.style.display = 'flex'; });
+    }
+    slides.forEach(function (s) { fitContent(s); });
+    if (forPrint) {
+      slides.forEach(function (s, k) { s.style.display = saved[k] || ''; });
+    }
+  }
+
   window.addEventListener('hashchange', function () { show(fromHash()); });
   window.addEventListener('resize', function () { fitContent(slides[index]); });
   window.addEventListener('load', function () { fitContent(slides[index]); });
+  window.addEventListener('beforeprint', function () { fitAllSlides(true); });
+  window.addEventListener('afterprint', function () { fitContent(slides[index]); });
 
   var nextBtn = document.getElementById('next');
   var prevBtn = document.getElementById('prev');
