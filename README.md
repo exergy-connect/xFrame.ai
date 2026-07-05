@@ -53,9 +53,9 @@ End-to-end sample under [`examples/`](examples/):
 | Path | Description |
 | --- | --- |
 | [`examples/consolidate/`](examples/consolidate/) | Subsea tieback portfolio — JSON model, sample data, and consolidated output. See [README](examples/consolidate/README.md) for entity layout and how to run the consolidator. |
-| [`examples/present/`](examples/present/) | Demo slide decks (`example-deck.md` / `example-deck.cz.md` → HTML) bound to the consolidated data, with shared graph specs via `@include`. |
+| [`examples/present/`](examples/present/) | Demo slide decks (`example-deck.md` / locale variants → HTML under `output/`) bound to the consolidated data, with shared graph specs via `@include`. |
 
-CI on `main` keeps generated artifacts fresh via [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml): consolidate, compile the deck, and commit once.
+CI on `main` keeps generated artifacts fresh via [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml): consolidate, compile decks to `examples/present/output/`, copy into `docs/examples/present/`, and commit once.
 
 ## GitHub Pages
 
@@ -79,7 +79,7 @@ This repo publishes two **composite** actions that wrap the bundled minified scr
 | [**xFrame consolidate**](action.yml) | `exergy-connect/xFrame.ai@main` | `skills/xframe-consolidate/scripts/consolidate.min.js` |
 | [**xFrame present**](present/action.yml) | `exergy-connect/xFrame.ai/present@main` | `skills/xframe-present/scripts/present.min.js` |
 
-[`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses these published refs and is intended as a copyable template.
+[`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo composite actions (`./action.yml`, `./present/action.yml`) and is intended as a copyable template. External workflows pin the published refs below.
 
 ### xFrame consolidate
 
@@ -132,7 +132,7 @@ jobs:
       - uses: exergy-connect/xFrame.ai/present@main
         with:
           input: examples/present/example-deck.md
-          output: examples/present/example-deck.html
+          output: examples/present/output/example-deck.html
           data: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
 ```
 

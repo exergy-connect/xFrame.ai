@@ -8,8 +8,14 @@ on:
     paths:
       - "examples/consolidate/model/**"
       - "examples/consolidate/data/**"
-      - "examples/present/**"
+      - "examples/present/**/*.md"
+      - "examples/present/_shared/**"
+      - "examples/present/snapshots/**"
+      - "examples/present/diagrams/**"
+      - "examples/present/*.png"
+      - "skills/xframe-present/**"
       - "present/action.yml"
+      - "action.yml"
       - ".github/workflows/examples-ci.yml"
   workflow_dispatch:
 
@@ -19,6 +25,10 @@ permissions:
 concurrency:
   group: xframe-examples-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  DATA: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
+  PRESENT_OUT: examples/present/output
 
 jobs:
   examples:
@@ -33,38 +43,32 @@ jobs:
         with:
           node-version: "24"
 
+      # External repos: uses: exergy-connect/xFrame.ai@main
       - name: Run xFrame consolidator
-        uses: exergy-connect/xFrame.ai@main
+        uses: ./action.yml
         with:
           working-dir: examples/consolidate
           note: "CI consolidate after model/data change (${{ github.sha }})"
           clean: "true"
 
-      # Per-deck compile via the published present action (one step per locale):
-      # - name: Compile example presentation
+      - name: Prepare presentation output directory
+        run: mkdir -p "$PRESENT_OUT"
+
+      # External repos: one present@main step per deck, e.g.:
       #   uses: exergy-connect/xFrame.ai/present@main
       #   with:
       #     input: examples/present/example-deck.md
-      #     output: examples/present/example-deck.html
-      #     data: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
-      #
-      # - name: Compile example presentation (Czech)
-      #   uses: exergy-connect/xFrame.ai/present@main
-      #   with:
-      #     input: examples/present/example-deck.cz.md
-      #     output: examples/present/example-deck.cz.html
+      #     output: examples/present/output/example-deck.html
       #     data: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
 
       - name: Compile example presentations
-        env:
-          DATA: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
         run: |
           set -euo pipefail
           present="skills/xframe-present/scripts/present.min.js"
           for deck in examples/present/*.md; do
             base=$(basename "$deck")
             [[ "$base" =~ ^example-deck(\.[A-Za-z0-9-]+)?\.md$ ]] || continue
-            out="${deck%.md}.html"
+            out="$PRESENT_OUT/${base%.md}.html"
             echo "Compiling ${deck} -> ${out}"
             node "$present" "$deck" --output "$out" --data "$DATA"
           done
@@ -73,7 +77,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p docs/examples/present
-          for html in examples/present/*.html; do
+          for html in "$PRESENT_OUT"/*.html; do
             base=$(basename "$html")
             [[ "$base" =~ ^example-deck(\.[A-Za-z0-9-]+)?\.html$ ]] || continue
             cp "$html" "docs/examples/present/$base"
@@ -87,14 +91,23 @@ jobs:
             examples/consolidate/output/consolidated.schema.json \
             examples/consolidate/output/consolidated_data.json
           shopt -s nullglob
-          for html in examples/present/*.html; do
+          for html in "$PRESENT_OUT"/*.html; do
             base=$(basename "$html")
             [[ "$base" =~ ^example-deck(\.[A-Za-z0-9-]+)?\.html$ ]] || continue
-            git add -f "$html" "docs/examples/present/$base"
+            git add -f "docs/examples/present/$base"
           done
           if git diff --staged --quiet; then
             echo "No changes to generated examples."
-          else
-            git commit -m "examples: refresh consolidated output and presentation (CI)"
-            git push origin "${GITHUB_REF_NAME}"
+            exit 0
           fi
+          git commit -m "examples: refresh consolidated output and presentation (CI) [skip ci]"
+          for attempt in 1 2 3 4 5; do
+            if git push origin "${GITHUB_REF_NAME}"; then
+              echo "Pushed on attempt $attempt"
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt); rebasing on latest and retrying"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+          done
+          echo "Failed to push after multiple attempts" >&2
+          exit 1
