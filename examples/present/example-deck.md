@@ -5,6 +5,7 @@ author: Exergy LLC
 header: xFrame Present
 footer: © Exergy ∞ LLC @builddatetime
 data: ../consolidate/output/consolidated_data.json
+lang: en
 ---
 
 # xFrame Present
