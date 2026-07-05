@@ -96,6 +96,15 @@ Note: these are speaker notes (kept out of the visible slide)
   ```
 
   `ratio` is optional (defaults to equal columns). The number of `@column`-delimited sections must match `columns`. Column CSS is embedded only when a deck uses `@layout`.
+- **Cover layout** (optional): put `@layout cover` on the first non-empty line of a slide body (after the heading, when framed). The slide uses a full-bleed body with no header/footer bands; content fills the slide area and **auto-fit scaling is skipped** (including in print/PDF). Use for title slides or other author-designed full-page layouts. Style the root element with `height: 100%` and flex/grid so content stays within the slide. Example:
+
+  ```markdown
+  # Quarterly Review
+
+  @layout cover
+
+  <div class="title-cover">…</div>
+  ```
 - **Includes**: an `@include` directive on its own line inlines another file before slides are split. Paths resolve relative to the including file. Use `@include path/to/file.md#fragment-id` to pull a named fragment from a registry file (`<!-- @fragment id -->` … `<!-- @end -->`). Includes are recursive; missing files, missing fragments, and circular includes fail the build. Useful for sharing graph specs across locale-specific decks.
 - **Locale decks**: sibling files `{base}.md` and `{base}.{locale}.md` in the same directory are auto-detected; when two or more exist, a language switcher appears in the HUD (preserves `#slide` hash). Set front-matter `lang` for `<html lang="…">`. Compiling the **base** deck also compiles all locale siblings unless **`--skip-locales`** is passed. Branding fields (`theme`, `footer`, `header-image`, `data`, etc.) inherit from the base deck when omitted — locale files typically only need `title`, `lang`, and translated slide content. CSS is shared from the base deck — see **Styling & CSS**.
 - **Website snapshots**: `xframe-snapshot` fenced JSON with required `url` and git-tracked `image` (PNG path). Renders a clickable thumbnail that opens the URL in a new tab; PNG is embedded like any image. Refresh PNGs with `npm run snapshot -- <deck.md>` in `ts/present/` (Playwright maintainer script, not bundled). CI compiles only — does not re-capture.
