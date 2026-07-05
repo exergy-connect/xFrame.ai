@@ -1,6 +1,5 @@
 ---
 title: xFrame Present — Demo
-theme: light
 author: Exergy LLC
 header: xFrame Present
 lang: nl

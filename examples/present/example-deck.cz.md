@@ -1,6 +1,5 @@
 ---
 title: xFrame Present — Ukázka
-theme: light
 author: Exergy LLC
 header: xFrame Present
 lang: cs
