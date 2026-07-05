@@ -1,6 +1,6 @@
-# Regenerate examples/consolidate/output when model or sample data changes (keeps
-# consolidated.schema.json in-repo for the present example deck and downstream tooling).
-name: xFrame consolidate
+# Regenerate example consolidated output, then compile the presentation deck.
+# Jobs run sequentially so only one commit/push happens at a time.
+name: xFrame examples
 
 on:
   push:
@@ -9,13 +9,15 @@ on:
     paths:
       - "examples/consolidate/model/**"
       - "examples/consolidate/data/**"
+      - "examples/present/**"
+      - ".github/workflows/examples-ci.yml"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: xframe-consolidate-${{ github.ref }}
+  group: xframe-examples-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -24,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 1
 
       - uses: actions/setup-node@v6
@@ -47,7 +49,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # examples/consolidate/output/ is gitignored; -f stages schema + data + JS for the repo without .gitignore exceptions.
           git add -f \
             examples/consolidate/output/consolidated.schema.json \
             examples/consolidate/output/consolidated_data.json \
@@ -57,5 +58,36 @@ jobs:
             echo "No changes to consolidated schema or data."
           else
             git commit -m "examples: refresh consolidated schema and data (CI)"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
+            git push origin "${GITHUB_REF_NAME}"
+          fi
+
+  present:
+    needs: consolidate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Compile example presentation
+        run: |
+          node skills/xframe-present/scripts/present.min.js \
+            examples/present/example-deck.md \
+            --output examples/present/example-deck.html
+
+      - name: Commit compiled HTML
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f examples/present/example-deck.html
+          if git diff --staged --quiet; then
+            echo "No changes to compiled presentation."
+          else
+            git commit -m "examples: refresh compiled presentation (CI)"
+            git push origin "${GITHUB_REF_NAME}"
           fi
