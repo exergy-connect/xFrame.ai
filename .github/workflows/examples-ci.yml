@@ -1,4 +1,4 @@
-# Regenerate example consolidated output, compile the presentation deck, then commit once.
+# Regenerate example consolidated output, compile locale decks (example-deck*.md), then commit once.
 name: xFrame examples
 
 on:
@@ -40,17 +40,44 @@ jobs:
           note: "CI consolidate after model/data change (${{ github.sha }})"
           clean: "true"
 
-      - name: Compile example presentation
-        uses: exergy-connect/xFrame.ai/present@main
-        with:
-          input: examples/present/example-deck.md
-          output: examples/present/example-deck.html
-          data: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
+      # Per-deck compile via the published present action (one step per locale):
+      # - name: Compile example presentation
+      #   uses: exergy-connect/xFrame.ai/present@main
+      #   with:
+      #     input: examples/present/example-deck.md
+      #     output: examples/present/example-deck.html
+      #     data: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
+      #
+      # - name: Compile example presentation (Czech)
+      #   uses: exergy-connect/xFrame.ai/present@main
+      #   with:
+      #     input: examples/present/example-deck.cz.md
+      #     output: examples/present/example-deck.cz.html
+      #     data: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
 
-      - name: Sync published demo to docs/
+      - name: Compile example presentations
+        env:
+          DATA: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
         run: |
+          set -euo pipefail
+          present="skills/xframe-present/scripts/present.min.js"
+          for deck in examples/present/*.md; do
+            base=$(basename "$deck")
+            [[ "$base" =~ ^example-deck(\.[A-Za-z0-9-]+)?\.md$ ]] || continue
+            out="${deck%.md}.html"
+            echo "Compiling ${deck} -> ${out}"
+            node "$present" "$deck" --output "$out" --data "$DATA"
+          done
+
+      - name: Sync published demos to docs/
+        run: |
+          set -euo pipefail
           mkdir -p docs/examples/present
-          cp examples/present/example-deck.html docs/examples/present/example-deck.html
+          for html in examples/present/*.html; do
+            base=$(basename "$html")
+            [[ "$base" =~ ^example-deck(\.[A-Za-z0-9-]+)?\.html$ ]] || continue
+            cp "$html" "docs/examples/present/$base"
+          done
 
       - name: Commit generated examples
         run: |
@@ -58,9 +85,13 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -f \
             examples/consolidate/output/consolidated.schema.json \
-            examples/consolidate/output/consolidated_data.json \
-            examples/present/example-deck.html \
-            docs/examples/present/example-deck.html
+            examples/consolidate/output/consolidated_data.json
+          shopt -s nullglob
+          for html in examples/present/*.html; do
+            base=$(basename "$html")
+            [[ "$base" =~ ^example-deck(\.[A-Za-z0-9-]+)?\.html$ ]] || continue
+            git add -f "$html" "docs/examples/present/$base"
+          done
           if git diff --staged --quiet; then
             echo "No changes to generated examples."
           else

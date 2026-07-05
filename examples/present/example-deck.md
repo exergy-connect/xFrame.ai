@@ -66,23 +66,7 @@ lifecycle event. Hover a marker or segment for details. Click a project name to
 isolate and zoom to that project, or click a segment to focus every project on
 that time window (`‹ reset` restores the full view).
 
-```xframe-graph
-{
-  "type": "timeline",
-  "title": "Subsea tieback lifecycles",
-  "entity": "project",
-  "rowLabel": "name",
-  "sort": "timeline",
-  "barSize": "budget",
-  "rowDetails": ["partners","budget"],
-  "events": {
-    "path": "milestones",
-    "date": "date",
-    "category": "milestone_key.phase"
-  },
-  "categories": ["discovery", "appraisal", "FID", "first_oil", "end_of_life"]
-}
-```
+@include _shared/graphs.md#project-timeline
 
 ---
 
@@ -94,26 +78,7 @@ records plotted by year. The per-metric `style` mixes chart types — oil
 against the secondary (right) axis — for all three projects. Hover any bar or
 point for its exact value.
 
-```xframe-graph
-{
-  "type": "timeseries",
-  "title": "Annual oil & gas production",
-  "entity": "project",
-  "seriesLabel": "name",
-  "points": {
-    "path": "production",
-    "x": "production_key.year",
-    "y": [
-      { "field": "oil_kbbd", "axis": "primary", "label": "Oil (kbbd)", "style": "bar" },
-      { "field": "gas_mmscfd", "axis": "secondary", "label": "Gas (MMscfd)", "style": "line" }
-    ]
-  },
-  "axes": {
-    "primary": { "label": "Oil (kbbd)" },
-    "secondary": { "label": "Gas (MMscfd)" }
-  }
-}
-```
+@include _shared/graphs.md#production-timeseries
 
 ---
 

@@ -53,7 +53,7 @@ End-to-end sample under [`examples/`](examples/):
 | Path | Description |
 | --- | --- |
 | [`examples/consolidate/`](examples/consolidate/) | Subsea tieback portfolio — JSON model, sample data, and consolidated output. See [README](examples/consolidate/README.md) for entity layout and how to run the consolidator. |
-| [`examples/present/`](examples/present/) | Demo slide deck (`example-deck.md` → `example-deck.html`) bound to the consolidated data, with timeline and timeseries graphs. |
+| [`examples/present/`](examples/present/) | Demo slide decks (`example-deck.md` / `example-deck.cz.md` → HTML) bound to the consolidated data, with shared graph specs via `@include`. |
 
 CI on `main` keeps generated artifacts fresh via [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml): consolidate, compile the deck, and commit once.
 
@@ -66,6 +66,7 @@ The live site ([exergy-connect.github.io/xFrame.ai](https://exergy-connect.githu
 | `install-skills.sh` | `/install-skills.sh` |
 | `latest` | `/latest` |
 | `examples/present/example-deck.html` | `/examples/present/example-deck.html` |
+| `examples/present/example-deck.cz.html` | `/examples/present/example-deck.cz.html` |
 | `goa_field_of_dreams.html` | `/goa_field_of_dreams.html` |
 | `LICENSE` | `/LICENSE` |
 
