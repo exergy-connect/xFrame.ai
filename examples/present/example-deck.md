@@ -3,9 +3,9 @@ title: xFrame Present — Demo
 theme: light
 author: Exergy LLC
 header: xFrame Present
+header-image: exergy_connect_logo.png
+header-image-alt: Exergy Connect
 footer: © Exergy ∞ LLC @builddatetime
-footer-image: exergy_connect_logo.png
-footer-image-alt: Exergy Connect
 data: ../consolidate/output/consolidated_data.json
 lang: en
 ---
