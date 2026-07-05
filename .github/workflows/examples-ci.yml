@@ -45,7 +45,7 @@ jobs:
 
       # External repos: uses: exergy-connect/xFrame.ai@main
       - name: Run xFrame consolidator
-        uses: ./action.yml
+        uses: ./
         with:
           working-dir: examples/consolidate
           note: "CI consolidate after model/data change (${{ github.sha }})"
@@ -57,7 +57,7 @@ jobs:
       # External repos: uses: exergy-connect/xFrame.ai/present@main
       # Compiling the base deck also compiles locale siblings (example-deck.cz.html, …).
       - name: Compile example presentations
-        uses: ./present/action.yml
+        uses: ./present
         with:
           input: examples/present/example-deck.md
           output: examples/present/output/example-deck.html

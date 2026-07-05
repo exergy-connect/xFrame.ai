@@ -79,7 +79,7 @@ This repo publishes two **composite** actions that wrap the bundled minified scr
 | [**xFrame consolidate**](action.yml) | `exergy-connect/xFrame.ai@main` | `skills/xframe-consolidate/scripts/consolidate.min.js` |
 | [**xFrame present**](present/action.yml) | `exergy-connect/xFrame.ai/present@main` | `skills/xframe-present/scripts/present.min.js` |
 
-[`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo composite actions (`./action.yml`, `./present/action.yml`) and is intended as a copyable template. External workflows pin the published refs below.
+[`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo composite actions (`./`, `./present`) and is intended as a copyable template. External workflows pin the published refs below.
 
 ### xFrame consolidate
 
