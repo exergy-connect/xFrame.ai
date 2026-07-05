@@ -54,24 +54,14 @@ jobs:
       - name: Prepare presentation output directory
         run: mkdir -p "$PRESENT_OUT"
 
-      # External repos: one present@main step per deck, e.g.:
-      #   uses: exergy-connect/xFrame.ai/present@main
-      #   with:
-      #     input: examples/present/example-deck.md
-      #     output: examples/present/output/example-deck.html
-      #     data: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
-
+      # External repos: uses: exergy-connect/xFrame.ai/present@main
+      # Compiling the base deck also compiles locale siblings (example-deck.cz.html, …).
       - name: Compile example presentations
-        run: |
-          set -euo pipefail
-          present="skills/xframe-present/scripts/present.min.js"
-          for deck in examples/present/*.md; do
-            base=$(basename "$deck")
-            [[ "$base" =~ ^example-deck(\.[A-Za-z0-9-]+)?\.md$ ]] || continue
-            out="$PRESENT_OUT/${base%.md}.html"
-            echo "Compiling ${deck} -> ${out}"
-            node "$present" "$deck" --output "$out" --data "$DATA"
-          done
+        uses: ./present/action.yml
+        with:
+          input: examples/present/example-deck.md
+          output: examples/present/output/example-deck.html
+          data: ${{ env.DATA }}
 
       - name: Sync published demos to docs/
         run: |
