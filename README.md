@@ -66,6 +66,7 @@ The live site ([exergy-connect.github.io/xFrame.ai](https://exergy-connect.githu
 | `install-skills.sh` | `/install-skills.sh` |
 | `latest` | `/latest` |
 | `examples/present/example-deck.html` | `/examples/present/example-deck.html` |
+| `goa_field_of_dreams.html` | `/goa_field_of_dreams.html` |
 | `LICENSE` | `/LICENSE` |
 
 ## GitHub Actions
