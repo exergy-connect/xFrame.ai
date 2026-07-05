@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "timestamp": "2026-07-05T05:57:06Z",
+  "timestamp": "2026-07-05T06:03:59Z",
   "model": {
     "name": "Subsea Tieback Portfolio",
     "version": "26.07.03.2",
@@ -21,10 +21,10 @@
     "change": {
       "000000000001": {
         "id": 1,
-        "timestamp": "2026-07-05T05:57:06+00:00",
+        "timestamp": "2026-07-05T06:03:59+00:00",
         "author": "jbemmel",
-        "note": "CI consolidate after model/data change (7c762e7d7287c6ace9104d608a5d5826aa9b7d7f)",
-        "git_commit_hash": "7c762e7d7287c6ace9104d608a5d5826aa9b7d7f"
+        "note": "CI consolidate after model/data change (8df67c3b232cce7b537c1fc3b834c6905a175025)",
+        "git_commit_hash": "8df67c3b232cce7b537c1fc3b834c6905a175025"
       }
     },
     "project": {
