@@ -3,7 +3,7 @@ title: xFrame Present — Demo
 theme: light
 author: Exergy LLC
 header: xFrame Present
-footer: © Exergy ∞ LLC
+footer: © Exergy ∞ LLC @builddatetime
 data: ../consolidate/output/consolidated_data.json
 ---
 
