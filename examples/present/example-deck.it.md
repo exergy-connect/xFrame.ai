@@ -69,6 +69,17 @@ a ogni run CI).
 
 ---
 
+## Flusso di lavoro Present
+
+Come un deck Markdown diventa HTML autonomo: frammenti condivisi e dati
+consolidati vengono risolti in compilazione; PNG e SVG tracciati in git sono
+incorporati in base64. Gli script di manutenzione aggiornano snapshot e diagrammi
+in locale — non a ogni run CI.
+
+@include _shared/diagrams.md#present-workflow
+
+---
+
 ## Timeline di progetto
 
 Un grafico `timeline` sui dati consolidati `project`: una barra orizzontale

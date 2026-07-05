@@ -69,6 +69,16 @@ každém běhu CI).
 
 ---
 
+## Pracovní postup Present
+
+Jak se z Markdown decku stane samostatné HTML: sdílené fragmenty a konsolidovaná
+data se vyřeší při kompilaci; PNG a SVG v gitu se vloží jako base64. Skripty pro
+údržbu obnovují snímky a diagramy lokálně — ne při každém běhu CI.
+
+@include _shared/diagrams.md#present-workflow
+
+---
+
 ## Časové osy projektů
 
 Graf typu `timeline` nad konsolidovanými daty `project`: jeden horizontální

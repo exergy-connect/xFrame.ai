@@ -69,6 +69,17 @@ CI run).
 
 ---
 
+## Present workflow
+
+How a Markdown deck becomes standalone HTML: shared fragments and consolidated
+data are resolved at compile time; git-tracked PNG and SVG assets are embedded
+as base64. Maintainer scripts refresh snapshots and diagrams locally — not on
+every CI run.
+
+@include _shared/diagrams.md#present-workflow
+
+---
+
 ## Project timelines
 
 A `timeline` graph over the consolidated `project` data: one horizontal stacked

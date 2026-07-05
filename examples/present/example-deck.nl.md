@@ -69,6 +69,17 @@ pagina in een nieuw tabblad te openen. Vernieuw de PNG met `npm run snapshot` in
 
 ---
 
+## Present-workflow
+
+Hoe een Markdown-deck standalone HTML wordt: gedeelde fragmenten en
+geconsolideerde data worden bij compilatie opgelost; PNG- en SVG-bestanden in git
+worden als base64 ingebed. Maintainer-scripts vernieuwen snapshots en diagrammen
+lokaal — niet bij elke CI-run.
+
+@include _shared/diagrams.md#present-workflow
+
+---
+
 ## Projecttijdlijnen
 
 Een `timeline`-grafiek over de geconsolideerde `project`-data: één horizontale
