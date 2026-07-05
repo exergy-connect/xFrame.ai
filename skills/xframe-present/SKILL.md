@@ -81,6 +81,21 @@ Note: these are speaker notes (kept out of the visible slide)
 - **Header / footer layout** (optional): set `header` and/or `footer` in the front matter to give every slide a consistent framed layout — a **10%** header band (slide's own title on the left, the `header` text on the right), an **80%** content area, and a **10%** footer band (the `footer` text on the left, the slide number `n / total` on the right). The slide's first heading is lifted into the header band so it isn't duplicated in the body. Optional **`header-image`** (path to a git-tracked PNG/SVG) renders a logo and is embedded at compile time; **`header-image-alt`** sets the `<img alt>`; **`header-image-align`** (`left` or `right`, default `right`) places the logo on the left band or left of the header text on the right. Optional **`footer-image`** renders a logo left of the footer text and is embedded at compile time; **`footer-image-alt`** sets the `<img alt>`. If `header`, `footer`, `header-image`, and `footer-image` are all unset, slides use the default full-bleed layout.
 - **Slides** are separated by a line containing only `---` (three or more dashes). Empty slides are dropped.
 - **Speaker notes**: a line starting with `Note:` marks the rest of the slide as notes; they are embedded as an HTML comment, not shown on the slide.
+- **Column layout** (optional): put `@layout columns=N [ratio=w1/w2/…] [vertical-align=top|center|bottom]` on the first non-empty line of a slide body (after the heading, which is lifted into the header band when framed). Separate column content with `@column [vertical-align=top|center|bottom]` on its own line — the attribute applies to the column that **follows** the marker. Default vertical alignment is **`center`** for both `@layout` and each column. Example — two columns with a 0.9 / 1.25 width ratio:
+
+  ```markdown
+  ## Slide title
+
+  @layout columns=2 ratio=0.9/1.25 vertical-align=center
+
+  Left column markdown…
+
+  @column vertical-align=top
+
+  Right column markdown…
+  ```
+
+  `ratio` is optional (defaults to equal columns). The number of `@column`-delimited sections must match `columns`. Column CSS is embedded only when a deck uses `@layout`.
 - **Includes**: an `@include` directive on its own line inlines another file before slides are split. Paths resolve relative to the including file. Use `@include path/to/file.md#fragment-id` to pull a named fragment from a registry file (`<!-- @fragment id -->` … `<!-- @end -->`). Includes are recursive; missing files, missing fragments, and circular includes fail the build. Useful for sharing graph specs across locale-specific decks.
 - **Locale decks**: sibling files `{base}.md` and `{base}.{locale}.md` in the same directory are auto-detected; when two or more exist, a language switcher appears in the HUD (preserves `#slide` hash). Set front-matter `lang` for `<html lang="…">`. Compiling the **base** deck also compiles all locale siblings unless **`--skip-locales`** is passed. Branding fields (`theme`, `footer`, `header-image`, `data`, etc.) inherit from the base deck when omitted — locale files typically only need `title`, `lang`, and translated slide content. CSS is shared from the base deck — see **Styling & CSS**.
 - **Website snapshots**: `xframe-snapshot` fenced JSON with required `url` and git-tracked `image` (PNG path). Renders a clickable thumbnail that opens the URL in a new tab; PNG is embedded like any image. Refresh PNGs with `npm run snapshot -- <deck.md>` in `ts/present/` (Playwright maintainer script, not bundled). CI compiles only — does not re-capture.
