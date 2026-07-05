@@ -5,6 +5,7 @@ author: Exergy LLC
 header: xFrame Present
 header-image: exergy_connect_logo.png
 header-image-alt: Exergy Connect
+header-image-align: left
 footer: © Exergy ∞ LLC @builddatetime
 data: ../consolidate/output/consolidated_data.json
 lang: en
