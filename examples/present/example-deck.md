@@ -1,6 +1,6 @@
 ---
 title: xFrame Present — Demo
-theme: light
+theme: dark
 author: Exergy LLC
 header: xFrame Present
 header-image: exergy_connect_logo.png
@@ -9,6 +9,22 @@ header-image-align: left
 footer: © Exergy ∞ LLC @builddatetime
 data: ../consolidate/output/consolidated_data.json
 lang: en
+style:
+  primary_color: "#4682B4"
+  background_color: "#050a14"
+  slide_background: "#0f1724"
+  text_color: "#f5f7fa"
+  muted_color: "#8caad6"
+  border_color: "#1a2a44"
+  code_background: "#0d1520"
+  light:
+    primary_color: "#2563a8"
+    background_color: "#f4f6f9"
+    slide_background: "#ffffff"
+    text_color: "#050a14"
+    muted_color: "#3b5998"
+    border_color: "#c5d4e8"
+    code_background: "#eef2f7"
 ---
 
 # xFrame Present
