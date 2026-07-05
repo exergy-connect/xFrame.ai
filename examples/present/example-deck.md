@@ -4,6 +4,8 @@ theme: light
 author: Exergy LLC
 header: xFrame Present
 footer: © Exergy ∞ LLC @builddatetime
+footer-image: exergy_connect_logo.png
+footer-image-alt: Exergy Connect
 data: ../consolidate/output/consolidated_data.json
 lang: en
 ---
