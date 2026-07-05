@@ -10,7 +10,7 @@ lang: nl
 
 # xFrame Present
 
-Markdown omzetten naar zelfstandige HTML-dia's.
+Markdown omzetten naar zelfstandige HTML-slides.
 
 Gebruik `→` / `←` om te navigeren, druk op `t` om het thema te wisselen.
 
@@ -32,7 +32,7 @@ import { compile } from "xframe-present";
 const html = compile("# Hello\n---\n# World");
 ```
 
-> Alles wat Markdown kan, kan een dia tonen.
+> Alles wat Markdown kan, kan een slide tonen.
 
 Note: vermeld dat GFM-functies zoals tabellen en task lists ook werken.
 
