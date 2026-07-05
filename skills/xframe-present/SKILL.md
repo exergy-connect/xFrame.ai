@@ -96,6 +96,19 @@ Note: these are speaker notes (kept out of the visible slide)
   ```
 
   `ratio` is optional (defaults to equal columns). The number of `@column`-delimited sections must match `columns`. Column CSS is embedded only when a deck uses `@layout`.
+- **Column text margins**: prose columns get default margins (`left-margin: 2rem`, `top-margin: 2rem`). Override per column with `@text left-margin=<length> top-margin=<length>` on its own line (either margin may be omitted to keep the default for that axis). Gallery columns are not wrapped. Example override:
+
+  ```markdown
+  @layout columns=2 vertical-align=top
+
+  @text top-margin=1rem
+
+  Left column prose…
+
+  @column
+
+  Right column gallery or other content…
+  ```
 - **Slide-body alignment** (default): slides **without** any `@layout columns=…` line center the content block vertically and horizontally in the body (`vertical-align: center`, `horizontal-align: center`). Text and bullets remain left-aligned inside the block. Images are centered within the block. Override with `@layout vertical-align=top|center|bottom horizontal-align=left|center|right` anywhere in the slide body (no `columns=` required). Alignment positions the `.fit` block — never `text-align: center` on prose or lists. Column layouts keep their own alignment rules.
 - **Cover layout** (optional): put `@layout cover` anywhere in the slide body (after the heading, when framed). The slide uses a full-bleed body with no header/footer bands; content fills the slide area and **auto-fit scaling is skipped** (including in print/PDF). Use for title slides or other author-designed full-page layouts. Style the root element with `height: 100%` and flex/grid so content stays within the slide. Example:
 
