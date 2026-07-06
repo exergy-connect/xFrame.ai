@@ -49,7 +49,7 @@ node .cursor/skills/xframe-present/scripts/present.min.js <input.md> [options]
 | `--author <name>` | Author metadata (`<meta name="author">`). Overrides front-matter `author`. |
 | `--theme <name>` | Visual theme: `light` or `dark`. Overrides front-matter `theme`. Invalid values exit non-zero. |
 | `--data <url>` | URL or local path to a consolidated xFrame JSON data file. Overrides front-matter `data`. See **Consolidated data & graphs** below. |
-| `--skip-locales` | Compile only the requested deck. By default, compiling the base deck (`deck.md`) also compiles every locale sibling (`deck.cz.md`, …) into the same output directory. |
+| `--skip-locales` | Compile only the requested deck. By default, compiling the base deck (`deck.md`) also compiles every locale sibling (`deck.cz.md`, …) into the same output directory. **Always compile the base deck** — locale variants are built as part of that run, not by invoking present on `{base}.{locale}.md` individually. |
 | `--no-embed-images` | By default, images are inlined as base64 and CSS is embedded in HTML. Pass this flag (alias **`--no-embed`**) to keep original image `src` values and link **`presentation.css`** (+ locale/custom CSS when present) instead of inlining. CSS files are always written beside the HTML output. |
 | `--no-embed` | Alias for `--no-embed-images`. |
 | `-h, --help` | Show usage. |
@@ -120,7 +120,7 @@ Note: these are speaker notes (kept out of the visible slide)
   <div class="title-cover">…</div>
   ```
 - **Includes**: an `@include` directive on its own line inlines another file before slides are split. Paths resolve relative to the including file. Use `@include path/to/file.md#fragment-id` to pull a named fragment from a registry file (`<!-- @fragment id -->` … `<!-- @end -->`). Includes are recursive; missing files, missing fragments, and circular includes fail the build. Useful for sharing graph specs across locale-specific decks.
-- **Locale decks**: sibling files `{base}.md` and `{base}.{locale}.md` in the same directory are auto-detected; when two or more exist, a language switcher appears in the HUD (preserves `#slide` hash). Set front-matter `lang` for `<html lang="…">`. Compiling the **base** deck also compiles all locale siblings unless **`--skip-locales`** is passed. Branding fields (`theme`, `footer`, `header-image`, `data`, etc.) inherit from the base deck when omitted — locale files typically only need `title`, `lang`, and translated slide content. CSS is shared from the base deck — see **Styling & CSS**.
+- **Locale decks**: sibling files `{base}.md` and `{base}.{locale}.md` in the same directory are auto-detected; when two or more exist, a language switcher appears in the HUD (preserves `#slide` hash). Set front-matter `lang` for `<html lang="…">`. **Compile `{base}.md` only** — all locale siblings are built in the same pass unless **`--skip-locales`** is passed; do not run present on `{base}.{locale}.md` individually (that compiles a single variant and skips the rest). Branding fields (`theme`, `footer`, `header-image`, `data`, etc.) inherit from the base deck when omitted — locale files typically only need `title`, `lang`, and translated slide content. CSS is shared from the base deck — see **Styling & CSS**.
 - **Website snapshots**: `xframe-snapshot` fenced JSON with required `url` and git-tracked `image` (PNG path). Renders a clickable thumbnail that opens the URL in a new tab; PNG is embedded like any image. Refresh PNGs with `npm run snapshot -- <deck.md>` in `ts/present/` (Playwright maintainer script, not bundled). CI compiles only — does not re-capture.
 - **Mermaid diagrams**: `xframe-mermaid` fenced JSON with required `image` (SVG path) and exactly one of `source` (`.mmd` file) or `diagram` (inline text). Renders an embedded SVG diagram, click-to-zoom by default. Refresh SVGs with `npm run mermaid -- <deck.md>` in `ts/present/` (`@mermaid-js/mermaid-cli` maintainer script, not bundled). CI compiles only — does not re-render.
 - **Image galleries**: `xframe-gallery` fenced JSON with `"layout": "primary"`, a `primary` image object, and a non-empty `support` array. Renders one dominant image above a row of supporting thumbnails; the support column count follows `support.length`. Each image entry is `{ "src": <path>, "alt": <text>, "zoom": <bool> }`; `zoom` defaults to `true` (click-to-zoom lightbox). Image paths resolve relative to the deck directory and must exist at compile time.
@@ -257,6 +257,7 @@ my-talk/
 
 ### Agent pitfalls
 
+- **Compile the base deck** (`deck.md`), not locale variants (`deck.cz.md`) — locale HTML is produced when the base is compiled.
 - Never hand-edit `presentation.css` — use `style` front matter or `presentation.custom.css`.
 - Locale `style` does not affect template modules — only color variable overrides.
 - Recompiling a locale without `style` leaves a stale `presentation.{locale}.css` on disk (harmless; optional cleanup).
