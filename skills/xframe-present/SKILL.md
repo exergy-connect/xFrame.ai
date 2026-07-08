@@ -1,6 +1,6 @@
 ---
 name: xframe-present
-description: Compiles a Markdown presentation deck into HTML slides with generated CSS (presentation.css, optional locale/custom overrides), embedded or linked styles, offline JS, and PDF printing. Supports front matter (title/theme/author/style), slide separators, speaker notes, locale decks, and CLI overrides. Use when building slides, customizing presentation.css or presentation.custom.css, or running the present script.
+description: Compiles a Markdown presentation deck into HTML slides with generated CSS (presentation.css, optional locale/custom overrides), embedded or linked styles, offline JS, PDF printing, and optional PowerPoint (.pptx) export. Supports front matter (title/theme/author/style), slide separators, speaker notes, locale decks, Mermaid/snapshot images in PPTX, and CLI overrides. Use when building slides, customizing presentation.css or presentation.custom.css, exporting to PowerPoint, or running the present script.
 disable-model-invocation: true
 ---
 
@@ -17,6 +17,7 @@ Prints cleanly to PDF (one slide per page). Companion tool to **xframe-consolida
 - User wants to **customize slide colors**, **`presentation.css`**, or **`presentation.custom.css`**.
 - User has a `.md` file with `---` slide separators and wants a viewable HTML deck.
 - User wants a **self-contained**, offline, printable presentation artifact.
+- User wants **PowerPoint** / **.pptx** export from a Markdown deck.
 
 ## How to run
 
@@ -52,7 +53,20 @@ node .cursor/skills/xframe-present/scripts/present.min.js <input.md> [options]
 | `--skip-locales` | Compile only the requested deck. By default, compiling the base deck (`deck.md`) also compiles every locale sibling (`deck.cz.md`, …) into the same output directory. **Always compile the base deck** — locale variants are built as part of that run, not by invoking present on `{base}.{locale}.md` individually. |
 | `--no-embed-images` | By default, images are inlined as base64 and CSS is embedded in HTML. Pass this flag (alias **`--no-embed`**) to keep original image `src` values and link **`presentation.css`** (+ locale/custom CSS when present) instead of inlining. CSS files are always written beside the HTML output. |
 | `--no-embed` | Alias for `--no-embed-images`. |
+| `--pptx` | Also write a PowerPoint `.pptx` file beside the HTML output. |
+| `--pptx-only` | Write only `.pptx` (skip HTML). Use `-o` for the output path. |
 | `-h, --help` | Show usage. |
+
+### PowerPoint export
+
+```bash
+node skills/xframe-present/scripts/present.min.js deck.md --pptx-only -o deck.pptx
+```
+
+Mermaid (`xframe-mermaid`) and snapshot (`xframe-snapshot`) blocks embed their
+git-tracked SVG/PNG images. Column layouts, galleries, graphs, and embeds are
+skipped with warnings. Rebuild the minified skill bundle after changing PPTX code
+(`npm run bundle:skills` in `ts/present/`).
 
 ## Deck format
 
