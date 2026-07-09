@@ -27,6 +27,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  TZ: America/Chicago
   DATA: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
   PRESENT_OUT: examples/present/output
 
