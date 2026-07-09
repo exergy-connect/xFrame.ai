@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "timestamp": "2026-07-09T15:30:28Z",
+  "version": 2,
+  "timestamp": "2026-07-09T17:20:46Z",
   "model": {
     "name": "Subsea Tieback Portfolio",
     "version": "26.07.03.2",
@@ -25,6 +25,13 @@
         "author": "jbemmel",
         "note": "CI consolidate after model/data change (503e2d46c94d295b3a07880eb0c1b61be70d375c)",
         "git_commit_hash": "503e2d46c94d295b3a07880eb0c1b61be70d375c"
+      },
+      "000000000002": {
+        "id": 2,
+        "timestamp": "2026-07-09T17:20:46Z",
+        "author": "jbemmel",
+        "note": "(no change) CI consolidate after model/data change (a2b5fcaad5ba8c3a2dcf19f7dc0f682182a2733a)",
+        "git_commit_hash": "a2b5fcaad5ba8c3a2dcf19f7dc0f682182a2733a"
       }
     },
     "project": {
@@ -109,8 +116,7 @@
           }
         ],
         "c": 1,
-        "v": 1,
-        "f": 1
+        "v": 1
       },
       "Penguins": {
         "name": "Penguins",
@@ -172,8 +178,7 @@
           }
         ],
         "c": 1,
-        "v": 1,
-        "f": 1
+        "v": 1
       },
       "Kaikias": {
         "name": "Kaikias",
@@ -249,8 +254,7 @@
           }
         ],
         "c": 1,
-        "v": 1,
-        "f": 1
+        "v": 1
       }
     }
   }
