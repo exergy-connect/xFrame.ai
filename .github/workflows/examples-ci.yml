@@ -50,7 +50,7 @@ jobs:
         with:
           working-dir: examples/consolidate
           note: "CI consolidate after model/data change (${{ github.sha }})"
-          clean: "true"
+          clean: "false"
 
       - name: Prepare presentation output directory
         run: mkdir -p "$PRESENT_OUT"

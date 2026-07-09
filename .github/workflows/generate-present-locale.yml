@@ -120,6 +120,10 @@ jobs:
             fi
           }
 
+          if [[ -f "$PRESENT_OUT/${DECK_BASE}.locale.js" ]]; then
+            cp "$PRESENT_OUT/${DECK_BASE}.locale.js" "docs/examples/present/${DECK_BASE}.locale.js"
+          fi
+
           if [[ "$LOCALES" == "*" ]]; then
             for md in examples/present/${DECK_BASE}.*.md; do
               [[ -f "$md" ]] || continue
@@ -157,6 +161,11 @@ jobs:
               git add -f "$png"
             done
           }
+
+          path="docs/examples/present/${DECK_BASE}.locale.js"
+          if [[ -f "$path" ]]; then
+            git add -f "$path"
+          fi
 
           if [[ "$LOCALES" == "*" ]]; then
             for md in examples/present/${DECK_BASE}.*.md; do
