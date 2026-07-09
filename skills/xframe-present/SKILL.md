@@ -54,6 +54,7 @@ node .cursor/skills/xframe-present/scripts/present.min.js <input.md> [options]
 | `--generate-locales <codes>` | Generate locale deck siblings via OpenRouter before compile (`de,es,ja` or `*` for all existing siblings). Missing files are created; existing files are skipped unless `--overwrite` or `*` is used. Requires `OPENROUTER_API_KEY` or `--openrouter-api-key`. |
 | `--overwrite` | Force-regenerate locales listed in `--generate-locales` that already exist. |
 | `--openrouter-api-key <key>` | OpenRouter API key for `--generate-locales` (or set `OPENROUTER_API_KEY`). |
+| `--generate-locales-timeout <sec>` | OpenRouter translation timeout in seconds (default: 120). Override with `OPENROUTER_TIMEOUT_MS` (milliseconds). |
 | `--no-embed-images` | By default, images are inlined as base64 and CSS is embedded in HTML. Pass this flag (alias **`--no-embed`**) to keep original image `src` values and link **`presentation.css`** (+ locale/custom CSS when present) instead of inlining. CSS files are always written beside the HTML output. |
 | `--no-embed` | Alias for `--no-embed-images`. |
 | `--pptx` | Also write a PowerPoint `.pptx` file beside the HTML output. |
