@@ -1,0 +1,190 @@
+# Generate locale deck siblings via OpenRouter, compile HTML, and commit.
+name: Generate presentation locale
+
+on:
+  workflow_dispatch:
+    inputs:
+      locale:
+        description: Locale suffix or comma-separated list (e.g. de, es, ja). Use * alone to regenerate all existing siblings.
+        required: true
+        type: string
+      deck:
+        description: Base Markdown deck path (relative to repo root)
+        required: false
+        default: examples/present/example-deck.md
+        type: string
+      overwrite:
+        description: Regenerate even if the locale deck already exists
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: xframe-present-locale-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DATA: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
+  PRESENT_OUT: examples/present/output
+
+jobs:
+  generate-locale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate inputs and resolve paths
+        run: |
+          set -euo pipefail
+          locales="${{ inputs.locale }}"
+          if [[ "$locales" == *"*"* && "$locales" != "*" ]]; then
+            echo "::error::Cannot mix '*' with explicit locale codes."
+            exit 1
+          fi
+          if [[ "$locales" != "*" ]]; then
+            IFS=',' read -ra tokens <<< "${locales// /}"
+            if [[ ${#tokens[@]} -eq 0 || -z "${tokens[0]}" ]]; then
+              echo "::error::Provide at least one locale suffix."
+              exit 1
+            fi
+            for token in "${tokens[@]}"; do
+              if [[ ! "$token" =~ ^[A-Za-z0-9-]+$ ]]; then
+                echo "::error::Invalid locale suffix: $token"
+                exit 1
+              fi
+            done
+          fi
+          deck="${{ inputs.deck }}"
+          if [[ ! -f "$deck" ]]; then
+            echo "::error file=${deck}::Base deck not found"
+            exit 1
+          fi
+          base=$(basename "$deck" .md)
+          echo "DECK=$deck" >> "$GITHUB_ENV"
+          echo "DECK_BASE=$base" >> "$GITHUB_ENV"
+          echo "DECK_OUTPUT=$PRESENT_OUT/${base}.html" >> "$GITHUB_ENV"
+          echo "LOCALES=$locales" >> "$GITHUB_ENV"
+
+      - name: Check consolidated data
+        id: data
+        run: |
+          if [[ -f "$DATA" ]]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run xFrame consolidator
+        if: steps.data.outputs.exists != 'true'
+        uses: ./actions/consolidate
+        with:
+          working-dir: examples/consolidate
+          note: "CI consolidate for locale generation (${{ github.sha }})"
+          clean: "true"
+
+      - name: Prepare presentation output directory
+        run: mkdir -p "$PRESENT_OUT"
+
+      - name: Generate locale deck and compile presentations
+        uses: ./actions/present
+        with:
+          input: ${{ env.DECK }}
+          output: ${{ env.DECK_OUTPUT }}
+          data: ${{ env.DATA }}
+          generate-locales: ${{ inputs.locale }}
+          overwrite: ${{ inputs.overwrite && 'true' || 'false' }}
+          openrouter-api-token: ${{ secrets.OPENROUTER_API_KEY }}
+
+      - name: Sync published demos to docs/
+        run: |
+          set -euo pipefail
+          mkdir -p docs/examples/present
+          shopt -s nullglob
+
+          sync_locale() {
+            local loc="$1"
+            local html="$PRESENT_OUT/${DECK_BASE}.${loc}.html"
+            if [[ -f "$html" ]]; then
+              cp "$html" "docs/examples/present/$(basename "$html")"
+            fi
+          }
+
+          if [[ "$LOCALES" == "*" ]]; then
+            for md in examples/present/${DECK_BASE}.*.md; do
+              [[ -f "$md" ]] || continue
+              loc=$(basename "$md" .md)
+              loc="${loc#${DECK_BASE}.}"
+              sync_locale "$loc"
+            done
+          else
+            IFS=',' read -ra LOCALE_LIST <<< "${LOCALES// /}"
+            for loc in "${LOCALE_LIST[@]}"; do
+              [[ -n "$loc" ]] || continue
+              sync_locale "$loc"
+            done
+          fi
+
+      - name: Commit generated locale
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          shopt -s nullglob
+
+          stage_locale() {
+            local loc="$1"
+            local path
+            for path in \
+              "examples/present/${DECK_BASE}.${loc}.md" \
+              "docs/examples/present/${DECK_BASE}.${loc}.html"; do
+              [[ -f "$path" ]] || continue
+              git add -f "$path"
+            done
+            for png in examples/present/images/*.${loc}.png; do
+              [[ -f "$png" ]] || continue
+              git add -f "$png"
+            done
+          }
+
+          if [[ "$LOCALES" == "*" ]]; then
+            for md in examples/present/${DECK_BASE}.*.md; do
+              [[ -f "$md" ]] || continue
+              loc=$(basename "$md" .md)
+              loc="${loc#${DECK_BASE}.}"
+              stage_locale "$loc"
+            done
+          else
+            IFS=',' read -ra LOCALE_LIST <<< "${LOCALES// /}"
+            for loc in "${LOCALE_LIST[@]}"; do
+              [[ -n "$loc" ]] || continue
+              stage_locale "$loc"
+            done
+          fi
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit (locale may already exist; try overwrite: true)."
+            exit 0
+          fi
+
+          git commit -m "examples: add presentation locale(s) ${LOCALES} (workflow) [skip ci]"
+          for attempt in 1 2 3 4 5; do
+            if git push origin "${GITHUB_REF_NAME}"; then
+              echo "Pushed on attempt $attempt"
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt); rebasing on latest and retrying"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+          done
+          echo "Failed to push after multiple attempts" >&2
+          exit 1

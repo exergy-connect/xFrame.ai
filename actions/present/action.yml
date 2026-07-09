@@ -39,6 +39,21 @@ inputs:
     description: 'Set to `true` to pass `--skip-locales` (do not compile locale siblings).'
     required: false
     default: 'false'
+  generate-locales:
+    description: >-
+      Comma-separated locale codes to generate (`de,es,ja`), or `*` to regenerate all
+      existing locale siblings. Missing files are always created; existing files are
+      skipped unless overwrite is true or `*` is used.
+    required: false
+    default: ''
+  overwrite:
+    description: 'Set to `true` to pass `--overwrite` (force-regenerate listed locales that already exist).'
+    required: false
+    default: 'false'
+  openrouter-api-token:
+    description: OpenRouter API key (required when generate-locales is non-empty).
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -55,11 +70,18 @@ runs:
         DATA: ${{ inputs.data }}
         NO_EMBED: ${{ inputs.no-embed-images }}
         SKIP_LOCALES: ${{ inputs.skip-locales }}
+        GENERATE_LOCALES: ${{ inputs.generate-locales }}
+        OVERWRITE: ${{ inputs.overwrite }}
+        OPENROUTER_TOKEN: ${{ inputs.openrouter-api-token }}
       run: |
         set -euo pipefail
         script="${ACTION_PATH}/../../skills/xframe-present/scripts/present.min.js"
         if [[ ! -f "$script" ]]; then
           echo "::error file=${script}::Present script missing (expected bundled xframe-present asset)."
+          exit 1
+        fi
+        if [[ -n "${GENERATE_LOCALES}" && -z "${OPENROUTER_TOKEN}" ]]; then
+          echo "::error::openrouter-api-token is required when generate-locales is set"
           exit 1
         fi
         cmd=(node "$script" "$INPUT")
@@ -70,4 +92,7 @@ runs:
         [[ -n "${DATA}" ]] && cmd+=(--data "$DATA")
         [[ "${NO_EMBED}" == "true" ]] && cmd+=(--no-embed-images)
         [[ "${SKIP_LOCALES}" == "true" ]] && cmd+=(--skip-locales)
+        [[ -n "${GENERATE_LOCALES}" ]] && cmd+=(--generate-locales "${GENERATE_LOCALES}")
+        [[ "${OVERWRITE}" == "true" ]] && cmd+=(--overwrite)
+        [[ -n "${OPENROUTER_TOKEN}" ]] && export OPENROUTER_API_KEY="${OPENROUTER_TOKEN}"
         "${cmd[@]}"

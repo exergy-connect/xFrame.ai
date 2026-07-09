@@ -81,6 +81,14 @@ jobs:
             examples/consolidate/output/consolidated.schema.json \
             examples/consolidate/output/consolidated_data.json
           shopt -s nullglob
+          for md in examples/present/example-deck.*.md; do
+            [[ -f "$md" ]] || continue
+            git add -f "$md"
+          done
+          for png in examples/present/images/*.png; do
+            [[ -f "$png" ]] || continue
+            git add -f "$png"
+          done
           for html in "$PRESENT_OUT"/*.html; do
             base=$(basename "$html")
             [[ "$base" =~ ^example-deck(\.[A-Za-z0-9-]+)?\.html$ ]] || continue
