@@ -159,6 +159,23 @@ Note: these are speaker notes (kept out of the visible slide)
   ```
   ````
 
+- **Animated credits**: `xframe-credits` fenced JSON with a non-empty `entries` array of `{ "role", "name", "org"? }`. Optional `title`, `animation` (`scroll` | `sequence` | `fade` | `scatter`, default `scroll`), `speed` (seconds), and `size` (`small` | `medium` | `large`). Use `@layout cover` on a credits-only slide for a full-bleed movie-style end card; use `scatter` to reveal lines one by one at pseudo-random positions inside a container (e.g. a yellow horizon band). Animations restart when the slide becomes active.
+
+  ````markdown
+  @layout cover
+
+  ```xframe-credits
+  {
+    "title": "Credits",
+    "animation": "scroll",
+    "speed": 50,
+    "entries": [
+      { "role": "Project Manager", "name": "Paola Santoli" }
+    ]
+  }
+  ```
+  ````
+
 - **Local HTML embeds**: `xframe-embed` fenced JSON with required `src` (git-tracked HTML path relative to the deck). Inlines the fragment into a sandboxed iframe (`srcdoc`) at compile time for offline interactive slides. On framed slides, use the slide heading as the title — do not repeat it in the body or embed spec. Requires `filePath` when compiling.
 
   ````markdown
