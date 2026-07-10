@@ -176,13 +176,13 @@ Note: these are speaker notes (kept out of the visible slide)
   ```
   ````
 
-- **Local HTML embeds**: `xframe-embed` fenced JSON with required `src` (git-tracked HTML path relative to the deck). Inlines the fragment into a sandboxed iframe (`srcdoc`) at compile time for offline interactive slides. On framed slides, use the slide heading as the title — do not repeat it in the body or embed spec. Requires `filePath` when compiling.
+- **Local HTML embeds**: `xframe-embed` fenced JSON with required `src` (git-tracked HTML path relative to the deck). Default `mode` is `"iframe"` (sandboxed `srcdoc`); set `"mode": "inline"` to inject the fragment into the slide DOM for SharePoint and other hosts that block nested frames. On framed slides, use the slide heading as the title — do not repeat it in the body or embed spec. Requires `filePath` when compiling.
 
   ````markdown
   ## Partner Network
 
   ```xframe-embed
-  { "src": "widgets/network.html" }
+  { "src": "widgets/network.html", "mode": "inline" }
   ```
   ````
 
