@@ -1,5 +1,6 @@
 ---
 name: xframe-model
+disable-model-invocation: true
 description: Create or edit model and data files for xFrame consolidation. Use when authoring entity schemas, model YAML/JSON, data JSON, or any input to the xframe-consolidate skill.
 ---
 
