@@ -5358,6 +5358,16 @@ If the source language is "auto", detect it first. Preserve the original meaning
     }
     return value.trim();
   }
+  function isProxyPlaceholderApiKey(value) {
+    const key = value?.trim() ?? "";
+    return !key || key === "cloudflare-proxy";
+  }
+  function resolveProxyAuthorization(inviteToken, apiKey) {
+    const invite = inviteToken?.trim();
+    if (invite) return invite;
+    if (isProxyPlaceholderApiKey(apiKey)) return void 0;
+    return apiKey.trim();
+  }
   function resolveRuntimeTtsProvider(configured, apiKey, hasInvite = false) {
     const canUseGemini = Boolean(apiKey?.trim()) || hasInvite;
     if (configured === "auto") return canUseGemini ? "gemini" : "browser_native";
@@ -5480,38 +5490,38 @@ If the source language is "auto", detect it first. Preserve the original meaning
       return void 0;
     }
   }
+  function inviteCallsUsed(inviteId) {
+    const key = `xframe-present:invite:${inviteId}`;
+    try {
+      return Math.max(0, Number.parseInt(localStorage.getItem(key) ?? "0", 10) || 0);
+    } catch {
+      return 0;
+    }
+  }
   function runtimeInvite() {
     const token = inviteTokenFromQuery();
     if (!token) return void 0;
     const claims = parseInviteClaims(token);
     if (!claims) return void 0;
     const now = Math.floor(Date.now() / 1e3);
-    if (!Number.isInteger(claims.calls) || claims.calls < 1 || !Number.isFinite(claims.nbf) || !Number.isFinite(claims.exp) || now < claims.nbf || now >= claims.exp) return void 0;
+    if (!Number.isInteger(claims.calls) || claims.calls < 1 || !Number.isFinite(claims.nbf) || !Number.isFinite(claims.exp) || now < claims.nbf || now >= claims.exp || inviteCallsUsed(claims.id) >= claims.calls) return void 0;
     return { token, claims };
   }
   function inviteAuthorization() {
     const token = inviteTokenFromQuery();
     if (!token) return void 0;
     const claims = parseInviteClaims(token);
-    if (claims) {
-      const now = Math.floor(Date.now() / 1e3);
-      if (Number.isFinite(claims.nbf) && now < claims.nbf) {
-        throw new Error("This invitation is not active yet");
-      }
-      if (Number.isFinite(claims.exp) && now >= claims.exp) {
-        throw new Error("This invitation has expired");
-      }
-      if (Number.isInteger(claims.calls) && claims.calls >= 1) {
-        const key = `xframe-present:invite:${claims.id}`;
-        let used = 0;
-        try {
-          used = Math.max(0, Number.parseInt(localStorage.getItem(key) ?? "0", 10) || 0);
-        } catch {
-        }
-        if (used >= claims.calls) {
-          throw new Error(`This invitation's ${claims.calls} AI-call allowance has been used`);
-        }
-      }
+    if (!claims) return void 0;
+    const now = Math.floor(Date.now() / 1e3);
+    if (Number.isFinite(claims.nbf) && now < claims.nbf) {
+      throw new Error("This invitation is not active yet");
+    }
+    if (Number.isFinite(claims.exp) && now >= claims.exp) {
+      throw new Error("This invitation has expired");
+    }
+    if (!Number.isInteger(claims.calls) || claims.calls < 1) return void 0;
+    if (inviteCallsUsed(claims.id) >= claims.calls) {
+      throw new Error(`This invitation's ${claims.calls} AI-call allowance has been used`);
     }
     return token;
   }
@@ -5519,13 +5529,8 @@ If the source language is "auto", detect it first. Preserve the original meaning
     const invite = runtimeInvite();
     if (!invite) return;
     const key = `xframe-present:invite:${invite.claims.id}`;
-    let used = 0;
     try {
-      used = Math.max(0, Number.parseInt(localStorage.getItem(key) ?? "0", 10) || 0);
-    } catch {
-    }
-    try {
-      localStorage.setItem(key, String(used + 1));
+      localStorage.setItem(key, String(inviteCallsUsed(invite.claims.id) + 1));
     } catch {
     }
   }
@@ -5600,9 +5605,8 @@ If the source language is "auto", detect it first. Preserve the original meaning
     return field instanceof HTMLInputElement || field instanceof HTMLSelectElement ? field : null;
   }
   function usableGeminiApiKey(value) {
-    const key = value?.trim() ?? "";
-    if (!key || key === "cloudflare-proxy") return void 0;
-    return key;
+    if (isProxyPlaceholderApiKey(value)) return void 0;
+    return value.trim();
   }
   function applyByoaEndpointOption(baseUrl, model, apiKey) {
     if (!(baseUrl instanceof HTMLSelectElement)) return;
@@ -5739,8 +5743,18 @@ If the source language is "auto", detect it first. Preserve the original meaning
       throw new Error("Gemini TTS requires an API key (enter it in BYOA settings)");
     }
     const inviteToken = geminiKey ? void 0 : inviteAuthorization();
+    const proxyAuthorization = geminiKey ? void 0 : resolveProxyAuthorization(inviteToken, apiKey);
+    if (!geminiKey && !proxyAuthorization) {
+      const locale = textOption(options, "locale", "en-US");
+      const nativeGender = gender ?? "female";
+      return `xframe-native-speech:${encodeURIComponent(JSON.stringify({
+        text,
+        locale,
+        gender: nativeGender
+      }))}`;
+    }
     const result = await synthesizeGeminiTts(prompt, {
-      ...geminiKey ? { apiKey: geminiKey } : { proxyBaseUrl, proxyAuthorization: inviteToken },
+      ...geminiKey ? { apiKey: geminiKey } : { proxyBaseUrl, proxyAuthorization },
       model: ttsModel,
       voice: textOption(options, "voice"),
       gender,
@@ -5789,7 +5803,6 @@ If the source language is "auto", detect it first. Preserve the original meaning
       const started = Date.now();
       const config = resolveRuntimeLlmConfig(source);
       if (!config) throw new Error("Runtime LLM configuration is not available");
-      if (!config.apiKey.trim()) throw new Error("API key is required (enter it in BYOA settings)");
       if (!config.baseUrl.trim()) throw new Error("Endpoint is required (enter it in BYOA settings)");
       if (!config.model.trim()) throw new Error("Model is required (enter it in BYOA settings)");
       if (typeof promptPath !== "string" || !config.prompts[promptPath]) throw new Error(`Unknown LLM prompt "${String(promptPath)}" in runtime embed`);
@@ -5801,6 +5814,37 @@ If the source language is "auto", detect it first. Preserve the original meaning
       const responseFormat = options.response_format ?? config.responseFormats?.[promptPath];
       const context = typeof promptContext === "function" ? promptContext() : promptContext;
       const cache = options.cache === true || options.cache === "true";
+      const fallbackText = typeof options.fallback === "string" && options.fallback.trim() ? options.fallback : input;
+      let inviteToken;
+      try {
+        inviteToken = inviteAuthorization();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const fallback = llmFallbackOutput(fallbackText, mimeType);
+        console.warn("[xFrame] LLM skipped (invite not usable)", {
+          prompt: promptPath,
+          model,
+          mimeType,
+          ms: Date.now() - started,
+          error: message,
+          fallback: debugPreview(fallback)
+        });
+        notifyLlmError(message);
+        return fallback;
+      }
+      const bearer = resolveProxyAuthorization(inviteToken, config.apiKey);
+      if (!bearer) {
+        if (!config.apiKey.trim()) throw new Error("API key is required (enter it in BYOA settings)");
+        const fallback = llmFallbackOutput(fallbackText, mimeType);
+        console.warn("[xFrame] LLM skipped (signed proxy requires a valid invite)", {
+          prompt: promptPath,
+          model,
+          mimeType,
+          ms: Date.now() - started,
+          fallback: debugPreview(fallback)
+        });
+        return fallback;
+      }
       console.log("[xFrame] LLM start", {
         prompt: promptPath,
         model,
@@ -5808,6 +5852,7 @@ If the source language is "auto", detect it first. Preserve the original meaning
         mimeType,
         bypassCache,
         cache,
+        viaInvite: Boolean(inviteToken),
         responseFormat: responseFormatSummary(responseFormat),
         inputChars: input.length,
         input: debugPreview(input),
@@ -5885,10 +5930,9 @@ If the source language is "auto", detect it first. Preserve the original meaning
         }
       });
       try {
-        const inviteToken = inviteAuthorization();
         const response = await fetch(endpoint, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${inviteToken ?? config.apiKey}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${bearer}` },
           body: JSON.stringify(request)
         });
         if (!response.ok) {
@@ -5930,7 +5974,6 @@ If the source language is "auto", detect it first. Preserve the original meaning
         return output;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        const fallbackText = typeof options.fallback === "string" && options.fallback.trim() ? options.fallback : input;
         const fallback = llmFallbackOutput(fallbackText, mimeType);
         console.warn("[xFrame] LLM fallback", {
           prompt: promptPath,
@@ -6413,28 +6456,61 @@ If the source language is "auto", detect it first. Preserve the original meaning
         } else {
           const geminiKey = usableGeminiApiKey(llm?.apiKey);
           const proxyBaseUrl = !geminiKey && llm?.baseUrl ? llm.baseUrl : void 0;
-          if (!geminiKey && !proxyBaseUrl) {
-            throw new Error("Gemini TTS requires an API key (enter it in BYOA settings)");
-          }
           const inviteToken = geminiKey ? void 0 : inviteAuthorization();
-          const result = await synthesizeGeminiTts(text, {
-            ...geminiKey ? { apiKey: geminiKey } : { proxyBaseUrl, proxyAuthorization: inviteToken },
-            model: tts.model ?? GEMINI_TTS_MODEL,
-            gender,
-            locale: resolvedLocale,
-            onProgress: (progress) => {
-              if (button.dataset.xframeTtsBusy !== "true") return;
-              setSpeakButtonState(button, "generating", speakProgressLabel(progress));
+          const proxyAuthorization = geminiKey ? void 0 : resolveProxyAuthorization(inviteToken, llm?.apiKey);
+          if (!geminiKey && (!proxyBaseUrl || !proxyAuthorization)) {
+            console.debug("[xFrame] TTS falling back to browser_native (no Gemini key or invite)");
+            if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+              throw new Error("This browser does not support speech synthesis for narration.");
             }
-          });
-          if (inviteToken) commitInviteCall();
-          console.debug("[xFrame] TTS synthesize ok", {
-            voice: result.voice,
-            model: result.model,
-            mimeType: result.mimeType,
-            wavBytes: result.wav.byteLength
-          });
-          objectUrl = URL.createObjectURL(audioBlob(result.wav, result.mimeType));
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = resolvedLocale;
+            utter.voice = selectBrowserVoice(await browserVoices(), resolvedLocale, gender);
+            await new Promise((resolve, reject) => {
+              utter.onend = () => resolve();
+              utter.onerror = () => reject(new Error("Browser speech synthesis failed"));
+              speechSynthesis.cancel();
+              speechSynthesis.speak(utter);
+            });
+            delete button.dataset.xframeTtsBusy;
+            setSpeakButtonState(button, "ready");
+            return;
+          }
+          try {
+            const result = await synthesizeGeminiTts(text, {
+              ...geminiKey ? { apiKey: geminiKey } : { proxyBaseUrl, proxyAuthorization },
+              model: tts.model ?? GEMINI_TTS_MODEL,
+              gender,
+              locale: resolvedLocale,
+              onProgress: (progress) => {
+                if (button.dataset.xframeTtsBusy !== "true") return;
+                setSpeakButtonState(button, "generating", speakProgressLabel(progress));
+              }
+            });
+            if (inviteToken) commitInviteCall();
+            console.debug("[xFrame] TTS synthesize ok", {
+              voice: result.voice,
+              model: result.model,
+              mimeType: result.mimeType,
+              wavBytes: result.wav.byteLength
+            });
+            objectUrl = URL.createObjectURL(audioBlob(result.wav, result.mimeType));
+          } catch (geminiError) {
+            console.debug("[xFrame] Gemini TTS failed; falling back to browser_native", geminiError);
+            if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) throw geminiError;
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = resolvedLocale;
+            utter.voice = selectBrowserVoice(await browserVoices(), resolvedLocale, gender);
+            await new Promise((resolve, reject) => {
+              utter.onend = () => resolve();
+              utter.onerror = () => reject(new Error("Browser speech synthesis failed"));
+              speechSynthesis.cancel();
+              speechSynthesis.speak(utter);
+            });
+            delete button.dataset.xframeTtsBusy;
+            setSpeakButtonState(button, "ready");
+            return;
+          }
         }
         pauseNarrativeAudio(root2);
         const audio = mountNarrativeGeminiAudio(narrative, resolvedLocale, objectUrl, text);
