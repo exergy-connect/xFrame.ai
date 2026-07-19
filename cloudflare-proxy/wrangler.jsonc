@@ -18,7 +18,7 @@
   },
 
   "secrets": {
-    "required": ["GEMINI_API_KEY"]
+    "required": ["GEMINI_API_KEY", "INVITE_SIGNING_SECRET", "INVITE_ADMIN_SECRET"]
   }
   // Optional native rate limiting binding. Uncomment and tune for production.
   // "ratelimits": [

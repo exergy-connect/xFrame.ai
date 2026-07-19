@@ -1,4 +1,5 @@
 GEMINI_API_KEY=replace-me
+INVITE_SIGNING_SECRET=replace-with-a-long-random-signing-secret
+INVITE_ADMIN_SECRET=replace-with-a-separate-admin-secret
 # Optional: when set, requests must include a valid X-Turnstile-Token header.
 # TURNSTILE_SECRET_KEY=replace-me
-

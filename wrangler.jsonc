@@ -21,6 +21,6 @@
     "LIVE_TOKEN_NEW_SESSION_EXPIRE_MS": "60000"
   },
   "secrets": {
-    "required": ["GEMINI_API_KEY"]
+    "required": ["GEMINI_API_KEY", "INVITE_SIGNING_SECRET", "INVITE_ADMIN_SECRET"]
   }
 }

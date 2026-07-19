@@ -1,12 +1,61 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import worker, { geminiGenerationConfigFromResponseFormat } from "../src/index.js";
+import worker, { geminiGenerationConfigFromResponseFormat, signInvite, verifyInviteToken } from "../src/index.js";
 
 const env = {
   ALLOWED_ORIGINS: "https://resume.example",
   GEMINI_API_KEY: "secret-key",
   GEMINI_MODEL: "gemini-test",
 };
+
+test("signs and verifies time-limited invite claims", async () => {
+  const now = Date.now();
+  const claims = { v: 1, id: "invite-1", origin: "https://resume.example", nbf: Math.floor(now / 1000) - 1, exp: Math.floor(now / 1000) + 60, calls: 4 };
+  const token = await signInvite(claims, "signing-secret");
+  assert.deepEqual(await verifyInviteToken(token, "signing-secret", now), claims);
+  await assert.rejects(() => verifyInviteToken(`${token}x`, "signing-secret", now), /signature is invalid/);
+  await assert.rejects(() => verifyInviteToken(token, "signing-secret", now + 61_000), /expired/);
+});
+
+test("mints an invited presentation URL from the admin web API", async () => {
+  const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
+    body: JSON.stringify({
+      url: "https://resume.example/deck?theme=dark",
+      notBefore: "2026-07-19T12:00:00.000Z",
+      expiresAt: "2026-07-20T12:00:00.000Z",
+      calls: 7,
+    }),
+  }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+  assert.equal(response.status, 201);
+  const body = await response.json();
+  const invited = new URL(body.url);
+  assert.equal(invited.origin, "https://resume.example");
+  assert.equal(invited.searchParams.get("theme"), "dark");
+  assert.equal(invited.searchParams.get("xframe_invite"), body.token);
+  assert.equal(body.claims.calls, 7);
+});
+
+test("requires a valid signed invite for AI routes when invite protection is configured", async () => {
+  const protectedEnv = { ...env, INVITE_SIGNING_SECRET: "signing-secret" };
+  const missing = await worker.fetch(new Request("https://proxy.example/v1/chat/completions", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "gemini-test", messages: [{ role: "user", content: "Hello" }] }),
+  }), protectedEnv);
+  assert.equal(missing.status, 401);
+
+  const now = Math.floor(Date.now() / 1000);
+  const wrongOriginToken = await signInvite({ v: 1, id: "x", origin: "https://other.example", nbf: now - 1, exp: now + 60, calls: 1 }, "signing-secret");
+  const wrongOrigin = await worker.fetch(new Request("https://proxy.example/v1/chat/completions", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: `Bearer ${wrongOriginToken}` },
+    body: JSON.stringify({ model: "gemini-test", messages: [{ role: "user", content: "Hello" }] }),
+  }), protectedEnv);
+  assert.equal(wrongOrigin.status, 401);
+  assert.match((await wrongOrigin.json()).error.message, /origin/);
+});
 
 test("rejects requests from unapproved origins", async () => {
   const response = await worker.fetch(new Request("https://proxy.example/health", {

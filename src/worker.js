@@ -5,7 +5,7 @@
 import proxy from "../cloudflare-proxy/src/index.js";
 
 function isApiPath(pathname) {
-  return pathname === "/health" || pathname.startsWith("/v1/");
+  return pathname === "/health" || pathname === "/invite" || pathname.startsWith("/invite/") || pathname.startsWith("/v1/");
 }
 
 export default {

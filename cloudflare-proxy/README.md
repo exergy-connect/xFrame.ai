@@ -4,6 +4,8 @@ API module for [xFrame.ai](https://github.com/exergy-connect/xFrame.ai) that kee
 
 Endpoints (same origin as the deck, e.g. `https://xframe-ai.jvb127.workers.dev`):
 
+- `GET /invite`: admin web interface for minting signed presentation URLs.
+- `POST /invite/mint`: admin-secret-protected minting API. The signed token limits its presentation origin, activation/expiry window, and browser-enforced AI call allowance.
 - `POST /v1/chat/completions`: limited OpenAI-compatible chat for xFrame's runtime LLM and translation filters. Forwards `response_format` of type `json_object` / `json_schema` to Gemini structured outputs (`responseMimeType` + `responseJsonSchema`).
 - `POST /v1/audio/speech`: exact-recitation narration. Cascades Gemini 3.1 Flash TTS → Gemini 2.5 Flash TTS → Microsoft Edge Read Aloud (each Gemini free tier is ~10 RPD).
 - `POST /v1/live-token`: constrained, single-use ephemeral token for Gemini Live (conversational voice agents — not slide narration).
@@ -46,8 +48,14 @@ From the **repo root** (recommended):
 ```bash
 npx wrangler login
 npx wrangler secret put GEMINI_API_KEY
+npx wrangler secret put INVITE_SIGNING_SECRET
+npx wrangler secret put INVITE_ADMIN_SECRET
 npx wrangler deploy
 ```
+
+Open `/invite`, enter the target presentation URL, allowed time window, AI-call allowance, and `INVITE_ADMIN_SECRET`, then share the resulting URL. `INVITE_SIGNING_SECRET` enables invite enforcement on all `/v1/*` routes. Use separate, long random values for the two secrets. During migration, omitting `INVITE_SIGNING_SECRET` leaves the existing origin-based behavior in place.
+
+The proxy cryptographically enforces the signature, activation/expiry window, and presentation origin. The call allowance is intentionally loose: xFrame records each uncached AI request in that browser's `localStorage`. Clearing site data or switching browsers resets the local counter; use a Cloudflare rate-limit binding when a hard server-side quota is required.
 
 Point xFrame's runtime LLM base URL at the Worker origin with a `/v1` suffix, e.g. `https://xframe-ai.jvb127.workers.dev/v1`. The Worker ignores `Authorization`. Until xFrame gains an explicit proxy mode, its runtime validation still requires a non-empty API-key field; use a non-secret placeholder such as `cloudflare-proxy`, never the Gemini key.
 

@@ -13,6 +13,10 @@ const GEMINI_MALE_VOICES = new Set([
 
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+    if (request.method === "GET" && url.pathname === "/invite") {
+      return invitePage(request);
+    }
     const origin = request.headers.get("Origin");
     const cors = corsHeaders(origin, env.ALLOWED_ORIGINS);
 
@@ -25,7 +29,15 @@ export default {
       return jsonError(403, "Origin is not allowed");
     }
 
-    const url = new URL(request.url);
+    if (request.method === "POST" && url.pathname === "/invite/mint") {
+      try {
+        return await mintInvite(request, env, cors);
+      } catch (error) {
+        if (error instanceof ClientError) return jsonError(error.status, error.message, cors);
+        console.error("Invite minting failed", error instanceof Error ? error.message : String(error));
+        return jsonError(500, "Could not mint invite", cors);
+      }
+    }
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ ok: true }, 200, cors);
     }
@@ -38,6 +50,9 @@ export default {
 
     const turnstileError = await verifyTurnstile(request, env);
     if (turnstileError) return jsonError(403, turnstileError, cors);
+
+    const inviteError = await verifyInvite(request, env);
+    if (inviteError) return jsonError(401, inviteError, cors);
 
     try {
       if (url.pathname === "/v1/chat/completions") {
@@ -57,6 +72,118 @@ export default {
     }
   },
 };
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+function base64UrlEncode(value) {
+  const bytes = typeof value === "string" ? encoder.encode(value) : value;
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function base64UrlDecode(value) {
+  if (!/^[A-Za-z0-9_-]+$/.test(value)) throw new ClientError(401, "Invite token is malformed");
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  return Uint8Array.from(atob(padded), (char) => char.charCodeAt(0));
+}
+
+async function hmac(secret, value) {
+  const key = await crypto.subtle.importKey(
+    "raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"],
+  );
+  return new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(value)));
+}
+
+export async function signInvite(claims, secret) {
+  requireSecret(secret, "INVITE_SIGNING_SECRET");
+  const payload = base64UrlEncode(JSON.stringify(claims));
+  return `${payload}.${base64UrlEncode(await hmac(secret, payload))}`;
+}
+
+export async function verifyInviteToken(token, secret, now = Date.now()) {
+  requireSecret(secret, "INVITE_SIGNING_SECRET");
+  const [payload, signature, extra] = String(token || "").split(".");
+  if (!payload || !signature || extra) throw new ClientError(401, "Invite token is malformed");
+  const expected = await hmac(secret, payload);
+  const actual = base64UrlDecode(signature);
+  if (actual.length !== expected.length) throw new ClientError(401, "Invite token signature is invalid");
+  let mismatch = 0;
+  for (let i = 0; i < expected.length; i += 1) mismatch |= expected[i] ^ actual[i];
+  if (mismatch) throw new ClientError(401, "Invite token signature is invalid");
+  let claims;
+  try { claims = JSON.parse(decoder.decode(base64UrlDecode(payload))); }
+  catch { throw new ClientError(401, "Invite token payload is invalid"); }
+  const nowSeconds = Math.floor(now / 1000);
+  if (!Number.isInteger(claims.nbf) || nowSeconds < claims.nbf) throw new ClientError(401, "Invite is not active yet");
+  if (!Number.isInteger(claims.exp) || nowSeconds >= claims.exp) throw new ClientError(401, "Invite has expired");
+  if (!Number.isInteger(claims.calls) || claims.calls < 1) throw new ClientError(401, "Invite call allowance is invalid");
+  if (typeof claims.origin !== "string" || !claims.origin) throw new ClientError(401, "Invite origin is invalid");
+  return claims;
+}
+
+async function verifyInvite(request, env) {
+  if (!env.INVITE_SIGNING_SECRET) return null;
+  const authorization = request.headers.get("Authorization") || "";
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
+  if (!match) return "A signed invite token is required";
+  try {
+    const claims = await verifyInviteToken(match[1], env.INVITE_SIGNING_SECRET);
+    const origin = request.headers.get("Origin");
+    if (!origin || origin !== claims.origin) return "Invite is not valid for this origin";
+    return null;
+  } catch (error) {
+    return error instanceof Error ? error.message : "Invite token is invalid";
+  }
+}
+
+async function mintInvite(request, env, cors = {}) {
+  requireSecret(env.INVITE_ADMIN_SECRET, "INVITE_ADMIN_SECRET");
+  requireSecret(env.INVITE_SIGNING_SECRET, "INVITE_SIGNING_SECRET");
+  const supplied = request.headers.get("Authorization") || "";
+  if (supplied !== `Bearer ${env.INVITE_ADMIN_SECRET}`) throw new ClientError(401, "Admin secret is invalid");
+  const body = await readJson(request);
+  let target;
+  try { target = new URL(body.url); } catch { throw new ClientError(400, "url must be an absolute HTTP(S) URL"); }
+  if (!["http:", "https:"].includes(target.protocol)) throw new ClientError(400, "url must be an HTTP(S) URL");
+  const notBefore = Date.parse(body.notBefore);
+  const expiresAt = Date.parse(body.expiresAt);
+  if (!Number.isFinite(notBefore) || !Number.isFinite(expiresAt)) {
+    throw new ClientError(400, "notBefore and expiresAt must be valid dates");
+  }
+  if (expiresAt <= notBefore) throw new ClientError(400, "expiresAt must be after notBefore");
+  const maxWindow = positiveInt(env.INVITE_MAX_WINDOW_SECONDS, 30 * 24 * 60 * 60) * 1000;
+  if (expiresAt - notBefore > maxWindow) throw new ClientError(400, "Invite time window is too long");
+  const calls = Number(body.calls);
+  const maxCalls = positiveInt(env.INVITE_MAX_CALLS, 100);
+  if (!Number.isInteger(calls) || calls < 1 || calls > maxCalls) {
+    throw new ClientError(400, `calls must be between 1 and ${maxCalls}`);
+  }
+  const claims = {
+    v: 1,
+    id: crypto.randomUUID(),
+    origin: target.origin,
+    nbf: Math.floor(notBefore / 1000),
+    exp: Math.floor(expiresAt / 1000),
+    calls,
+  };
+  const token = await signInvite(claims, env.INVITE_SIGNING_SECRET);
+  target.searchParams.set("xframe_invite", token);
+  return json({ url: target.toString(), token, claims }, 201, cors);
+}
+
+function invitePage(request) {
+  const now = new Date();
+  const later = new Date(now.getTime() + 24 * 60 * 60_000);
+  const local = (date) => new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mint xFrame invite</title><style>
+body{font:16px system-ui,sans-serif;max-width:44rem;margin:3rem auto;padding:0 1rem;color:#172033}form{display:grid;gap:1rem}label{display:grid;gap:.35rem;font-weight:650}input,button{font:inherit;padding:.7rem;border:1px solid #aab3c3;border-radius:.45rem}button{background:#2959c8;color:#fff;border:0;font-weight:700;cursor:pointer}output{display:block;margin-top:1.5rem;padding:1rem;background:#f3f6fb;border-radius:.5rem;overflow-wrap:anywhere}small{color:#596579}</style></head><body>
+<h1>Mint an invited URL</h1><p>Create a signed link that activates runtime AI only during its time window. Call usage is loosely enforced by the recipient's browser cache.</p>
+<form id="mint"><label>Presentation URL<input name="url" type="url" required placeholder="https://example.com/deck"></label><label>Active from<input name="notBefore" type="datetime-local" required value="${local(now)}"></label><label>Expires at<input name="expiresAt" type="datetime-local" required value="${local(later)}"></label><label>Maximum AI calls<input name="calls" type="number" min="1" value="10" required></label><label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label><button>Mint URL</button></form><output id="result" hidden></output>
+<script>document.querySelector('#mint').addEventListener('submit',async(e)=>{e.preventDefault();const f=new FormData(e.currentTarget),o=document.querySelector('#result');o.hidden=false;o.textContent='Minting…';try{const r=await fetch('/invite/mint',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+f.get('secret')},body:JSON.stringify({url:f.get('url'),notBefore:new Date(f.get('notBefore')).toISOString(),expiresAt:new Date(f.get('expiresAt')).toISOString(),calls:Number(f.get('calls'))})});const b=await r.json();if(!r.ok)throw new Error(b.error?.message||'Request failed');o.innerHTML='<strong>Invited URL</strong><br><a rel="noreferrer" href="'+b.url.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">'+b.url.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</a><br><small>Copy this link. The token is a credential.</small>'}catch(x){o.textContent=x.message}});</script></body></html>`;
+  return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+}
 
 export async function chatCompletions(request, env, cors = {}) {
   requireSecret(env.GEMINI_API_KEY, "GEMINI_API_KEY");
