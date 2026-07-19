@@ -1,0 +1,4 @@
+GEMINI_API_KEY=replace-me
+# Optional: when set, requests must include a valid X-Turnstile-Token header.
+# TURNSTILE_SECRET_KEY=replace-me
+

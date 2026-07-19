@@ -70,6 +70,10 @@ The live site ([exergy-connect.github.io/xFrame.ai](https://exergy-connect.githu
 | `goa_field_of_dreams.html` | `/goa_field_of_dreams.html` |
 | `LICENSE` | `/LICENSE` |
 
+## Cloudflare Gemini proxy
+
+[`cloudflare-proxy/`](cloudflare-proxy/) is a Cloudflare Worker that keeps the Gemini API key off the client for xFrame Present runtime LLM and Live TTS. See [cloudflare-proxy/README.md](cloudflare-proxy/README.md) for local setup and deploy. CI deploys on changes via [`.github/workflows/deploy-cloudflare-proxy.yml`](.github/workflows/deploy-cloudflare-proxy.yml) when `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are configured.
+
 ## GitHub Actions
 
 This repo publishes two **composite** actions that wrap the bundled minified scripts under `skills/`. **Node.js ≥18** is required on the job runner (`ubuntu-latest` includes a suitable Node). Pin a branch, tag, or SHA (for example `@main`).
