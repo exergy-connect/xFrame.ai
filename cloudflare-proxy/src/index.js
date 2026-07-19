@@ -59,7 +59,7 @@ export async function chatCompletions(request, env, cors = {}) {
     throw new ClientError(400, `Only model ${configuredModel} is allowed`);
   }
 
-  const maxChars = positiveInt(env.MAX_INPUT_CHARS, 20_000);
+  const maxChars = positiveInt(env.MAX_INPUT_CHARS, 30_000);
   const messages = normalizeMessages(body.messages, maxChars);
   const systemText = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
   const contents = messages.filter((m) => m.role !== "system").map((message) => ({
@@ -150,7 +150,7 @@ function normalizeMessages(messages, maxChars) {
       throw new ClientError(400, "Each message needs a supported role and string content");
     }
     total += message.content.length;
-    if (total > maxChars) throw new ClientError(413, `Message content exceeds ${maxChars} characters`);
+    if (total > maxChars) throw new ClientError(413, `Message content exceeds ${maxChars} characters (got ${total})`);
     return { role: message.role, content: message.content };
   });
 }
