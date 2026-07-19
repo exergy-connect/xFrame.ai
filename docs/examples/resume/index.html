@@ -151,6 +151,21 @@ img[data-click-to-zoom="true"] { cursor: zoom-in; }
 .xframe-button-control[data-align="end"] { align-self: flex-end; }
 .xframe-button-control[data-align="stretch"] { align-self: stretch; }
 .xframe-button-control:disabled { opacity: .55; cursor: default; }
+#xframe { overflow: visible; }
+.xframe-ai-index-control { position: absolute; top: 0; right: calc(100% + .85rem); z-index: 30; box-sizing: border-box; width: min(13.5rem, 18vw); max-height: 100%; overflow: auto; padding: .65rem .7rem; border: 1px solid var(--border); border-radius: .75rem; background: color-mix(in srgb, var(--surface-bg) 92%, transparent); color: var(--fg); box-shadow: 0 .45rem 1.25rem rgb(20 40 70 / 10%); backdrop-filter: blur(8px); font: inherit; }
+.xframe-ai-index-heading { margin: 0 0 .55rem; color: var(--muted); font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.xframe-ai-index-list { display: grid; gap: .35rem; margin: 0; padding: 0; list-style: none; counter-reset: xframe-ai-index-step; }
+.xframe-ai-index-list > li { position: relative; counter-increment: xframe-ai-index-step; }
+.xframe-ai-index-list > li:not(:last-child)::after { content: ""; position: absolute; left: .85rem; top: 2.05rem; bottom: -.35rem; width: 1px; background: color-mix(in srgb, var(--border) 80%, transparent); }
+.xframe-ai-index-step { display: grid; grid-template-columns: 1.7rem minmax(0, 1fr); column-gap: .45rem; align-items: start; width: 100%; margin: 0; padding: .35rem .4rem; border: 1px solid transparent; border-radius: .55rem; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.xframe-ai-index-step::before { content: counter(xframe-ai-index-step); display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border)); background: color-mix(in srgb, var(--accent) 10%, var(--surface-bg)); color: var(--fg); font-size: .78rem; font-weight: 700; line-height: 1; }
+.xframe-ai-index-step:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.xframe-ai-index-step.is-current { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); background: color-mix(in srgb, var(--accent) 14%, var(--surface-bg)); }
+.xframe-ai-index-step.is-current::before { border-color: var(--accent); background: var(--accent); color: #fff; }
+.xframe-ai-index-label, .xframe-ai-index-aspect { grid-column: 2; min-width: 0; }
+.xframe-ai-index-label { color: var(--fg); font-size: .86rem; font-weight: 650; line-height: 1.25; }
+.xframe-ai-index-aspect { margin-top: .12rem; color: var(--muted); font-size: .74rem; line-height: 1.3; }
+@media (max-width: 1100px) { .xframe-ai-index-control { right: auto; left: 0; top: calc(100% + 4.25rem); width: min(22rem, calc(100vw - 2rem)); max-height: 10rem; } }
 @keyframes xframe-llm-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.42; }
@@ -486,139 +501,6 @@ img[data-click-to-zoom="true"] { cursor: zoom-in; }
 #tailored [data-xframe-variable-bind][data-xframe-llm-pending="true"]:not(:empty) {
   opacity: 0.55;
 }
-
-/* Suggested path — persistent rail beside the slide canvas */
-#xframe {
-  overflow: visible;
-}
-
-.resume-suggest-path {
-  position: absolute;
-  top: 0;
-  right: calc(100% + 0.85rem);
-  z-index: 30;
-  box-sizing: border-box;
-  width: min(13.5rem, 18vw);
-  max-height: 100%;
-  overflow: auto;
-  padding: 0.65rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--surface-bg) 92%, transparent);
-  box-shadow: 0 0.45rem 1.25rem rgba(20, 40, 70, 0.1);
-  backdrop-filter: blur(8px);
-}
-
-.resume-suggest-path-heading {
-  margin: 0 0 0.55rem;
-  color: var(--muted);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.resume-suggest-path-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.35rem;
-  counter-reset: suggest-step;
-}
-
-.resume-suggest-path-list > li {
-  position: relative;
-  counter-increment: suggest-step;
-}
-
-.resume-suggest-path-list > li:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  left: 0.85rem;
-  top: 2.05rem;
-  bottom: -0.35rem;
-  width: 1px;
-  background: color-mix(in srgb, var(--border) 80%, transparent);
-}
-
-.resume-suggest-path-step {
-  display: grid;
-  grid-template-columns: 1.7rem minmax(0, 1fr);
-  column-gap: 0.45rem;
-  align-items: start;
-  width: 100%;
-  margin: 0;
-  padding: 0.35rem 0.4rem;
-  border: 1px solid transparent;
-  border-radius: 0.55rem;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.resume-suggest-path-step::before {
-  content: counter(suggest-step);
-  display: grid;
-  place-items: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
-  background: color-mix(in srgb, var(--accent) 10%, var(--surface-bg));
-  color: var(--fg);
-  font-size: 0.78rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.resume-suggest-path-step:hover {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-}
-
-.resume-suggest-path-step.is-current {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  background: color-mix(in srgb, var(--accent) 14%, var(--surface-bg));
-}
-
-.resume-suggest-path-step.is-current::before {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-
-.resume-suggest-path-label,
-.resume-suggest-path-aspect {
-  grid-column: 2;
-  min-width: 0;
-}
-
-.resume-suggest-path-label {
-  color: var(--fg);
-  font-size: 0.86rem;
-  font-weight: 650;
-  line-height: 1.25;
-}
-
-.resume-suggest-path-aspect {
-  margin-top: 0.12rem;
-  color: var(--muted);
-  font-size: 0.74rem;
-  line-height: 1.3;
-}
-
-@media (max-width: 1100px) {
-  .resume-suggest-path {
-    right: auto;
-    left: 0;
-    top: calc(100% + 4.25rem);
-    width: min(22rem, calc(100vw - 2rem));
-    max-height: 10rem;
-  }
-}
 </style>
 
 </head>
@@ -843,144 +725,14 @@ img[data-click-to-zoom="true"] { cursor: zoom-in; }
     <p>A default guidance is pre-filled below. Edit it to match your context and priorities — the role, problem space, or capabilities you want to evaluate — then apply it to generate a tailored overview and suggested path.</p>
     <label class="xframe-input-control" data-xframe-control="input">
   <span class="xframe-input-control-label">Guidance for this conversation</span>
-  <textarea data-xframe-input placeholder="" aria-label="Guidance for this conversation">I want to understand how Jeroen approaches complex technical problems and what kind of systems architect he is today. Please guide me through the experience most relevant to evaluating him for senior technical architecture, systems engineering, infrastructure, networking, or AI systems roles. I am particularly interested in how he has helped organizations adopt new technologies and move them from experimental or manually operated systems toward structured, repeatable, and sustainable operation. Look for evidence of architectural judgment, hands-on engineering depth, customer and organizational adoption, automation, model-driven systems, and the ability to make complex technology operational in the real world. Do not simply present his career chronologically. Instead, identify the strongest evidence for these capabilities and show me the most relevant path through the presentation. I want to explore the presentation based on what I am trying to understand, rather than simply follow a chronological career history.</textarea>
+  <textarea id="xframe-input-guidance" name="guidance" data-xframe-input placeholder="" aria-label="Guidance for this conversation">I want to understand how Jeroen approaches complex technical problems and what kind of systems architect he is today. Please guide me through the experience most relevant to evaluating him for senior technical architecture, systems engineering, infrastructure, networking, or AI systems roles. I am particularly interested in how he has helped organizations adopt new technologies and move them from experimental or manually operated systems toward structured, repeatable, and sustainable operation. Look for evidence of architectural judgment, hands-on engineering depth, customer and organizational adoption, automation, model-driven systems, and the ability to make complex technology operational in the real world. Do not simply present his career chronologically. Instead, identify the strongest evidence for these capabilities and show me the most relevant path through the presentation. I want to explore the presentation based on what I am trying to understand, rather than simply follow a chronological career history.</textarea>
 </label>
     <button type="button" class="xframe-button-control" data-xframe-control="button" data-xframe-action="generate-journey" data-align="center">Apply guidance</button>
+    <aside class="xframe-ai-index-control" data-xframe-control="ai-index" data-variable-id="xframe-variable-tailored_narrative" data-target-id="tailored" data-action="generate-journey" data-input-id="xframe-input-guidance" data-baseline="baseline_narrative" aria-label="Suggested path" hidden>
+  <p class="xframe-ai-index-heading">Suggested path</p>
+  <ol class="xframe-ai-index-list" data-xframe-ai-index-results aria-live="polite"></ol>
+</aside>
     
-    <script>(() => {
-  const root = document.getElementById("xframe");
-  if (!(root instanceof HTMLElement)) return;
-
-  const TAILORED_INDEX = 2;
-  const TAILORED_HASH = `#${TAILORED_INDEX + 1}`;
-
-  function decodeJson(raw) {
-    try {
-      return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(raw || ""), (c) => c.charCodeAt(0))));
-    } catch {
-      return null;
-    }
-  }
-
-  function notesText() {
-    const input = root.querySelector("[data-xframe-control='input'] [data-xframe-input]");
-    if (!(input instanceof HTMLTextAreaElement)) return "";
-    return input.value.trim();
-  }
-
-  function preferredLanguage() {
-    const locale = root.dataset.narrationLocale || root.dataset.narrationLanguage || "en-US";
-    const language = locale.split("-")[0] || "en";
-    return { locale, language };
-  }
-
-  function languageDisplayName(locale) {
-    try {
-      return new Intl.DisplayNames(["en"], { type: "language" }).of(locale.split("-")[0] || locale) || locale;
-    } catch {
-      return locale;
-    }
-  }
-
-  function baselineNarrative() {
-    try {
-      const ctx = decodeJson(root.dataset.xframeTemplateContext);
-      return String(ctx?.baseline_narrative || "").trim();
-    } catch {
-      return "";
-    }
-  }
-
-  function adaptationContext() {
-    const { locale, language } = preferredLanguage();
-    const preferred = languageDisplayName(locale);
-    const viewer_notes = notesText();
-    const baseline = baselineNarrative();
-    const adaptation_input = [
-      "## Baseline narrative",
-      baseline,
-      "",
-      "## Viewer context",
-      `Notes: ${viewer_notes || "(not provided)"}`,
-      `Preferred language: ${preferred} (${locale})`,
-      language.toLowerCase() === "en"
-        ? "Keep the narration in English."
-        : `Rewrite the narration in ${preferred}.`,
-    ].join("\n");
-    return {
-      adaptation_input,
-      viewer_notes,
-      baseline_narrative: baseline,
-      target_language: preferred,
-      target_locale: locale,
-      voice_language: language,
-    };
-  }
-
-  let tailoredSyncTimer = 0;
-  function syncTailoredNarrative(refresh = false) {
-    const target = document.querySelector("#tailored [data-xframe-variable]");
-    if (!(target instanceof HTMLElement)) return;
-    const context = adaptationContext();
-    // Coalesce bursty slide/activation events into one render.
-    window.clearTimeout(tailoredSyncTimer);
-    tailoredSyncTimer = window.setTimeout(() => {
-      target.dispatchEvent(new CustomEvent("xframe:render-template", {
-        bubbles: true,
-        detail: { context, refresh },
-      }));
-    }, refresh ? 0 : 50);
-  }
-
-  // Refresh control otherwise re-renders without viewer notes — keep guidance attached.
-  root.addEventListener("click", (event) => {
-    const button = event.target instanceof Element
-      ? event.target.closest("[data-xframe-llm-refresh]")
-      : null;
-    if (!(button instanceof HTMLButtonElement) || !root.contains(button)) return;
-    const variable = button.closest(".xframe-llm-refresh-group")
-      ?.querySelector("[data-xframe-variable]");
-    if (!(variable instanceof HTMLElement) || variable.dataset.xframeVariable !== "tailored_narrative") {
-      return;
-    }
-    event.preventDefault();
-    event.stopPropagation();
-    syncTailoredNarrative(true);
-  }, true);
-
-  function goToTailoredAndGenerate() {
-    const tailoredActive = Boolean(root.querySelector("#tailored.segment.active"));
-    if (tailoredActive) {
-      syncTailoredNarrative(true);
-      return;
-    }
-    const onArrive = (event) => {
-      const index = event instanceof CustomEvent ? Number(event.detail?.index) : -1;
-      if (index !== TAILORED_INDEX) return;
-      root.removeEventListener("xframe:slidechange", onArrive);
-      syncTailoredNarrative(true);
-    };
-    root.addEventListener("xframe:slidechange", onArrive);
-    if (location.hash !== TAILORED_HASH) location.hash = TAILORED_HASH;
-    else {
-      // Already hashed to tailored but slide not active yet — force hashchange.
-      window.dispatchEvent(new HashChangeEvent("hashchange"));
-    }
-  }
-
-  root.addEventListener("click", (event) => {
-    const button = event.target instanceof Element
-      ? event.target.closest("[data-xframe-control='button'][data-xframe-action='generate-journey']")
-      : null;
-    if (!(button instanceof HTMLButtonElement) || !root.contains(button)) return;
-    event.preventDefault();
-    goToTailoredAndGenerate();
-  });
-
-  root.addEventListener("xframe:languagechange", () => {
-    if (root.querySelector("#tailored.segment.active")) syncTailoredNarrative(true);
-  });
-})();</script>
   </div>
   </div>
   </div>
@@ -1002,103 +754,8 @@ img[data-click-to-zoom="true"] { cursor: zoom-in; }
     <h1>RÉSUMÉ · SYSTEMS ARCHITECT</h1>
     <h2>Jeroen van Bemmel</h2>
     <h3>Bridging the gap between innovation and operations by turning complex, emerging technologies into reliable, sustainable production systems</h3>
-    <span class="xframe-llm-refresh-group"><span hidden data-xframe-variable="tailored_narrative" data-xframe-template="e3sgYWRhcHRhdGlvbl9pbnB1dCB8IGRlZmF1bHQoYmFzZWxpbmVfbmFycmF0aXZlKSB8IGxsbSgicHJvbXB0cy9hZGFwdC10aXRsZS1uYXJyYXRpdmUubWQiLCBtaW1lX3R5cGU9ImFwcGxpY2F0aW9uL2pzb24iLCBjYWNoZT10cnVlLCBldmFsdWF0aW9uPSJkeW5hbWljIiwgbWFudWFsPXRydWUsIHJlZnJlc2hfY29udHJvbD10cnVlLCBmYWxsYmFjaz1iYXNlbGluZV9uYXJyYXRpdmUpIH19"></span><button class="xframe-llm-refresh-control" type="button" data-xframe-llm-refresh aria-label="Refresh value" title="Refresh value">↻</button></span>
+    <span class="xframe-llm-refresh-group"><span id="xframe-variable-tailored_narrative" hidden data-xframe-variable="tailored_narrative" data-xframe-template="e3sgYWRhcHRhdGlvbl9pbnB1dCB8IGRlZmF1bHQoYmFzZWxpbmVfbmFycmF0aXZlKSB8IGxsbSgicHJvbXB0cy9hZGFwdC10aXRsZS1uYXJyYXRpdmUubWQiLCBtaW1lX3R5cGU9ImFwcGxpY2F0aW9uL2pzb24iLCBjYWNoZT10cnVlLCBldmFsdWF0aW9uPSJkeW5hbWljIiwgbWFudWFsPXRydWUsIHJlZnJlc2hfY29udHJvbD10cnVlLCBmYWxsYmFjaz1iYXNlbGluZV9uYXJyYXRpdmUpIH19"></span><button class="xframe-llm-refresh-control" type="button" data-xframe-llm-refresh data-xframe-template-target="xframe-variable-tailored_narrative" aria-label="Refresh value" title="Refresh value">↻</button></span>
     <p data-xframe-variable-bind="tailored_narrative"></p>
-    <script>(() => {
-  const root = document.getElementById("xframe");
-  if (!(root instanceof HTMLElement)) return;
-
-  const PATH_ATTR = "data-resume-suggest-path";
-  let path = root.querySelector(`[${PATH_ATTR}]`);
-  if (!(path instanceof HTMLElement)) {
-    path = document.createElement("aside");
-    path.className = "resume-suggest-path";
-    path.setAttribute(PATH_ATTR, "true");
-    path.setAttribute("aria-label", "Suggested navigation path");
-    path.hidden = true;
-    root.appendChild(path);
-  }
-
-  const hashForIndex = (index) => `#${index + 1}`;
-
-  const syncCurrent = (index) => {
-    const currentHash = hashForIndex(index);
-    path.querySelectorAll("[data-suggest-href]").forEach((node) => {
-      if (!(node instanceof HTMLElement)) return;
-      const active = node.dataset.suggestHref === currentHash;
-      node.classList.toggle("is-current", active);
-      if (active) node.setAttribute("aria-current", "step");
-      else node.removeAttribute("aria-current");
-    });
-  };
-
-  const renderPath = (structured) => {
-    const links = Array.isArray(structured?.links) ? structured.links : [];
-    path.replaceChildren();
-    if (!links.length) {
-      path.hidden = true;
-      return;
-    }
-
-    const heading = document.createElement("p");
-    heading.className = "resume-suggest-path-heading";
-    heading.textContent = "Suggested path";
-    path.appendChild(heading);
-
-    const list = document.createElement("ol");
-    list.className = "resume-suggest-path-list";
-    for (const entry of links) {
-      const href = typeof entry?.href === "string" ? entry.href.trim() : "";
-      const label = typeof entry?.label === "string" ? entry.label.trim() : "";
-      const aspect = typeof entry?.aspect === "string" ? entry.aspect.trim() : "";
-      if (!href || !label) continue;
-
-      const item = document.createElement("li");
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "resume-suggest-path-step";
-      button.dataset.suggestHref = href;
-      button.title = aspect || label;
-
-      const name = document.createElement("span");
-      name.className = "resume-suggest-path-label";
-      name.textContent = label;
-      button.appendChild(name);
-      if (aspect) {
-        const note = document.createElement("span");
-        note.className = "resume-suggest-path-aspect";
-        note.textContent = aspect;
-        button.appendChild(note);
-      }
-      button.addEventListener("click", () => {
-        if (location.hash !== href) location.hash = href;
-      });
-      item.appendChild(button);
-      list.appendChild(item);
-    }
-    if (!list.childElementCount) {
-      path.hidden = true;
-      return;
-    }
-    path.appendChild(list);
-    path.hidden = false;
-
-    const active = root.querySelector(".segment.active");
-    const index = active instanceof HTMLElement ? Number(active.dataset.index) : Number.NaN;
-    if (Number.isFinite(index)) syncCurrent(index);
-  };
-
-  root.addEventListener("xframe:variablechange", (event) => {
-    const detail = event instanceof CustomEvent ? event.detail : null;
-    if (detail?.name !== "tailored_narrative") return;
-    renderPath(detail.structured);
-  });
-
-  root.addEventListener("xframe:slidechange", (event) => {
-    const index = event instanceof CustomEvent ? Number(event.detail?.index) : Number.NaN;
-    if (Number.isFinite(index)) syncCurrent(index);
-  });
-})();</script>
   </div>
 <div class="layout-container layout-stack" data-layout-direction="vertical" style="gap: 1rem; align-items: stretch; --layout-weight: 1; --layout-shrink: 1; --layout-basis: 0%">
     <div class="region horizontal-split-image" data-region="image" style="--layout-weight: 0; --layout-shrink: 0; --layout-basis: auto">
@@ -1599,6 +1256,126 @@ img[data-click-to-zoom="true"] { cursor: zoom-in; }
     overlay.hidden = false;
   });
   window.addEventListener("keydown", (event) => { if (event.key === "Escape" && !overlay.hidden) close(); });
+})();
+</script>
+
+<script>
+(() => {
+  if (window.__xframeAiIndexScheduled) return;
+  window.__xframeAiIndexScheduled = true;
+  const initialize = () => {
+    const root = document.getElementById("xframe");
+    if (!root) return;
+    const decodeJson = (raw) => {
+      try { return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(raw || ""), (c) => c.charCodeAt(0)))); }
+      catch { return null; }
+    };
+    const languageDisplayName = (locale) => {
+      try { return new Intl.DisplayNames(["en"], { type: "language" }).of(locale.split("-")[0] || locale) || locale; }
+      catch { return locale; }
+    };
+    root.querySelectorAll("[data-xframe-control='ai-index']").forEach((control) => {
+      if (!(control instanceof HTMLElement)) return;
+      root.appendChild(control);
+      const variable = document.getElementById(control.dataset.variableId || "");
+      const destination = document.getElementById(control.dataset.targetId || "");
+      const input = document.getElementById(control.dataset.inputId || "");
+      const action = control.dataset.action || "generate-index";
+      const baselineName = control.dataset.baseline || "baseline_narrative";
+      const results = control.querySelector("[data-xframe-ai-index-results]");
+      if (!(variable instanceof HTMLElement) || !(results instanceof HTMLOListElement)) return;
+      const variableName = variable.dataset.xframeVariable || "";
+
+      const inputText = () => input instanceof HTMLTextAreaElement ? input.value.trim() : "";
+      const context = () => {
+        const locale = root.dataset.narrationLocale || root.dataset.narrationLanguage || "en-US";
+        const language = locale.split("-")[0] || "en";
+        const preferred = languageDisplayName(locale);
+        const viewer_notes = inputText();
+        const base = decodeJson(root.dataset.xframeTemplateContext) || {};
+        const baseline_narrative = String(base[baselineName] || "").trim();
+        return {
+          adaptation_input: [
+            "## Baseline narrative", baseline_narrative, "", "## Viewer context",
+            `Notes: ${viewer_notes || "(not provided)"}`,
+            `Preferred language: ${preferred} (${locale})`,
+            language.toLowerCase() === "en" ? "Keep the narration in English." : `Rewrite the narration in ${preferred}.`,
+          ].join("\n"),
+          viewer_notes, baseline_narrative, target_language: preferred,
+          target_locale: locale, voice_language: language,
+        };
+      };
+      let timer = 0;
+      const generate = (refresh = false) => {
+        clearTimeout(timer);
+        timer = window.setTimeout(() => variable.dispatchEvent(new CustomEvent("xframe:render-template", {
+          bubbles: true, detail: { context: context(), refresh },
+        })), refresh ? 0 : 50);
+      };
+      const navigateAndGenerate = () => {
+        const slide = destination || variable.closest(".segment");
+        if (!(slide instanceof HTMLElement)) { generate(true); return; }
+        const index = Number(slide.dataset.index);
+        if (slide.classList.contains("active")) { generate(true); return; }
+        const onArrive = (event) => {
+          if (!(event instanceof CustomEvent) || Number(event.detail?.index) !== index) return;
+          root.removeEventListener("xframe:slidechange", onArrive);
+          generate(true);
+        };
+        root.addEventListener("xframe:slidechange", onArrive);
+        const hash = `#${index + 1}`;
+        if (location.hash !== hash) location.hash = hash;
+        else window.dispatchEvent(new HashChangeEvent("hashchange"));
+      };
+      const syncCurrent = (index) => control.querySelectorAll("[data-xframe-ai-index-href]").forEach((node) => {
+        if (!(node instanceof HTMLElement)) return;
+        const active = node.dataset.xframeAiIndexHref === `#${index + 1}`;
+        node.classList.toggle("is-current", active);
+        if (active) node.setAttribute("aria-current", "step"); else node.removeAttribute("aria-current");
+      });
+      const render = (structured) => {
+        const links = Array.isArray(structured?.links) ? structured.links : [];
+        results.replaceChildren();
+        for (const entry of links) {
+          const href = typeof entry?.href === "string" ? entry.href.trim() : "";
+          const label = typeof entry?.label === "string" ? entry.label.trim() : "";
+          const aspect = typeof entry?.aspect === "string" ? entry.aspect.trim() : "";
+          if (!href || !label) continue;
+          const item = document.createElement("li");
+          const button = document.createElement("button");
+          button.type = "button"; button.className = "xframe-ai-index-step";
+          button.dataset.xframeAiIndexHref = href; button.title = aspect || label;
+          const name = document.createElement("span");
+          name.className = "xframe-ai-index-label"; name.textContent = label; button.append(name);
+          if (aspect) { const note = document.createElement("span"); note.className = "xframe-ai-index-aspect"; note.textContent = aspect; button.append(note); }
+          button.addEventListener("click", () => { if (location.hash !== href) location.hash = href; });
+          item.append(button); results.append(item);
+        }
+        control.hidden = !results.childElementCount;
+        const active = root.querySelector(".segment.active");
+        if (active instanceof HTMLElement) syncCurrent(Number(active.dataset.index));
+      };
+      root.addEventListener("xframe:action", (event) => {
+        if (event instanceof CustomEvent && event.detail?.action === action) navigateAndGenerate();
+      });
+      root.addEventListener("xframe:template-request", (event) => {
+        if (!(event instanceof CustomEvent) || event.detail?.target !== variable) return;
+        Object.assign(event.detail.context, context());
+      });
+      root.addEventListener("xframe:variablechange", (event) => {
+        if (event instanceof CustomEvent && event.detail?.name === variableName) render(event.detail.structured);
+      });
+      root.addEventListener("xframe:slidechange", (event) => {
+        if (event instanceof CustomEvent) syncCurrent(Number(event.detail?.index));
+      });
+      root.addEventListener("xframe:languagechange", () => {
+        const slide = variable.closest(".segment");
+        if (slide?.classList.contains("active")) generate(true);
+      });
+    });
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialize, { once: true });
+  else initialize();
 })();
 </script>
 
@@ -5658,6 +5435,36 @@ ${trimmed}` : trimmed;
 
   // src/runtime/template.ts
   var memoryCache = /* @__PURE__ */ new Map();
+  function debugPreview(value, max = 400) {
+    const text = value == null ? "" : String(value);
+    if (text.length <= max) return text;
+    return `${text.slice(0, max)}\u2026 (+${text.length - max} chars)`;
+  }
+  function responseFormatSummary(responseFormat) {
+    if (!responseFormat || typeof responseFormat !== "object" || Array.isArray(responseFormat)) return null;
+    const format = responseFormat;
+    const schema = format.json_schema?.schema;
+    return {
+      type: format.type ?? null,
+      name: format.json_schema?.name ?? null,
+      schemaKeys: schema && typeof schema === "object" && !Array.isArray(schema) ? Object.keys(schema) : []
+    };
+  }
+  function promptContextSummary(context) {
+    const segment = context.segment && typeof context.segment === "object" ? context.segment : void 0;
+    const segments = Array.isArray(context.segments) ? context.segments : [];
+    return {
+      viewer_notes: debugPreview(context.viewer_notes, 240),
+      has_viewer_notes: Boolean(String(context.viewer_notes ?? "").trim()),
+      adaptation_input: debugPreview(context.adaptation_input, 240),
+      baseline_narrative: debugPreview(context.baseline_narrative, 160),
+      target_language: context.target_language ?? null,
+      target_locale: context.target_locale ?? null,
+      voice_language: context.voice_language ?? null,
+      segment: segment ? { index: segment.index, id: segment.id, href: segment.href, title: segment.title } : null,
+      segments: segments.length
+    };
+  }
   function optionsOf(value) {
     return value && typeof value === "object" && !Array.isArray(value) ? value : {};
   }
@@ -5866,6 +5673,7 @@ ${trimmed}` : trimmed;
   }
   function createLlmFilter(source, bypassCache = false, promptContext = {}) {
     return async (value, promptPath, kwargs = {}) => {
+      const started = Date.now();
       const config = resolveRuntimeLlmConfig(source);
       if (!config) throw new Error("Runtime LLM configuration is not available");
       if (!config.apiKey.trim()) throw new Error("API key is required (enter it in BYOA settings)");
@@ -5879,24 +5687,58 @@ ${trimmed}` : trimmed;
       if (!mimeType) throw new Error('llm filter requires an output MIME type, e.g. mime_type="text/markdown"');
       const responseFormat = options.response_format ?? options.responseFormat ?? config.responseFormats?.[promptPath];
       const context = typeof promptContext === "function" ? promptContext() : promptContext;
+      const cache = options.cache === true || options.cache === "true";
+      console.log("[xFrame] LLM start", {
+        prompt: promptPath,
+        model,
+        baseUrl: config.baseUrl,
+        mimeType,
+        bypassCache,
+        cache,
+        responseFormat: responseFormatSummary(responseFormat),
+        inputChars: input.length,
+        input: debugPreview(input),
+        context: promptContextSummary(context)
+      });
       const prompt = (await renderJinjaAsync(
         config.prompts[promptPath],
         context,
         createBuiltinFilterRegistry()
       )).trim();
+      console.log("[xFrame] LLM prompt rendered", {
+        prompt: promptPath,
+        chars: prompt.length,
+        hasViewerRequestSection: prompt.includes("## Viewer request"),
+        preview: debugPreview(prompt, 800)
+      });
       const key = cacheKey({ ...config, prompts: { ...config.prompts, [promptPath]: prompt } }, promptPath, input, model, mimeType, responseFormat);
-      const cache = options.cache === true || options.cache === "true";
       if (cache && !bypassCache) {
         const memory = memoryCache.get(key);
         if (memory !== void 0) {
-          console.log("[xFrame] LLM cache hit", { source: "memory", model, prompt: promptPath, mimeType, input, output: memory });
+          console.log("[xFrame] LLM cache hit", {
+            source: "memory",
+            model,
+            prompt: promptPath,
+            mimeType,
+            ms: Date.now() - started,
+            input: debugPreview(input),
+            output: debugPreview(memory)
+          });
           return memory;
         }
         try {
           const stored = localStorage.getItem(key);
           if (stored !== null) {
             memoryCache.set(key, stored);
-            console.log("[xFrame] LLM cache hit", { source: "localStorage", model, prompt: promptPath, mimeType, input, output: stored });
+            console.log("[xFrame] LLM cache hit", {
+              source: "localStorage",
+              model,
+              prompt: promptPath,
+              mimeType,
+              ms: Date.now() - started,
+              input: debugPreview(input),
+              output: debugPreview(stored)
+            });
             return stored;
           }
         } catch {
@@ -5910,7 +5752,25 @@ ${trimmed}` : trimmed;
       ];
       const request = { model, messages };
       applyOpenRouterStructuredOutputOptions(request, config.baseUrl, responseFormat);
-      console.log("[xFrame] LLM request", { endpoint, prompt: promptPath, mimeType, bypassCache, request });
+      console.log("[xFrame] LLM request", {
+        endpoint,
+        prompt: promptPath,
+        mimeType,
+        bypassCache,
+        model,
+        messageRoles: messages.map((message) => message.role),
+        systemChars: prompt.length,
+        userChars: input.length,
+        responseFormat: responseFormatSummary(responseFormat),
+        request: {
+          ...request,
+          messages: messages.map((message) => ({
+            role: message.role,
+            content: debugPreview(message.content, message.role === "system" ? 800 : 400),
+            contentChars: message.content.length
+          }))
+        }
+      });
       try {
         const response = await fetch(endpoint, {
           method: "POST",
@@ -5922,17 +5782,29 @@ ${trimmed}` : trimmed;
           console.error("[xFrame] LLM error", {
             endpoint,
             status: response.status,
-            error,
+            ms: Date.now() - started,
+            error: debugPreview(error, 600),
             headers: Object.fromEntries(response.headers.entries())
           });
           throw new Error(formatLlmHttpError(response.status, error, response.headers));
         }
-        const output = (await response.json()).choices?.[0]?.message?.content;
+        const payload = await response.json();
+        const output = payload.choices?.[0]?.message?.content;
         if (!output?.trim()) throw new Error("LLM response did not include message content");
         if (responseFormat !== void 0 || isJsonLlmMimeType(mimeType)) {
           parseLlmStructured(output, isJsonLlmMimeType(mimeType) ? mimeType : "application/json");
         }
-        console.log("[xFrame] LLM response", { endpoint, status: response.status, model, prompt: promptPath, output });
+        console.log("[xFrame] LLM response", {
+          endpoint,
+          status: response.status,
+          model: payload.model ?? model,
+          prompt: promptPath,
+          ms: Date.now() - started,
+          finishReason: payload.choices?.[0]?.finish_reason ?? null,
+          usage: payload.usage ?? null,
+          outputChars: output.length,
+          output: debugPreview(output, 800)
+        });
         if (cache) {
           memoryCache.set(key, output);
           try {
@@ -5943,9 +5815,19 @@ ${trimmed}` : trimmed;
         return output;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        notifyLlmError(message);
         const fallbackText = typeof options.fallback === "string" && options.fallback.trim() ? options.fallback : input;
-        return llmFallbackOutput(fallbackText, mimeType);
+        const fallback = llmFallbackOutput(fallbackText, mimeType);
+        console.warn("[xFrame] LLM fallback", {
+          prompt: promptPath,
+          model,
+          mimeType,
+          ms: Date.now() - started,
+          error: message,
+          usedExplicitFallback: Boolean(typeof options.fallback === "string" && options.fallback.trim()),
+          fallback: debugPreview(fallback)
+        });
+        notifyLlmError(message);
+        return fallback;
       }
     };
   }
@@ -6074,6 +5956,15 @@ ${trimmed}` : trimmed;
           // Implied host slide for prompt Jinja (`segment.index` / optional `segment.id`).
           segment: currentDeckSegment(deck, hostIndex, hostId ? { id: hostId } : void 0)
         };
+        if (pending) {
+          console.log("[xFrame] LLM template render", {
+            variable: target.dataset.xframeVariable ?? null,
+            refresh,
+            overrideKeys: Object.keys(contextOverrides),
+            context: promptContextSummary(context),
+            template: debugPreview(template, 200)
+          });
+        }
         const registry = createBuiltinFilterRegistry();
         registry.register("text_to_speech", createTextToSpeech);
         const llmSource = () => runtimeLlmConfig(root2);
@@ -6600,11 +6491,24 @@ ${trimmed}` : trimmed;
     });
     for (const button of root2.querySelectorAll("[data-xframe-llm-refresh]")) {
       button.addEventListener("click", () => {
-        const target = button.parentElement?.querySelector("[data-xframe-template]");
-        if (!target) return;
-        renderElement(root2, target, true).catch(reportTemplateError);
+        const targetId = button.dataset.xframeTemplateTarget;
+        const target = targetId ? document.getElementById(targetId) : null;
+        if (!(target instanceof HTMLElement)) return;
+        const request = new CustomEvent("xframe:template-request", {
+          bubbles: true,
+          detail: { target, refresh: true, context: {} }
+        });
+        button.dispatchEvent(request);
+        renderElement(root2, target, true, request.detail.context).catch(reportTemplateError);
       });
     }
+    root2.addEventListener("click", (event) => {
+      const button = event.target instanceof Element ? event.target.closest("[data-xframe-action]") : null;
+      if (!(button instanceof HTMLButtonElement) || !root2.contains(button)) return;
+      root2.dispatchEvent(new CustomEvent("xframe:action", {
+        detail: { action: button.dataset.xframeAction ?? "", source: button }
+      }));
+    });
     root2.addEventListener("click", (event) => {
       const button = event.target instanceof Element ? event.target.closest("[data-narrative-speak]") : null;
       if (!(button instanceof HTMLButtonElement) || !root2.contains(button)) return;
