@@ -24,6 +24,20 @@ test("serves health checks to approved browser origins", async () => {
   assert.deepEqual(await response.json(), { ok: true });
 });
 
+test("answers CORS preflight for chat completions with Authorization", async () => {
+  const response = await worker.fetch(new Request("https://proxy.example/v1/chat/completions", {
+    method: "OPTIONS",
+    headers: {
+      Origin: "https://resume.example",
+      "Access-Control-Request-Method": "POST",
+      "Access-Control-Request-Headers": "content-type,authorization",
+    },
+  }), env);
+  assert.equal(response.status, 204);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), "https://resume.example");
+  assert.match(response.headers.get("Access-Control-Allow-Headers") || "", /Authorization/i);
+});
+
 test("translates Gemini output to an OpenAI-compatible response", async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => { globalThis.fetch = originalFetch; });

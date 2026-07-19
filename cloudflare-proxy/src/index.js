@@ -190,7 +190,8 @@ function corsHeaders(origin, configured) {
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Turnstile-Token",
+    // Authorization is ignored by the Worker but xFrame's BYOA client always sends it.
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Turnstile-Token",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
   };
