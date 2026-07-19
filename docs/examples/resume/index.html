@@ -5062,9 +5062,9 @@ If the source language is "auto", detect it first. Preserve the original meaning
     if (/openrouter\.ai/i.test(base)) return void 0;
     return `${base}/audio/speech`;
   }
-  function reportProgress(options, started, expectedSeconds, phase, message, pcmBytes = 0, complete = false) {
+  function reportProgress(options, started, expectedSeconds, phase, message, pcmBytes = 0, complete = false, percentOverride) {
     const audioSeconds = pcmBytes / (GEMINI_TTS_SAMPLE_RATE * 2);
-    const percent = complete ? 100 : phase === "connecting" ? 5 : phase === "setup" ? 15 : 55;
+    const percent = complete ? 100 : percentOverride !== void 0 ? Math.max(0, Math.min(99, percentOverride)) : phase === "connecting" ? 5 : phase === "setup" ? 15 : 55;
     const progress = {
       phase,
       percent,
@@ -5080,6 +5080,28 @@ If the source language is "auto", detect it first. Preserve the original meaning
       options.onProgress?.(progress);
     } catch {
     }
+  }
+  function withProgressHeartbeat(work, options, started, expectedSeconds, viaProxy) {
+    const expected = Math.max(1, Math.round(expectedSeconds));
+    const labelBase = viaProxy ? "Generating via proxy" : "Generating speech";
+    const tick = () => {
+      const elapsedSec = Math.max(0, Math.floor((Date.now() - started) / 1e3));
+      const waitHint = Math.max(expected, 4);
+      const percent = Math.min(92, Math.round(12 + elapsedSec / (waitHint * 1.4) * 80));
+      reportProgress(
+        options,
+        started,
+        expectedSeconds,
+        "speaking",
+        `${labelBase}\u2026 ${elapsedSec}s \xB7 ~${expected}s audio`,
+        0,
+        false,
+        percent
+      );
+    };
+    tick();
+    const timer = setInterval(tick, 500);
+    return work.finally(() => clearInterval(timer));
   }
   async function withTimeout(promise, timeoutMs, signal) {
     if (signal?.aborted) throw new Error("Gemini TTS aborted");
@@ -5200,13 +5222,24 @@ ${trimmed}` : trimmed;
       auth: viaProxy ? "proxy" : "api_key",
       endpoint: viaProxy ? proxyEndpoint : `${GEMINI_GENERATE_CONTENT}/${model}:generateContent`
     });
-    reportProgress(options, started, expectedSeconds, "connecting", "Connecting\u2026");
-    reportProgress(options, started, expectedSeconds, "speaking", "Generating speech\u2026");
+    reportProgress(
+      options,
+      started,
+      expectedSeconds,
+      "connecting",
+      viaProxy ? "Connecting to TTS proxy\u2026" : "Connecting\u2026"
+    );
     try {
-      const result = await withTimeout(
-        viaProxy ? synthesizeViaProxy(options, proxyEndpoint, voice, model, trimmed) : synthesizeDirect(options, apiKey, voice, model, prompt),
-        timeoutMs,
-        options.signal
+      const result = await withProgressHeartbeat(
+        withTimeout(
+          viaProxy ? synthesizeViaProxy(options, proxyEndpoint, voice, model, trimmed) : synthesizeDirect(options, apiKey, voice, model, prompt),
+          timeoutMs,
+          options.signal
+        ),
+        options,
+        started,
+        expectedSeconds,
+        viaProxy
       );
       reportProgress(
         options,
@@ -6063,15 +6096,19 @@ ${trimmed}` : trimmed;
     button.textContent = "\u25B6 Play";
   }
   function speakProgressLabel(progress) {
+    if (progress.phase === "complete") return "Ready";
+    const message = progress.message?.trim();
+    if (message) return message;
     if (progress.phase === "connecting") return "Connecting\u2026";
     if (progress.phase === "setup") return "Starting session\u2026";
-    if (progress.phase === "complete") return "Ready";
     if (progress.pcmBytes > 0) {
       const received = Math.floor(progress.audioSeconds);
-      const expected = Math.max(1, Math.round(progress.expectedSeconds));
-      return `${progress.percent}% \xB7 ${received}s / ~${expected}s`;
+      const expected2 = Math.max(1, Math.round(progress.expectedSeconds));
+      return `${progress.percent}% \xB7 ${received}s / ~${expected2}s`;
     }
-    return "Generating speech\u2026";
+    const elapsedSec = Math.max(0, Math.floor(progress.elapsedMs / 1e3));
+    const expected = Math.max(1, Math.round(progress.expectedSeconds));
+    return `Generating speech\u2026 ${elapsedSec}s \xB7 ~${expected}s audio`;
   }
   function narrativeVoiceGender(root2) {
     const context = decodeJson(
