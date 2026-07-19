@@ -18,13 +18,15 @@ test("signs and verifies time-limited invite claims", async () => {
 });
 
 test("mints an invited presentation URL from the admin web API", async () => {
+  const active = new Date(Date.now() + 5 * 60_000);
+  const expires = new Date(active.getTime() + 24 * 60 * 60_000);
   const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
     method: "POST",
     headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
     body: JSON.stringify({
       url: "https://resume.example/deck?theme=dark",
-      notBefore: "2026-07-19T12:00:00.000Z",
-      expiresAt: "2026-07-20T12:00:00.000Z",
+      notBefore: active.toISOString(),
+      expiresAt: expires.toISOString(),
       calls: 7,
     }),
   }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
@@ -35,6 +37,31 @@ test("mints an invited presentation URL from the admin web API", async () => {
   assert.equal(invited.searchParams.get("theme"), "dark");
   assert.equal(invited.searchParams.get("xframe_invite"), body.token);
   assert.equal(body.claims.calls, 7);
+});
+
+test("invite page defaults to this site's presentation and a five-call budget", async () => {
+  const response = await worker.fetch(new Request("https://proxy.example/invite"), env);
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /name="url"[^>]*value="https:\/\/proxy\.example\/"/);
+  assert.match(html, /name="calls"[^>]*max="20" value="5"/);
+  assert.match(html, /Date\.now\(\)\+5\*60\*1000/);
+  assert.match(html, /new Date\(f\.get\('notBefore'\)\)\.toISOString\(\)/);
+});
+
+test("rejects invite activation times that are not in the future", async () => {
+  const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
+    body: JSON.stringify({
+      url: "https://resume.example/",
+      notBefore: new Date(Date.now() - 60_000).toISOString(),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      calls: 5,
+    }),
+  }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error.message, /future/);
 });
 
 test("requires a valid signed invite for AI routes when invite protection is configured", async () => {

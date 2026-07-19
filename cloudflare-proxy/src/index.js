@@ -152,11 +152,12 @@ async function mintInvite(request, env, cors = {}) {
   if (!Number.isFinite(notBefore) || !Number.isFinite(expiresAt)) {
     throw new ClientError(400, "notBefore and expiresAt must be valid dates");
   }
+  if (notBefore <= Date.now()) throw new ClientError(400, "notBefore must be in the future");
   if (expiresAt <= notBefore) throw new ClientError(400, "expiresAt must be after notBefore");
   const maxWindow = positiveInt(env.INVITE_MAX_WINDOW_SECONDS, 30 * 24 * 60 * 60) * 1000;
   if (expiresAt - notBefore > maxWindow) throw new ClientError(400, "Invite time window is too long");
   const calls = Number(body.calls);
-  const maxCalls = positiveInt(env.INVITE_MAX_CALLS, 100);
+  const maxCalls = positiveInt(env.INVITE_MAX_CALLS, 20);
   if (!Number.isInteger(calls) || calls < 1 || calls > maxCalls) {
     throw new ClientError(400, `calls must be between 1 and ${maxCalls}`);
   }
@@ -174,14 +175,12 @@ async function mintInvite(request, env, cors = {}) {
 }
 
 function invitePage(request) {
-  const now = new Date();
-  const later = new Date(now.getTime() + 24 * 60 * 60_000);
-  const local = (date) => new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+  const presentationUrl = `${new URL(request.url).origin}/`;
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mint xFrame invite</title><style>
 body{font:16px system-ui,sans-serif;max-width:44rem;margin:3rem auto;padding:0 1rem;color:#172033}form{display:grid;gap:1rem}label{display:grid;gap:.35rem;font-weight:650}input,button{font:inherit;padding:.7rem;border:1px solid #aab3c3;border-radius:.45rem}button{background:#2959c8;color:#fff;border:0;font-weight:700;cursor:pointer}output{display:block;margin-top:1.5rem;padding:1rem;background:#f3f6fb;border-radius:.5rem;overflow-wrap:anywhere}small{color:#596579}</style></head><body>
 <h1>Mint an invited URL</h1><p>Create a signed link that activates runtime AI only during its time window. Call usage is loosely enforced by the recipient's browser cache.</p>
-<form id="mint"><label>Presentation URL<input name="url" type="url" required placeholder="https://example.com/deck"></label><label>Active from<input name="notBefore" type="datetime-local" required value="${local(now)}"></label><label>Expires at<input name="expiresAt" type="datetime-local" required value="${local(later)}"></label><label>Maximum AI calls<input name="calls" type="number" min="1" value="10" required></label><label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label><button>Mint URL</button></form><output id="result" hidden></output>
-<script>document.querySelector('#mint').addEventListener('submit',async(e)=>{e.preventDefault();const f=new FormData(e.currentTarget),o=document.querySelector('#result');o.hidden=false;o.textContent='Minting…';try{const r=await fetch('/invite/mint',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+f.get('secret')},body:JSON.stringify({url:f.get('url'),notBefore:new Date(f.get('notBefore')).toISOString(),expiresAt:new Date(f.get('expiresAt')).toISOString(),calls:Number(f.get('calls'))})});const b=await r.json();if(!r.ok)throw new Error(b.error?.message||'Request failed');o.innerHTML='<strong>Invited URL</strong><br><a rel="noreferrer" href="'+b.url.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">'+b.url.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</a><br><small>Copy this link. The token is a credential.</small>'}catch(x){o.textContent=x.message}});</script></body></html>`;
+<form id="mint"><label>Presentation URL<input name="url" type="url" required value="${presentationUrl}"></label><label>Active from<input name="notBefore" type="datetime-local" required></label><label>Expires at<input name="expiresAt" type="datetime-local" required></label><label>Maximum AI calls<input name="calls" type="number" min="1" max="20" value="5" required></label><label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label><button>Mint URL</button></form><output id="result" hidden></output>
+<script>const form=document.querySelector('#mint'),localValue=d=>{const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes())};const active=new Date(Date.now()+5*60*1000),expires=new Date(active.getTime()+24*60*60*1000);form.elements.notBefore.value=localValue(active);form.elements.notBefore.min=localValue(new Date(Date.now()+60*1000));form.elements.expiresAt.value=localValue(expires);form.addEventListener('submit',async(e)=>{e.preventDefault();const f=new FormData(e.currentTarget),o=document.querySelector('#result');o.hidden=false;o.textContent='Minting…';try{const r=await fetch('/invite/mint',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+f.get('secret')},body:JSON.stringify({url:f.get('url'),notBefore:new Date(f.get('notBefore')).toISOString(),expiresAt:new Date(f.get('expiresAt')).toISOString(),calls:Number(f.get('calls'))})});const b=await r.json();if(!r.ok)throw new Error(b.error?.message||'Request failed');o.innerHTML='<strong>Invited URL</strong><br><a rel="noreferrer" href="'+b.url.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">'+b.url.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</a><br><small>Copy this link. The token is a credential.</small>'}catch(x){o.textContent=x.message}});</script></body></html>`;
   return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
