@@ -45,23 +45,37 @@ test("invite page defaults to this site's presentation and a five-call budget", 
   const html = await response.text();
   assert.match(html, /name="url"[^>]*value="https:\/\/proxy\.example\/"/);
   assert.match(html, /name="calls"[^>]*max="20" value="5"/);
-  assert.match(html, /Date\.now\(\)\+5\*60\*1000/);
+  assert.match(html, /const active=new Date\(\)/);
   assert.match(html, /new Date\(f\.get\('notBefore'\)\)\.toISOString\(\)/);
 });
 
-test("rejects invite activation times that are not in the future", async () => {
+test("rejects invite activation times that are too far in the past", async () => {
   const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
     method: "POST",
     headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
     body: JSON.stringify({
       url: "https://resume.example/",
-      notBefore: new Date(Date.now() - 60_000).toISOString(),
+      notBefore: new Date(Date.now() - 120_000).toISOString(),
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
       calls: 5,
     }),
   }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
   assert.equal(response.status, 400);
-  assert.match((await response.json()).error.message, /future/);
+  assert.match((await response.json()).error.message, /past/);
+});
+
+test("allows minting invites that activate immediately", async () => {
+  const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
+    body: JSON.stringify({
+      url: "https://resume.example/",
+      notBefore: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      calls: 5,
+    }),
+  }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+  assert.equal(response.status, 201);
 });
 
 test("requires a valid signed invite for AI routes when invite protection is configured", async () => {
