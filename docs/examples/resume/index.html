@@ -1329,6 +1329,28 @@ img[data-click-to-zoom="true"] { cursor: zoom-in; }
       if (!(variable instanceof HTMLElement) || !(results instanceof HTMLOListElement)) return;
       const variableName = variable.dataset.xframeVariable || "";
 
+      const navigationHash = (href) => {
+        const raw = String(href || "").trim();
+        if (!raw) return "";
+        let hash = raw;
+        try { hash = new URL(raw, location.href).hash || raw; } catch {}
+        if (!hash.startsWith("#")) hash = `#${hash}`;
+        const target = decodeURIComponent(hash.slice(1));
+        if (/^\d+$/.test(target)) return `#${target}`;
+        const slide = document.getElementById(target)?.closest(".segment")
+          || [...root.querySelectorAll(".segment")].find((candidate) => candidate.id === target);
+        if (!(slide instanceof HTMLElement)) return "";
+        const index = Number(slide.dataset.index);
+        return Number.isInteger(index) ? `#${index + 1}` : "";
+      };
+
+      const navigate = (href) => {
+        const hash = navigationHash(href);
+        if (!hash) return;
+        if (location.hash !== hash) location.hash = hash;
+        else window.dispatchEvent(new HashChangeEvent("hashchange"));
+      };
+
       const inputText = () => input instanceof HTMLTextAreaElement ? input.value.trim() : "";
       const context = () => {
         const locale = root.dataset.narrationLocale || root.dataset.narrationLanguage || "en-US";
@@ -1372,7 +1394,7 @@ img[data-click-to-zoom="true"] { cursor: zoom-in; }
       };
       const syncCurrent = (index) => control.querySelectorAll("[data-xframe-ai-index-href]").forEach((node) => {
         if (!(node instanceof HTMLElement)) return;
-        const active = node.dataset.xframeAiIndexHref === `#${index + 1}`;
+        const active = navigationHash(node.dataset.xframeAiIndexHref) === `#${index + 1}`;
         node.classList.toggle("is-current", active);
         if (active) node.setAttribute("aria-current", "step"); else node.removeAttribute("aria-current");
       });
@@ -1391,7 +1413,7 @@ img[data-click-to-zoom="true"] { cursor: zoom-in; }
           const name = document.createElement("span");
           name.className = "xframe-ai-index-label"; name.textContent = label; button.append(name);
           if (aspect) { const note = document.createElement("span"); note.className = "xframe-ai-index-aspect"; note.textContent = aspect; button.append(note); }
-          button.addEventListener("click", () => { if (location.hash !== href) location.hash = href; });
+          button.addEventListener("click", () => navigate(href));
           item.append(button); results.append(item);
         }
         control.hidden = !results.childElementCount;
