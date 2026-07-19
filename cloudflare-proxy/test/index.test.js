@@ -92,8 +92,10 @@ test("issues constrained single-use Live tokens", async (t) => {
   globalThis.fetch = async (url, init) => {
     assert.match(String(url), /v1alpha\/auth_tokens\?key=secret-key$/);
     const body = JSON.parse(init.body);
-    assert.equal(body.authToken.uses, 1);
-    assert.deepEqual(body.authToken.liveConnectConstraints.config.responseModalities, ["AUDIO"]);
+    assert.equal(body.uses, 1);
+    assert.equal(body.bidiGenerateContentSetup.model, "models/gemini-live-test");
+    assert.deepEqual(body.bidiGenerateContentSetup.generationConfig.responseModalities, ["AUDIO"]);
+    assert.equal(body.authToken, undefined);
     return Response.json({ name: "auth_tokens/temporary", expireTime: "later" });
   };
   const response = await worker.fetch(new Request("https://proxy.example/v1/live-token", {

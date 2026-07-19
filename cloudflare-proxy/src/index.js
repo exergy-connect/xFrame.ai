@@ -114,18 +114,19 @@ export async function createLiveToken(env, cors = {}) {
   const now = Date.now();
   const expireMs = positiveInt(env.LIVE_TOKEN_EXPIRE_MS, 30 * 60_000);
   const newSessionExpireMs = positiveInt(env.LIVE_TOKEN_NEW_SESSION_EXPIRE_MS, 60_000);
+  // Wire format matches @google/genai tokens.create (fields at top level; constraints
+  // land on bidiGenerateContentSetup after the SDK unwraps liveConnectConstraints.setup).
+  const modelResource = model.startsWith("models/") ? model : `models/${model}`;
   const upstream = await fetch(`${GEMINI_API}/v1alpha/auth_tokens?key=${encodeURIComponent(env.GEMINI_API_KEY)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      authToken: {
-        uses: 1,
-        expireTime: new Date(now + expireMs).toISOString(),
-        newSessionExpireTime: new Date(now + newSessionExpireMs).toISOString(),
-        liveConnectConstraints: {
-          model,
-          config: { responseModalities: ["AUDIO"] },
-        },
+      uses: 1,
+      expireTime: new Date(now + expireMs).toISOString(),
+      newSessionExpireTime: new Date(now + newSessionExpireMs).toISOString(),
+      bidiGenerateContentSetup: {
+        model: modelResource,
+        generationConfig: { responseModalities: ["AUDIO"] },
       },
     }),
   });
