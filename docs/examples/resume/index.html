@@ -4693,11 +4693,11 @@ Path:speech.config\r
         }
       }
       const audioBuffer = concatUint8Arrays(audioChunks);
-      const audioBlob = new Blob([
+      const audioBlob2 = new Blob([
         audioBuffer
       ], { type: "audio/mpeg" });
       return {
-        audio: audioBlob,
+        audio: audioBlob2,
         subtitle: wordBoundaries
       };
     }
@@ -4985,48 +4985,17 @@ If the source language is "auto", detect it first. Preserve the original meaning
   }
 
   // src/shared/gemini-tts.ts
-  var GEMINI_TTS_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
+  var GEMINI_TTS_MODEL = "gemini-3.1-flash-tts-preview";
   var GEMINI_TTS_SAMPLE_RATE = 24e3;
-  var LIVE_WS_PATH = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
-  var NARRATOR_INSTRUCTION = "You are a presentation narrator. Speak the user's text aloud verbatim with natural pacing. Do not greet, ask questions, summarize, translate, or add any words that are not in the script.";
+  var GEMINI_GENERATE_CONTENT = "https://generativelanguage.googleapis.com/v1beta/models";
   var GEMINI_VOICES_BY_GENDER = {
     male: ["Charon", "Orus", "Alnilam", "Fenrir", "Iapetus", "Algenib"],
     female: ["Kore", "Aoede", "Leda", "Sulafat", "Aoede", "Despina"]
   };
-  async function fetchGeminiLiveToken(baseUrl, options = {}) {
-    const base = baseUrl.trim().replace(/\/$/, "");
-    if (!base) return void 0;
-    if (/generativelanguage\.googleapis\.com/i.test(base)) return void 0;
-    if (/openrouter\.ai/i.test(base)) return void 0;
-    const fetchImpl = options.fetchImpl ?? globalThis.fetch;
-    if (!fetchImpl) throw new Error("fetch is not available for Gemini Live token minting");
-    const response = await fetchImpl(`${base}/live-token`, {
-      method: "POST",
-      headers: { Accept: "application/json" },
-      signal: options.signal
-    });
-    if (response.status === 404 || response.status === 405) return void 0;
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const message = typeof payload.error?.message === "string" && payload.error.message.trim() ? payload.error.message.trim() : `Live token request failed (${response.status})`;
-      throw new Error(message);
-    }
-    const token = typeof payload.token === "string" ? payload.token.trim() : "";
-    const websocketUrl = typeof payload.websocketUrl === "string" ? payload.websocketUrl.trim() : "";
-    if (!token || !websocketUrl) throw new Error("Live token response incomplete");
-    const model = typeof payload.model === "string" && payload.model.trim() ? payload.model.trim() : void 0;
-    return { token, websocketUrl, ...model ? { model } : {} };
-  }
   function estimateNarrationSeconds(text) {
     const chars = text.trim().length;
     if (!chars) return 1;
     return Math.max(1, chars / 12.5);
-  }
-  function formatClock(seconds) {
-    const whole = Math.max(0, Math.floor(seconds));
-    const mins = Math.floor(whole / 60);
-    const secs = whole % 60;
-    return mins > 0 ? `${mins}:${String(secs).padStart(2, "0")}` : `0:${String(secs).padStart(2, "0")}`;
   }
   function normalizeGender(value) {
     if (!value) return void 0;
@@ -5078,208 +5047,190 @@ If the source language is "auto", detect it first. Preserve the original meaning
     for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
     return bytes;
   }
-  function concatBytes(chunks) {
-    const total = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
-    const out = new Uint8Array(total);
-    let offset = 0;
-    for (const chunk of chunks) {
-      out.set(chunk, offset);
-      offset += chunk.byteLength;
-    }
-    return out;
+  function looksLikeWav(bytes) {
+    return bytes.length >= 12 && bytes[0] === 82 && bytes[1] === 73 && bytes[2] === 70 && bytes[3] === 70 && bytes[8] === 87 && bytes[9] === 65 && bytes[10] === 86 && bytes[11] === 69;
   }
-  async function readSocketData(data) {
-    if (typeof data === "string") return data;
-    if (typeof Blob !== "undefined" && data instanceof Blob) return data.text();
-    if (data instanceof ArrayBuffer) return new TextDecoder().decode(data);
-    if (ArrayBuffer.isView(data)) {
-      return new TextDecoder().decode(new Uint8Array(data.buffer, data.byteOffset, data.byteLength));
+  function isMpegAudio(mimeType, bytes) {
+    const lower = mimeType.toLowerCase();
+    if (lower.includes("mpeg") || lower.includes("mp3")) return true;
+    return Boolean(bytes && bytes.length >= 2 && bytes[0] === 255 && (bytes[1] & 224) === 224);
+  }
+  function proxySpeechUrl(baseUrl) {
+    const base = baseUrl.trim().replace(/\/$/, "");
+    if (!base) return void 0;
+    if (/generativelanguage\.googleapis\.com/i.test(base)) return void 0;
+    if (/openrouter\.ai/i.test(base)) return void 0;
+    return `${base}/audio/speech`;
+  }
+  function reportProgress(options, started, expectedSeconds, phase, message, pcmBytes = 0, complete = false) {
+    const audioSeconds = pcmBytes / (GEMINI_TTS_SAMPLE_RATE * 2);
+    const percent = complete ? 100 : phase === "connecting" ? 5 : phase === "setup" ? 15 : 55;
+    const progress = {
+      phase,
+      percent,
+      elapsedMs: Date.now() - started,
+      pcmBytes,
+      audioSeconds,
+      expectedSeconds,
+      chunks: pcmBytes > 0 ? 1 : 0,
+      message
+    };
+    console.debug("[xFrame] Gemini TTS progress", progress);
+    try {
+      options.onProgress?.(progress);
+    } catch {
     }
-    return String(data ?? "");
+  }
+  async function withTimeout(promise, timeoutMs, signal) {
+    if (signal?.aborted) throw new Error("Gemini TTS aborted");
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`Gemini TTS timed out after ${timeoutMs}ms`)), timeoutMs);
+    });
+    const onAbort = () => {
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+    try {
+      return await Promise.race([promise, timeout]);
+    } finally {
+      if (timer !== void 0) clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+    }
+  }
+  function audioFromInline(inline, voice, model) {
+    if (!inline.data) throw new Error("Gemini TTS response did not include audio data");
+    const raw = decodeBase64Audio(inline.data);
+    const mimeType = inline.mimeType ?? "audio/L16";
+    if (isMpegAudio(mimeType, raw)) {
+      return { mimeType: "audio/mpeg", wav: raw, voice, model };
+    }
+    if (looksLikeWav(raw)) {
+      return { mimeType: mimeType || "audio/wav", wav: raw, voice, model };
+    }
+    return { mimeType: "audio/wav", wav: pcm16ToWav(raw), voice, model };
+  }
+  async function synthesizeViaProxy(options, endpoint, voice, model, input) {
+    const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+    if (!fetchImpl) throw new Error("fetch is not available for Gemini TTS proxy");
+    const style = options.style?.trim() ?? "";
+    const response = await fetchImpl(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      signal: options.signal,
+      body: JSON.stringify({
+        model,
+        input,
+        voice,
+        provider: "auto",
+        ...options.gender ? { gender: options.gender } : {},
+        ...options.locale?.trim() ? { locale: options.locale.trim() } : {},
+        ...options.voiceIndex !== void 0 ? { voiceIndex: options.voiceIndex } : {},
+        ...style ? { style } : {}
+      })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = typeof payload.error?.message === "string" && payload.error.message.trim() ? payload.error.message.trim() : `Gemini TTS proxy failed (${response.status})`;
+      throw new Error(message);
+    }
+    const audio = typeof payload.audio === "string" ? payload.audio.trim() : "";
+    if (!audio) throw new Error("Gemini TTS proxy response did not include audio data");
+    const resolvedVoice = typeof payload.voice === "string" && payload.voice.trim() ? payload.voice.trim() : voice;
+    const resolvedModel = typeof payload.model === "string" && payload.model.trim() ? payload.model.trim() : model;
+    const mimeType = typeof payload.mimeType === "string" && payload.mimeType.trim() ? payload.mimeType.trim() : "audio/wav";
+    return audioFromInline({ mimeType, data: audio }, resolvedVoice, resolvedModel);
+  }
+  async function synthesizeDirect(options, apiKey, voice, model, prompt) {
+    const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+    if (!fetchImpl) throw new Error("fetch is not available for Gemini TTS");
+    const endpoint = `${GEMINI_GENERATE_CONTENT}/${encodeURIComponent(model)}:generateContent`;
+    const response = await fetchImpl(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey
+      },
+      signal: options.signal,
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseModalities: ["AUDIO"],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: voice }
+            }
+          }
+        }
+      })
+    });
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Gemini TTS HTTP ${response.status}: ${error.slice(0, 400)}`);
+    }
+    const payload = await response.json();
+    const inline = payload.candidates?.[0]?.content?.parts?.find((part) => part.inlineData?.data)?.inlineData;
+    if (!inline?.data) throw new Error("Gemini TTS response did not include audio data");
+    return audioFromInline(inline, voice, model);
   }
   async function synthesizeGeminiTts(text, options) {
     const trimmed = text.trim();
     if (!trimmed) throw new Error("Gemini TTS text must not be empty");
-    const accessToken = options.accessToken?.trim() ?? "";
     const apiKey = options.apiKey?.trim() ?? "";
-    if (!accessToken && !apiKey) {
-      throw new Error("Gemini TTS requires an API key or a Live access token");
+    const proxyEndpoint = options.proxyBaseUrl ? proxySpeechUrl(options.proxyBaseUrl) : void 0;
+    if (!apiKey && !proxyEndpoint) {
+      throw new Error("Gemini TTS requires an API key or a proxy /audio/speech endpoint");
     }
     const model = (options.model ?? GEMINI_TTS_MODEL).trim() || GEMINI_TTS_MODEL;
     const voice = resolveGeminiTtsVoice(options);
-    const script = options.style?.trim() ? `${options.style.trim()}
+    const prompt = options.style?.trim() ? `${options.style.trim()}
 
 ${trimmed}` : trimmed;
     const timeoutMs = options.timeoutMs ?? 9e4;
-    const Ws = options.WebSocketImpl ?? globalThis.WebSocket;
-    if (!Ws) throw new Error("WebSocket is not available for Gemini Live TTS");
-    const wsBase = (options.websocketUrl?.trim() || LIVE_WS_PATH).replace(/\?.*$/, "");
-    const endpoint = accessToken ? `${wsBase}?access_token=${encodeURIComponent(accessToken)}` : `${wsBase}?key=${encodeURIComponent(apiKey)}`;
-    const expectedSeconds = estimateNarrationSeconds(script);
-    console.debug("[xFrame] Gemini Live TTS connect", {
+    const expectedSeconds = estimateNarrationSeconds(prompt);
+    const started = Date.now();
+    const viaProxy = Boolean(proxyEndpoint && !apiKey);
+    console.debug("[xFrame] Gemini TTS request", {
       model,
       voice,
       textChars: trimmed.length,
       expectedSeconds,
-      auth: accessToken ? "access_token" : "api_key",
-      apiKeyPrefix: accessToken ? void 0 : `${apiKey.slice(0, 6)}\u2026`
+      auth: viaProxy ? "proxy" : "api_key",
+      endpoint: viaProxy ? proxyEndpoint : `${GEMINI_GENERATE_CONTENT}/${model}:generateContent`
     });
-    const started = Date.now();
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      let setupDone = false;
-      const pcmChunks = [];
-      let pcmBytes = 0;
-      let lastMime = "audio/pcm;rate=24000";
-      const ws = new Ws(endpoint);
-      const report = (phase, message, complete = false) => {
-        const audioSeconds = pcmBytes / (GEMINI_TTS_SAMPLE_RATE * 2);
-        const ratio = expectedSeconds > 0 ? audioSeconds / expectedSeconds : 0;
-        const percent = complete ? 100 : phase === "connecting" ? 2 : phase === "setup" ? 8 : Math.min(95, Math.max(10, Math.round(10 + ratio * 85)));
-        const progress = {
-          phase,
-          percent,
-          elapsedMs: Date.now() - started,
-          pcmBytes,
-          audioSeconds,
-          expectedSeconds,
-          chunks: pcmChunks.length,
-          message
-        };
-        console.debug("[xFrame] Gemini Live TTS progress", progress);
-        try {
-          options.onProgress?.(progress);
-        } catch {
-        }
-      };
-      report("connecting", "Connecting\u2026");
-      const finish = (error) => {
-        if (settled) return;
-        settled = true;
-        options.signal?.removeEventListener("abort", onAbort);
-        clearTimeout(timer);
-        try {
-          ws.close();
-        } catch {
-        }
-        if (error) {
-          console.debug("[xFrame] Gemini Live TTS failed", { ms: Date.now() - started, error: error.message });
-          reject(error);
-          return;
-        }
-        const pcm = concatBytes(pcmChunks);
-        if (!pcm.byteLength) {
-          reject(new Error("Gemini Live TTS returned no audio data"));
-          return;
-        }
-        const wav = pcm16ToWav(pcm);
-        report("complete", "Ready", true);
-        console.debug("[xFrame] Gemini Live TTS ok", {
-          model,
-          voice,
-          mimeType: lastMime,
-          pcmBytes: pcm.byteLength,
-          wavBytes: wav.byteLength,
-          ms: Date.now() - started
-        });
-        resolve({ mimeType: "audio/wav", wav, voice, model });
-      };
-      const onAbort = () => finish(new Error("Gemini Live TTS aborted"));
-      options.signal?.addEventListener("abort", onAbort, { once: true });
-      if (options.signal?.aborted) {
-        finish(new Error("Gemini Live TTS aborted"));
-        return;
-      }
-      const timer = setTimeout(() => {
-        finish(new Error(`Gemini Live TTS timed out after ${timeoutMs}ms`));
-      }, timeoutMs);
-      ws.onopen = () => {
-        const setup = {
-          setup: {
-            model: model.startsWith("models/") ? model : `models/${model}`,
-            generationConfig: {
-              responseModalities: ["AUDIO"],
-              speechConfig: {
-                voiceConfig: {
-                  prebuiltVoiceConfig: { voiceName: voice }
-                }
-              }
-            },
-            systemInstruction: {
-              parts: [{ text: NARRATOR_INSTRUCTION }]
-            }
-          }
-        };
-        console.debug("[xFrame] Gemini Live TTS setup", { model, voice });
-        report("setup", "Starting session\u2026");
-        ws.send(JSON.stringify(setup));
-      };
-      ws.onclose = (event) => {
-        if (settled) return;
-        if (pcmChunks.length) {
-          finish();
-          return;
-        }
-        const reason = event.reason?.trim() ? `: ${event.reason.trim()}` : "";
-        finish(new Error(`Gemini Live TTS closed before audio (code ${event.code})${reason}`));
-      };
-      ws.onerror = () => {
-        finish(new Error("Gemini Live TTS WebSocket error"));
-      };
-      ws.onmessage = (event) => {
-        void (async () => {
-          try {
-            const raw = await readSocketData(event.data);
-            const message = JSON.parse(raw);
-            if (message.error) {
-              finish(new Error(
-                `Gemini Live TTS error ${message.error.code ?? ""}: ${message.error.message ?? message.error.status ?? "unknown"}`.trim()
-              ));
-              return;
-            }
-            if (message.setupComplete !== void 0 && !setupDone) {
-              setupDone = true;
-              console.debug("[xFrame] Gemini Live TTS setupComplete");
-              report("speaking", "Generating speech\u2026");
-              ws.send(JSON.stringify({
-                clientContent: {
-                  turns: [{ role: "user", parts: [{ text: script }] }],
-                  turnComplete: true
-                }
-              }));
-              return;
-            }
-            const parts = message.serverContent?.modelTurn?.parts ?? [];
-            let received = false;
-            for (const part of parts) {
-              const data = part.inlineData?.data;
-              if (!data) continue;
-              if (part.inlineData?.mimeType) lastMime = part.inlineData.mimeType;
-              const chunk = decodeBase64Audio(data);
-              pcmChunks.push(chunk);
-              pcmBytes += chunk.byteLength;
-              received = true;
-            }
-            if (received) {
-              const audioSeconds = pcmBytes / (GEMINI_TTS_SAMPLE_RATE * 2);
-              report(
-                "speaking",
-                `Generating ${formatClock(audioSeconds)} / ~${formatClock(expectedSeconds)}\u2026`
-              );
-            }
-            if (message.serverContent?.turnComplete) {
-              console.debug("[xFrame] Gemini Live TTS turnComplete", {
-                chunks: pcmChunks.length,
-                mimeType: lastMime
-              });
-              finish();
-            }
-          } catch (error) {
-            finish(error instanceof Error ? error : new Error(String(error)));
-          }
-        })();
-      };
-    });
+    reportProgress(options, started, expectedSeconds, "connecting", "Connecting\u2026");
+    reportProgress(options, started, expectedSeconds, "speaking", "Generating speech\u2026");
+    try {
+      const result = await withTimeout(
+        viaProxy ? synthesizeViaProxy(options, proxyEndpoint, voice, model, trimmed) : synthesizeDirect(options, apiKey, voice, model, prompt),
+        timeoutMs,
+        options.signal
+      );
+      reportProgress(
+        options,
+        started,
+        expectedSeconds,
+        "complete",
+        "Ready",
+        Math.max(0, result.wav.byteLength - 44),
+        true
+      );
+      console.debug("[xFrame] Gemini TTS ok", {
+        model: result.model,
+        voice: result.voice,
+        mimeType: result.mimeType,
+        wavBytes: result.wav.byteLength,
+        ms: Date.now() - started
+      });
+      return result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (options.signal?.aborted) throw new Error("Gemini TTS aborted");
+      console.debug("[xFrame] Gemini TTS failed", { ms: Date.now() - started, error: message });
+      throw error instanceof Error ? error : new Error(message);
+    }
   }
 
   // src/shared/tts-provider.ts
@@ -5626,25 +5577,22 @@ ${trimmed}` : trimmed;
       });
     }
     const geminiKey = usableGeminiApiKey(apiKey);
-    if (!geminiKey && !llm?.baseUrl) {
+    const proxyBaseUrl = !geminiKey && llm?.baseUrl ? llm.baseUrl : void 0;
+    if (!geminiKey && !proxyBaseUrl) {
       throw new Error("Gemini TTS requires an API key (enter it in BYOA settings)");
     }
-    const live = llm?.baseUrl ? await fetchGeminiLiveToken(llm.baseUrl) : void 0;
-    if (!live && !geminiKey) {
-      throw new Error(
-        llm?.baseUrl ? "Gemini Live TTS needs a proxy /live-token response (or a real Gemini API key)" : "Gemini TTS requires an API key (enter it in BYOA settings)"
-      );
-    }
     const result = await synthesizeGeminiTts(text, {
-      ...live ? { accessToken: live.token, websocketUrl: live.websocketUrl, model: live.model ?? ttsModel } : { apiKey: geminiKey, model: ttsModel },
+      ...geminiKey ? { apiKey: geminiKey } : { proxyBaseUrl },
+      model: ttsModel,
       voice: textOption(options, "voice"),
       gender,
-      voiceIndex
+      voiceIndex,
+      locale: textOption(options, "locale") ?? textOption(options, "language")
     });
-    return URL.createObjectURL(wavBlob(result.wav));
+    return URL.createObjectURL(audioBlob(result.wav, result.mimeType));
   }
-  function wavBlob(wav) {
-    return new Blob([wav.slice().buffer], { type: "audio/wav" });
+  function audioBlob(bytes, mimeType = "audio/wav") {
+    return new Blob([bytes.slice().buffer], { type: mimeType });
   }
   function decodeBase64(value) {
     return new TextDecoder().decode(Uint8Array.from(atob(value), (char) => char.charCodeAt(0)));
@@ -6285,22 +6233,15 @@ ${trimmed}` : trimmed;
           });
         } else {
           const geminiKey = usableGeminiApiKey(llm?.apiKey);
-          if (!geminiKey && !llm?.baseUrl) {
+          const proxyBaseUrl = !geminiKey && llm?.baseUrl ? llm.baseUrl : void 0;
+          if (!geminiKey && !proxyBaseUrl) {
             throw new Error("Gemini TTS requires an API key (enter it in BYOA settings)");
           }
-          const live = llm?.baseUrl ? await fetchGeminiLiveToken(llm.baseUrl) : void 0;
-          if (!live && !geminiKey) {
-            throw new Error(
-              llm?.baseUrl ? "Gemini Live TTS needs a proxy /live-token response (or a real Gemini API key)" : "Gemini TTS requires an API key (enter it in BYOA settings)"
-            );
-          }
           const result = await synthesizeGeminiTts(text, {
-            ...live ? {
-              accessToken: live.token,
-              websocketUrl: live.websocketUrl,
-              model: live.model ?? tts.model ?? GEMINI_TTS_MODEL
-            } : { apiKey: geminiKey, model: tts.model ?? GEMINI_TTS_MODEL },
+            ...geminiKey ? { apiKey: geminiKey } : { proxyBaseUrl },
+            model: tts.model ?? GEMINI_TTS_MODEL,
             gender,
+            locale: resolvedLocale,
             onProgress: (progress) => {
               if (button.dataset.xframeTtsBusy !== "true") return;
               setSpeakButtonState(button, "generating", speakProgressLabel(progress));
@@ -6312,7 +6253,7 @@ ${trimmed}` : trimmed;
             mimeType: result.mimeType,
             wavBytes: result.wav.byteLength
           });
-          objectUrl = URL.createObjectURL(wavBlob(result.wav));
+          objectUrl = URL.createObjectURL(audioBlob(result.wav, result.mimeType));
         }
         pauseNarrativeAudio(root2);
         const audio = mountNarrativeGeminiAudio(narrative, resolvedLocale, objectUrl, text);

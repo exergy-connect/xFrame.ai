@@ -5,7 +5,8 @@ API module for [xFrame.ai](https://github.com/exergy-connect/xFrame.ai) that kee
 Endpoints (same origin as the deck, e.g. `https://xframe-ai.jvb127.workers.dev`):
 
 - `POST /v1/chat/completions`: limited OpenAI-compatible chat for xFrame's runtime LLM and translation filters. Forwards `response_format` of type `json_object` / `json_schema` to Gemini structured outputs (`responseMimeType` + `responseJsonSchema`).
-- `POST /v1/live-token`: constrained, single-use ephemeral token for browser-to-Gemini Live TTS.
+- `POST /v1/audio/speech`: exact-recitation narration. Cascades Gemini 3.1 Flash TTS → Gemini 2.5 Flash TTS → Microsoft Edge Read Aloud (each Gemini free tier is ~10 RPD).
+- `POST /v1/live-token`: constrained, single-use ephemeral token for Gemini Live (conversational voice agents — not slide narration).
 - `GET /health`: deployment health check (requires an allowed `Origin`).
 
 Optional standalone deploy of this folder alone (`name`: `xframe-gemini-proxy`) is still supported via this directory's `wrangler.jsonc`, but the primary production target is root `xframe-ai`.
@@ -61,6 +62,24 @@ The model, input size, and maximum output tokens are controlled by Worker config
 
 CORS is a browser boundary, not authentication. Rate limiting and/or Turnstile prevent third parties from consuming the Gemini quota by calling the Worker directly. Same-origin calls from the résumé on `xframe-ai` still send an `Origin` header that must be listed.
 
-## Live TTS client contract
+## Narration TTS client contract
+
+Call `POST /v1/audio/speech` with JSON:
+
+```json
+{ "input": "<script>", "voice": "Charon", "gender": "male", "locale": "nl-NL", "provider": "auto" }
+```
+
+Cascade (`provider: "auto"`, default):
+
+1. `GEMINI_TTS_MODEL` (default `gemini-3.1-flash-tts-preview`)
+2. `GEMINI_TTS_FALLBACK_MODEL` (default `gemini-2.5-flash-preview-tts`) on quota/5xx
+3. Microsoft Edge Read Aloud — voice chosen from `locale` + `gender` (Edge voice list, with static fallbacks)
+
+Response: `{ audio, mimeType, voice, locale?, model, provider }` where `audio` is base64 (Gemini PCM/L16 or Edge `audio/mpeg`).
+
+Do **not** use `/v1/live-token` for presentation narration — Live Native Audio is a conversational agent and will often greet like a phone attendant instead of reading the script.
+
+## Live token client contract (agents only)
 
 Call `/v1/live-token` immediately before opening the socket. Connect to the returned `websocketUrl` with `?access_token=<token>`. Ephemeral tokens require the constrained `v1alpha` Live endpoint and expire quickly; never cache them.
