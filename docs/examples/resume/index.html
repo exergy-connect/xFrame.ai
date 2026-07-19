@@ -5145,6 +5145,30 @@ If the source language is "auto", detect it first. Preserve the original meaning
     male: ["Charon", "Orus", "Alnilam", "Fenrir", "Iapetus", "Algenib"],
     female: ["Kore", "Aoede", "Leda", "Sulafat", "Aoede", "Despina"]
   };
+  async function fetchGeminiLiveToken(baseUrl, options = {}) {
+    const base = baseUrl.trim().replace(/\/$/, "");
+    if (!base) return void 0;
+    if (/generativelanguage\.googleapis\.com/i.test(base)) return void 0;
+    if (/openrouter\.ai/i.test(base)) return void 0;
+    const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+    if (!fetchImpl) throw new Error("fetch is not available for Gemini Live token minting");
+    const response = await fetchImpl(`${base}/live-token`, {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      signal: options.signal
+    });
+    if (response.status === 404 || response.status === 405) return void 0;
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = typeof payload.error?.message === "string" && payload.error.message.trim() ? payload.error.message.trim() : `Live token request failed (${response.status})`;
+      throw new Error(message);
+    }
+    const token = typeof payload.token === "string" ? payload.token.trim() : "";
+    const websocketUrl = typeof payload.websocketUrl === "string" ? payload.websocketUrl.trim() : "";
+    if (!token || !websocketUrl) throw new Error("Live token response incomplete");
+    const model = typeof payload.model === "string" && payload.model.trim() ? payload.model.trim() : void 0;
+    return { token, websocketUrl, ...model ? { model } : {} };
+  }
   function estimateNarrationSeconds(text) {
     const chars = text.trim().length;
     if (!chars) return 1;
@@ -5228,7 +5252,11 @@ If the source language is "auto", detect it first. Preserve the original meaning
   async function synthesizeGeminiTts(text, options) {
     const trimmed = text.trim();
     if (!trimmed) throw new Error("Gemini TTS text must not be empty");
-    if (!options.apiKey.trim()) throw new Error("Gemini TTS requires an API key");
+    const accessToken = options.accessToken?.trim() ?? "";
+    const apiKey = options.apiKey?.trim() ?? "";
+    if (!accessToken && !apiKey) {
+      throw new Error("Gemini TTS requires an API key or a Live access token");
+    }
     const model = (options.model ?? GEMINI_TTS_MODEL).trim() || GEMINI_TTS_MODEL;
     const voice = resolveGeminiTtsVoice(options);
     const script = options.style?.trim() ? `${options.style.trim()}
@@ -5237,14 +5265,16 @@ ${trimmed}` : trimmed;
     const timeoutMs = options.timeoutMs ?? 9e4;
     const Ws = options.WebSocketImpl ?? globalThis.WebSocket;
     if (!Ws) throw new Error("WebSocket is not available for Gemini Live TTS");
-    const endpoint = `${LIVE_WS_PATH}?key=${encodeURIComponent(options.apiKey.trim())}`;
+    const wsBase = (options.websocketUrl?.trim() || LIVE_WS_PATH).replace(/\?.*$/, "");
+    const endpoint = accessToken ? `${wsBase}?access_token=${encodeURIComponent(accessToken)}` : `${wsBase}?key=${encodeURIComponent(apiKey)}`;
     const expectedSeconds = estimateNarrationSeconds(script);
     console.debug("[xFrame] Gemini Live TTS connect", {
       model,
       voice,
       textChars: trimmed.length,
       expectedSeconds,
-      apiKeyPrefix: `${options.apiKey.trim().slice(0, 6)}\u2026`
+      auth: accessToken ? "access_token" : "api_key",
+      apiKeyPrefix: accessToken ? void 0 : `${apiKey.slice(0, 6)}\u2026`
     });
     const started = Date.now();
     return new Promise((resolve, reject) => {
@@ -5597,13 +5627,18 @@ ${trimmed}` : trimmed;
     const field = form.querySelector("[data-xframe-byoa-base-url]");
     return field instanceof HTMLInputElement || field instanceof HTMLSelectElement ? field : null;
   }
+  function usableGeminiApiKey(value) {
+    const key = value?.trim() ?? "";
+    if (!key || key === "cloudflare-proxy") return void 0;
+    return key;
+  }
   function applyByoaEndpointOption(baseUrl, model, apiKey) {
     if (!(baseUrl instanceof HTMLSelectElement)) return;
     const option = baseUrl.selectedOptions[0];
     if (!option) return;
     const presetModel = option.dataset.model?.trim();
     if (presetModel) model.value = presetModel;
-    if (Object.prototype.hasOwnProperty.call(option.dataset, "apiKey")) {
+    if (option.hasAttribute("data-api-key")) {
       apiKey.value = option.dataset.apiKey ?? "";
     }
   }
@@ -5712,10 +5747,18 @@ ${trimmed}` : trimmed;
         volume: textOption(options, "volume")
       });
     }
-    if (!apiKey) throw new Error("Gemini TTS requires an API key (enter it in BYOA settings)");
+    const geminiKey = usableGeminiApiKey(apiKey);
+    if (!geminiKey && !llm?.baseUrl) {
+      throw new Error("Gemini TTS requires an API key (enter it in BYOA settings)");
+    }
+    const live = llm?.baseUrl ? await fetchGeminiLiveToken(llm.baseUrl) : void 0;
+    if (!live && !geminiKey) {
+      throw new Error(
+        llm?.baseUrl ? "Gemini Live TTS needs a proxy /live-token response (or a real Gemini API key)" : "Gemini TTS requires an API key (enter it in BYOA settings)"
+      );
+    }
     const result = await synthesizeGeminiTts(text, {
-      apiKey,
-      model: ttsModel,
+      ...live ? { accessToken: live.token, websocketUrl: live.websocketUrl, model: live.model ?? ttsModel } : { apiKey: geminiKey, model: ttsModel },
       voice: textOption(options, "voice"),
       gender,
       voiceIndex
@@ -6277,12 +6320,22 @@ ${trimmed}` : trimmed;
             gender
           });
         } else {
-          if (!llm?.apiKey) {
+          const geminiKey = usableGeminiApiKey(llm?.apiKey);
+          if (!geminiKey && !llm?.baseUrl) {
             throw new Error("Gemini TTS requires an API key (enter it in BYOA settings)");
           }
+          const live = llm?.baseUrl ? await fetchGeminiLiveToken(llm.baseUrl) : void 0;
+          if (!live && !geminiKey) {
+            throw new Error(
+              llm?.baseUrl ? "Gemini Live TTS needs a proxy /live-token response (or a real Gemini API key)" : "Gemini TTS requires an API key (enter it in BYOA settings)"
+            );
+          }
           const result = await synthesizeGeminiTts(text, {
-            apiKey: llm.apiKey,
-            model: tts.model ?? GEMINI_TTS_MODEL,
+            ...live ? {
+              accessToken: live.token,
+              websocketUrl: live.websocketUrl,
+              model: live.model ?? tts.model ?? GEMINI_TTS_MODEL
+            } : { apiKey: geminiKey, model: tts.model ?? GEMINI_TTS_MODEL },
             gender,
             onProgress: (progress) => {
               if (button.dataset.xframeTtsBusy !== "true") return;
