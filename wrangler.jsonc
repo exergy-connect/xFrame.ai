@@ -1,8 +1,23 @@
 {
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "xframe-ai",
+  "main": "src/worker.js",
   "compatibility_date": "2026-07-19",
   "workers_dev": true,
   "assets": {
-    "directory": "./docs/examples/resume"
+    "directory": "./docs/examples/resume",
+    "binding": "ASSETS"
+  },
+  "vars": {
+    "ALLOWED_ORIGINS": "http://localhost:8000,http://localhost:3000,https://resume.jvb127.workers.dev,https://xframe-ai.jvb127.workers.dev",
+    "GEMINI_MODEL": "gemini-3.1-flash-lite",
+    "GEMINI_LIVE_MODEL": "gemini-2.5-flash-native-audio-preview-12-2025",
+    "MAX_INPUT_CHARS": "20000",
+    "MAX_OUTPUT_TOKENS": "2048",
+    "LIVE_TOKEN_EXPIRE_MS": "1800000",
+    "LIVE_TOKEN_NEW_SESSION_EXPIRE_MS": "60000"
+  },
+  "secrets": {
+    "required": ["GEMINI_API_KEY"]
   }
 }

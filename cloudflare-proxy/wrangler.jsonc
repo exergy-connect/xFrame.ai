@@ -1,3 +1,4 @@
+// Optional standalone deploy. Production uses root wrangler.jsonc (xframe-ai = assets + this module).
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "xframe-gemini-proxy",

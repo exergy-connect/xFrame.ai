@@ -71,11 +71,16 @@ The live site ([exergy-connect.github.io/xFrame.ai](https://exergy-connect.githu
 | `goa_field_of_dreams.html` | `/goa_field_of_dreams.html` |
 | `LICENSE` | `/LICENSE` |
 
-Root [`wrangler.jsonc`](wrangler.jsonc) publishes `docs/examples/resume` as the `xframe-ai` Worker (`npx wrangler deploy`).
+Root [`wrangler.jsonc`](wrangler.jsonc) deploys the `xframe-ai` Worker: static résumé assets under `docs/examples/resume` plus the Gemini proxy API (`/v1/*`, `/health`) from [`cloudflare-proxy/`](cloudflare-proxy/).
+
+```bash
+npx wrangler deploy
+npx wrangler secret put GEMINI_API_KEY
+```
 
 ## Cloudflare Gemini proxy
 
-[`cloudflare-proxy/`](cloudflare-proxy/) is a Cloudflare Worker that keeps the Gemini API key off the client for xFrame Present runtime LLM and Live TTS. See [cloudflare-proxy/README.md](cloudflare-proxy/README.md) for local setup and deploy. CI deploys on changes via [`.github/workflows/deploy-cloudflare-proxy.yml`](.github/workflows/deploy-cloudflare-proxy.yml) when `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are configured.
+[`cloudflare-proxy/`](cloudflare-proxy/) is the API module bundled into `xframe-ai` (keeps the Gemini key off the client for runtime LLM and Live TTS). See [cloudflare-proxy/README.md](cloudflare-proxy/README.md). CI deploys the combined Worker via [`.github/workflows/deploy-cloudflare-proxy.yml`](.github/workflows/deploy-cloudflare-proxy.yml) when `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are configured.
 
 ## GitHub Actions
 
