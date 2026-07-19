@@ -560,7 +560,7 @@ img[data-click-to-zoom="true"] { cursor: zoom-in; }
     <form class="xframe-byoa-control" data-xframe-control="byoa" data-byoa-state="incomplete" autocomplete="off">
   <label class="xframe-byoa-endpoint">
     <span>Endpoint</span>
-    <input type="url" data-xframe-byoa-base-url placeholder="https://api.openai.com/v1" required>
+    <select data-xframe-byoa-base-url required><option value="https://xframe-ai.jvb127.workers.dev/v1" selected data-model="gemini-3.1-flash-lite" data-api-key="cloudflare-proxy">Cloudflare proxy</option><option value="https://generativelanguage.googleapis.com/v1beta/openai" data-model="gemini-3.1-flash-lite">Gemini</option><option value="https://openrouter.ai/api/v1" data-model="google/gemini-2.5-flash-lite">OpenRouter</option></select>
   </label>
   <label>
     <span>Model</span>
