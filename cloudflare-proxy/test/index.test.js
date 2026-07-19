@@ -39,14 +39,18 @@ test("mints an invited presentation URL from the admin web API", async () => {
   assert.equal(body.claims.calls, 7);
 });
 
-test("invite page defaults to this site's presentation and a five-call budget", async () => {
+test("invite page defaults to day selection through five business days", async () => {
   const response = await worker.fetch(new Request("https://proxy.example/invite"), env);
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /name="url"[^>]*value="https:\/\/proxy\.example\/"/);
   assert.match(html, /name="calls"[^>]*max="20" value="5"/);
-  assert.match(html, /const active=new Date\(\)/);
-  assert.match(html, /new Date\(f\.get\('notBefore'\)\)\.toISOString\(\)/);
+  assert.match(html, /name="notBefore" type="date"/);
+  assert.match(html, /name="expiresAt" type="date"/);
+  assert.match(html, /name="preciseTime" type="checkbox"/);
+  assert.match(html, /addBusinessDays\(today, 5\)/);
+  assert.match(html, /applyDayDefaults\(\)/);
+  assert.doesNotMatch(html, /preciseTime[^>]*checked/);
 });
 
 test("rejects invite activation times that are too far in the past", async () => {
@@ -55,7 +59,7 @@ test("rejects invite activation times that are too far in the past", async () =>
     headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
     body: JSON.stringify({
       url: "https://resume.example/",
-      notBefore: new Date(Date.now() - 120_000).toISOString(),
+      notBefore: new Date(Date.now() - 37 * 60 * 60_000).toISOString(),
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
       calls: 5,
     }),
@@ -72,6 +76,30 @@ test("allows minting invites that activate immediately", async () => {
       url: "https://resume.example/",
       notBefore: new Date().toISOString(),
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      calls: 5,
+    }),
+  }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+  assert.equal(response.status, 201);
+});
+
+test("allows minting invites from local midnight today through end of a business-day window", async () => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  let left = 5;
+  while (left > 0) {
+    end.setDate(end.getDate() + 1);
+    const weekday = end.getDay();
+    if (weekday !== 0 && weekday !== 6) left -= 1;
+  }
+  end.setHours(23, 59, 59, 999);
+  const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
+    body: JSON.stringify({
+      url: "https://resume.example/",
+      notBefore: start.toISOString(),
+      expiresAt: end.toISOString(),
       calls: 5,
     }),
   }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });

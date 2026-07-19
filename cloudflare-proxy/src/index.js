@@ -152,8 +152,8 @@ async function mintInvite(request, env, cors = {}) {
   if (!Number.isFinite(notBefore) || !Number.isFinite(expiresAt)) {
     throw new ClientError(400, "notBefore and expiresAt must be valid dates");
   }
-  // Allow "now" with a small clock-skew grace; reject clearly stale activation times.
-  if (notBefore < Date.now() - 60_000) throw new ClientError(400, "notBefore is too far in the past");
+  // Day-mode defaults use local midnight for "today", which can be almost a day ago in UTC.
+  if (notBefore < Date.now() - 36 * 60 * 60_000) throw new ClientError(400, "notBefore is too far in the past");
   if (expiresAt <= Math.max(notBefore, Date.now())) throw new ClientError(400, "expiresAt must be after notBefore");
   const maxWindow = positiveInt(env.INVITE_MAX_WINDOW_SECONDS, 30 * 24 * 60 * 60) * 1000;
   if (expiresAt - notBefore > maxWindow) throw new ClientError(400, "Invite time window is too long");
@@ -178,10 +178,108 @@ async function mintInvite(request, env, cors = {}) {
 function invitePage(request) {
   const presentationUrl = `${new URL(request.url).origin}/`;
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mint xFrame invite</title><style>
-body{font:16px system-ui,sans-serif;max-width:44rem;margin:3rem auto;padding:0 1rem;color:#172033}form{display:grid;gap:1rem}label{display:grid;gap:.35rem;font-weight:650}input,button{font:inherit;padding:.7rem;border:1px solid #aab3c3;border-radius:.45rem}button{background:#2959c8;color:#fff;border:0;font-weight:700;cursor:pointer}output{display:block;margin-top:1.5rem;padding:1rem;background:#f3f6fb;border-radius:.5rem;overflow-wrap:anywhere}small{color:#596579}</style></head><body>
-<h1>Mint an invited URL</h1><p>Create a signed link that activates runtime AI only during its time window. Call usage is loosely enforced by the recipient's browser cache.</p>
-<form id="mint"><label>Presentation URL<input name="url" type="url" required value="${presentationUrl}"></label><label>Active from<input name="notBefore" type="datetime-local" required></label><label>Expires at<input name="expiresAt" type="datetime-local" required></label><label>Maximum AI calls<input name="calls" type="number" min="1" max="20" value="5" required></label><label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label><button>Mint URL</button></form><output id="result" hidden></output>
-<script>const form=document.querySelector('#mint'),localValue=d=>{const p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes())};const active=new Date(),expires=new Date(active.getTime()+24*60*60*1000);form.elements.notBefore.value=localValue(active);form.elements.expiresAt.value=localValue(expires);form.addEventListener('submit',async(e)=>{e.preventDefault();const f=new FormData(e.currentTarget),o=document.querySelector('#result');o.hidden=false;o.textContent='Minting…';try{const r=await fetch('/invite/mint',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+f.get('secret')},body:JSON.stringify({url:f.get('url'),notBefore:new Date(f.get('notBefore')).toISOString(),expiresAt:new Date(f.get('expiresAt')).toISOString(),calls:Number(f.get('calls'))})});const b=await r.json();if(!r.ok)throw new Error(b.error?.message||'Request failed');o.innerHTML='<strong>Invited URL</strong><br><a rel="noreferrer" href="'+b.url.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">'+b.url.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</a><br><small>Copy this link. The token is a credential.</small>'}catch(x){o.textContent=x.message}});</script></body></html>`;
+body{font:16px system-ui,sans-serif;max-width:44rem;margin:3rem auto;padding:0 1rem;color:#172033}
+form{display:grid;gap:1rem}
+label{display:grid;gap:.35rem;font-weight:650}
+label.check{display:flex;align-items:center;gap:.55rem;font-weight:650}
+label.check input{width:auto;margin:0;padding:0}
+input,button{font:inherit;padding:.7rem;border:1px solid #aab3c3;border-radius:.45rem}
+button{background:#2959c8;color:#fff;border:0;font-weight:700;cursor:pointer}
+output{display:block;margin-top:1.5rem;padding:1rem;background:#f3f6fb;border-radius:.5rem;overflow-wrap:anywhere}
+small{color:#596579}
+</style></head><body>
+<h1>Mint an invited URL</h1>
+<p>Create a signed link that activates runtime AI only during its time window. Call usage is loosely enforced by the recipient's browser cache.</p>
+<form id="mint">
+  <label>Presentation URL<input name="url" type="url" required value="${presentationUrl}"></label>
+  <label>Active from<input name="notBefore" type="date" required></label>
+  <label>Expires at<input name="expiresAt" type="date" required></label>
+  <label class="check"><input name="preciseTime" type="checkbox"> Set specific times of day</label>
+  <label>Maximum AI calls<input name="calls" type="number" min="1" max="20" value="5" required></label>
+  <label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label>
+  <button>Mint URL</button>
+</form>
+<output id="result" hidden></output>
+<script>
+const form = document.querySelector('#mint');
+const fromInput = form.elements.notBefore;
+const untilInput = form.elements.expiresAt;
+const precise = form.elements.preciseTime;
+const pad = (n) => String(n).padStart(2, '0');
+const dateValue = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const dateTimeValue = (d) => dateValue(d) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0); }
+function endOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999); }
+function addBusinessDays(from, days) {
+  const d = startOfDay(from);
+  let left = days;
+  while (left > 0) {
+    d.setDate(d.getDate() + 1);
+    const weekday = d.getDay();
+    if (weekday !== 0 && weekday !== 6) left -= 1;
+  }
+  return d;
+}
+function parseLocalDate(value) {
+  const [y, m, day] = String(value).split('-').map(Number);
+  return new Date(y, m - 1, day, 0, 0, 0, 0);
+}
+function applyDayDefaults() {
+  const today = startOfDay(new Date());
+  const until = addBusinessDays(today, 5);
+  fromInput.type = 'date';
+  untilInput.type = 'date';
+  fromInput.value = dateValue(today);
+  untilInput.value = dateValue(until);
+}
+function applyTimeDefaults() {
+  const today = startOfDay(new Date());
+  const until = addBusinessDays(today, 5);
+  const active = new Date();
+  active.setMinutes(0, 0, 0);
+  fromInput.type = 'datetime-local';
+  untilInput.type = 'datetime-local';
+  fromInput.value = dateTimeValue(active);
+  untilInput.value = dateTimeValue(endOfDay(until));
+}
+function syncMode() {
+  if (precise.checked) applyTimeDefaults();
+  else applyDayDefaults();
+}
+precise.addEventListener('change', syncMode);
+applyDayDefaults();
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const data = new FormData(form);
+  const out = document.querySelector('#result');
+  out.hidden = false;
+  out.textContent = 'Minting…';
+  try {
+    const fromRaw = String(data.get('notBefore') || '');
+    const untilRaw = String(data.get('expiresAt') || '');
+    const notBefore = precise.checked ? new Date(fromRaw) : startOfDay(parseLocalDate(fromRaw));
+    const expiresAt = precise.checked ? new Date(untilRaw) : endOfDay(parseLocalDate(untilRaw));
+    const response = await fetch('/invite/mint', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + data.get('secret') },
+      body: JSON.stringify({
+        url: data.get('url'),
+        notBefore: notBefore.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+        calls: Number(data.get('calls')),
+      }),
+    });
+    const body = await response.json();
+    if (!response.ok) throw new Error(body.error?.message || 'Request failed');
+    out.innerHTML = '<strong>Invited URL</strong><br><a rel="noreferrer" href="'
+      + body.url.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">'
+      + body.url.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      + '</a><br><small>Copy this link. The token is a credential.</small>';
+  } catch (error) {
+    out.textContent = error.message;
+  }
+});
+</script></body></html>`;
   return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
