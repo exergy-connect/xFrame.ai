@@ -53,11 +53,11 @@ npx wrangler secret put INVITE_ADMIN_SECRET
 npx wrangler deploy
 ```
 
-Open `/invite`, enter the target presentation URL, allowed time window, AI-call allowance, and `INVITE_ADMIN_SECRET`, then share the resulting URL. `INVITE_SIGNING_SECRET` enables invite enforcement on all `/v1/*` routes. Use separate, long random values for the two secrets. During migration, omitting `INVITE_SIGNING_SECRET` leaves the existing origin-based behavior in place.
+Open `/invite`, enter the target presentation URL, allowed time window, AI-call allowance, and `INVITE_ADMIN_SECRET`, then share the resulting URL. `INVITE_SIGNING_SECRET` requires a signed invite for `/v1/audio/speech` and `/v1/live-token` (Gemini TTS / Live). `/v1/chat/completions` stays origin-gated (and rate-limited) so résumé adaptation works without an invite; when an invite Bearer is sent, it is still verified. Use separate, long random values for the two secrets. During migration, omitting `INVITE_SIGNING_SECRET` leaves the existing origin-based behavior in place.
 
-The proxy cryptographically enforces the signature, activation/expiry window, and presentation origin. The call allowance is intentionally loose: xFrame records each uncached AI request in that browser's `localStorage`. Clearing site data or switching browsers resets the local counter; use a Cloudflare rate-limit binding when a hard server-side quota is required.
+The proxy cryptographically enforces invite signature, activation/expiry window, and presentation origin for TTS/Live. The call allowance is intentionally loose: xFrame records each uncached invited AI request in that browser's `localStorage`. Clearing site data or switching browsers resets the local counter; use a Cloudflare rate-limit binding when a hard server-side quota is required.
 
-Point xFrame's runtime LLM base URL at the Worker origin with a `/v1` suffix, e.g. `https://xframe-ai.jvb127.workers.dev/v1`. The Worker ignores `Authorization`. Until xFrame gains an explicit proxy mode, its runtime validation still requires a non-empty API-key field; use a non-secret placeholder such as `cloudflare-proxy`, never the Gemini key.
+Point xFrame's runtime LLM base URL at the Worker origin with a `/v1` suffix, e.g. `https://xframe-ai.jvb127.workers.dev/v1`. For the Cloudflare proxy preset, use a non-secret placeholder such as `cloudflare-proxy` in the BYOA form (never the Gemini key). Omit `Authorization` for uninvited chat; send `Authorization: Bearer <xframe_invite>` when an invite is present or when calling TTS/Live.
 
 ## Production protection
 

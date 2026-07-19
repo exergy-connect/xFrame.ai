@@ -106,14 +106,29 @@ test("allows minting invites from local midnight today through end of a business
   assert.equal(response.status, 201);
 });
 
-test("requires a valid signed invite for AI routes when invite protection is configured", async () => {
+test("requires a signed invite for TTS but allows origin-gated chat without one", async (t) => {
   const protectedEnv = { ...env, INVITE_SIGNING_SECRET: "signing-secret" };
-  const missing = await worker.fetch(new Request("https://proxy.example/v1/chat/completions", {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async () => Response.json({
+    candidates: [{ content: { parts: [{ text: "Hi" }] }, finishReason: "STOP" }],
+    usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1, totalTokenCount: 2 },
+  });
+
+  const chat = await worker.fetch(new Request("https://proxy.example/v1/chat/completions", {
     method: "POST",
     headers: { Origin: "https://resume.example", "Content-Type": "application/json" },
     body: JSON.stringify({ model: "gemini-test", messages: [{ role: "user", content: "Hello" }] }),
   }), protectedEnv);
-  assert.equal(missing.status, 401);
+  assert.equal(chat.status, 200);
+
+  const ttsMissing = await worker.fetch(new Request("https://proxy.example/v1/audio/speech", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json" },
+    body: JSON.stringify({ input: "Hello", voice: "Charon" }),
+  }), protectedEnv);
+  assert.equal(ttsMissing.status, 401);
+  assert.match((await ttsMissing.json()).error.message, /invite/i);
 
   const now = Math.floor(Date.now() / 1000);
   const wrongOriginToken = await signInvite({ v: 1, id: "x", origin: "https://other.example", nbf: now - 1, exp: now + 60, calls: 1 }, "signing-secret");

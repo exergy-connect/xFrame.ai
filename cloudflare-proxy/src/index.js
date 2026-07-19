@@ -51,7 +51,7 @@ export default {
     const turnstileError = await verifyTurnstile(request, env);
     if (turnstileError) return jsonError(403, turnstileError, cors);
 
-    const inviteError = await verifyInvite(request, env);
+    const inviteError = await verifyInvite(request, env, url.pathname);
     if (inviteError) return jsonError(401, inviteError, cors);
 
     try {
@@ -123,11 +123,18 @@ export async function verifyInviteToken(token, secret, now = Date.now()) {
   return claims;
 }
 
-async function verifyInvite(request, env) {
+/** TTS / Live mint require a signed invite; chat completions stay origin-gated. */
+function pathRequiresInvite(pathname) {
+  return pathname === "/v1/audio/speech" || pathname === "/v1/live-token";
+}
+
+async function verifyInvite(request, env, pathname = new URL(request.url).pathname) {
   if (!env.INVITE_SIGNING_SECRET) return null;
   const authorization = request.headers.get("Authorization") || "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);
-  if (!match) return "A signed invite token is required";
+  if (!match) {
+    return pathRequiresInvite(pathname) ? "A signed invite token is required" : null;
+  }
   try {
     const claims = await verifyInviteToken(match[1], env.INVITE_SIGNING_SECRET);
     const origin = request.headers.get("Origin");
