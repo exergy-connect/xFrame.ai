@@ -67,8 +67,11 @@ The live site ([exergy-connect.github.io/xFrame.ai](https://exergy-connect.githu
 | `latest` | `/latest` |
 | `examples/present/example-deck.html` | `/examples/present/example-deck.html` |
 | `examples/present/example-deck.cz.html` | `/examples/present/example-deck.cz.html` |
+| `examples/resume/index.html` | `/examples/resume/` |
 | `goa_field_of_dreams.html` | `/goa_field_of_dreams.html` |
 | `LICENSE` | `/LICENSE` |
+
+Root [`wrangler.jsonc`](wrangler.jsonc) publishes `docs/examples/resume` as the `resume` Worker (`npx wrangler deploy`).
 
 ## Cloudflare Gemini proxy
 
