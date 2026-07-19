@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import worker from "../src/index.js";
+import worker, { geminiGenerationConfigFromResponseFormat } from "../src/index.js";
 
 const env = {
   ALLOWED_ORIGINS: "https://resume.example",
@@ -63,6 +63,51 @@ test("translates Gemini output to an OpenAI-compatible response", async (t) => {
   const body = await response.json();
   assert.equal(body.choices[0].message.content, "Hi");
   assert.equal(body.usage.total_tokens, 3);
+});
+
+test("maps OpenAI json_schema response_format onto Gemini structured outputs", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  const schema = {
+    type: "object",
+    properties: { text: { type: "string" } },
+    required: ["text"],
+    additionalProperties: false,
+  };
+  globalThis.fetch = async (_url, init) => {
+    const body = JSON.parse(init.body);
+    assert.equal(body.generationConfig.responseMimeType, "application/json");
+    assert.deepEqual(body.generationConfig.responseJsonSchema, schema);
+    return Response.json({
+      candidates: [{ content: { parts: [{ text: '{"text":"ok"}' }] }, finishReason: "STOP" }],
+    });
+  };
+  const response = await worker.fetch(new Request("https://proxy.example/v1/chat/completions", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "gemini-test",
+      messages: [{ role: "user", content: "Adapt this" }],
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: "adapted_narrative", strict: true, schema },
+      },
+    }),
+  }), env);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).choices[0].message.content, '{"text":"ok"}');
+});
+
+test("geminiGenerationConfigFromResponseFormat handles json_object and rejects bad schemas", () => {
+  assert.deepEqual(
+    geminiGenerationConfigFromResponseFormat({ type: "json_object" }),
+    { responseMimeType: "application/json" },
+  );
+  assert.deepEqual(geminiGenerationConfigFromResponseFormat(undefined), {});
+  assert.throws(
+    () => geminiGenerationConfigFromResponseFormat({ type: "json_schema", json_schema: { name: "x" } }),
+    /response_format\.json_schema\.schema/,
+  );
 });
 
 test("rejects models that are not configured server-side", async () => {

@@ -70,9 +70,29 @@ export async function chatCompletions(request, env, cors = {}) {
 
   const requestedTokens = positiveInt(body.max_tokens, positiveInt(env.MAX_OUTPUT_TOKENS, 2048));
   const maxOutputTokens = Math.min(requestedTokens, positiveInt(env.MAX_OUTPUT_TOKENS, 2048));
-  const generationConfig = { maxOutputTokens };
-  const responseMimeType = body.response_format?.type === "json_object" ? "application/json" : undefined;
-  if (responseMimeType) generationConfig.responseMimeType = responseMimeType;
+  const structured = geminiGenerationConfigFromResponseFormat(body.response_format);
+  const generationConfig = {
+    maxOutputTokens,
+    ...structured,
+  };
+  const started = Date.now();
+  console.log("[xFrame proxy] chat/completions", {
+    model: configuredModel,
+    messageCount: messages.length,
+    systemChars: systemText.length,
+    userChars: contents.reduce((sum, entry) => sum + (entry.parts[0]?.text?.length || 0), 0),
+    maxOutputTokens,
+    responseFormatType: body.response_format?.type ?? null,
+    structuredOutputs: {
+      responseMimeType: generationConfig.responseMimeType ?? null,
+      hasResponseJsonSchema: Boolean(generationConfig.responseJsonSchema),
+      schemaKeys: generationConfig.responseJsonSchema && typeof generationConfig.responseJsonSchema === "object"
+        ? Object.keys(generationConfig.responseJsonSchema)
+        : [],
+    },
+    systemPreview: previewText(systemText, 400),
+    userPreview: previewText(contents[0]?.parts?.[0]?.text || "", 400),
+  });
 
   const upstream = await fetch(
     `${GEMINI_API}/v1beta/models/${encodeURIComponent(configuredModel)}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`,
@@ -88,12 +108,32 @@ export async function chatCompletions(request, env, cors = {}) {
   );
   const payload = await upstream.json().catch(() => ({}));
   if (!upstream.ok) {
-    console.error("Gemini generateContent failed", upstream.status, payload?.error?.status || "unknown");
+    console.error("[xFrame proxy] Gemini generateContent failed", {
+      status: upstream.status,
+      errorStatus: payload?.error?.status || "unknown",
+      message: payload?.error?.message || "Gemini request failed",
+      ms: Date.now() - started,
+    });
     return jsonError(upstream.status, payload?.error?.message || "Gemini request failed", cors);
   }
 
   const content = payload.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("") || "";
-  if (!content) return jsonError(502, "Gemini returned no content", cors);
+  if (!content) {
+    console.error("[xFrame proxy] Gemini returned no content", {
+      finishReason: payload.candidates?.[0]?.finishReason || null,
+      ms: Date.now() - started,
+    });
+    return jsonError(502, "Gemini returned no content", cors);
+  }
+  console.log("[xFrame proxy] Gemini ok", {
+    model: configuredModel,
+    ms: Date.now() - started,
+    finishReason: payload.candidates?.[0]?.finishReason || null,
+    promptTokens: payload.usageMetadata?.promptTokenCount || 0,
+    completionTokens: payload.usageMetadata?.candidatesTokenCount || 0,
+    outputChars: content.length,
+    outputPreview: previewText(content, 400),
+  });
   return json({
     id: crypto.randomUUID(),
     object: "chat.completion",
@@ -144,6 +184,12 @@ export async function createLiveToken(env, cors = {}) {
   }, 200, cors);
 }
 
+function previewText(value, max = 400) {
+  const text = String(value ?? "");
+  if (text.length <= max) return text;
+  return `${text.slice(0, max)}… (+${text.length - max} chars)`;
+}
+
 function normalizeMessages(messages, maxChars) {
   let total = 0;
   return messages.map((message) => {
@@ -154,6 +200,35 @@ function normalizeMessages(messages, maxChars) {
     if (total > maxChars) throw new ClientError(413, `Message content exceeds ${maxChars} characters (got ${total})`);
     return { role: message.role, content: message.content };
   });
+}
+
+/**
+ * Map OpenAI/OpenRouter `response_format` onto Gemini `generationConfig`.
+ * xFrame prompt front matter uses `type: "json_schema"`; without this mapping the
+ * schema is silently dropped and the model ignores structured-output constraints.
+ */
+export function geminiGenerationConfigFromResponseFormat(responseFormat) {
+  if (!responseFormat || typeof responseFormat !== "object" || Array.isArray(responseFormat)) {
+    return {};
+  }
+  const type = responseFormat.type;
+  if (type === "json_object") {
+    return { responseMimeType: "application/json" };
+  }
+  if (type === "json_schema") {
+    const jsonSchema = responseFormat.json_schema;
+    const schema = jsonSchema && typeof jsonSchema === "object" && !Array.isArray(jsonSchema)
+      ? jsonSchema.schema
+      : undefined;
+    if (!schema || typeof schema !== "object" || Array.isArray(schema)) {
+      throw new ClientError(400, "response_format.json_schema.schema must be an object");
+    }
+    return {
+      responseMimeType: "application/json",
+      responseJsonSchema: schema,
+    };
+  }
+  return {};
 }
 
 async function verifyTurnstile(request, env) {

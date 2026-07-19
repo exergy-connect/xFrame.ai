@@ -4,7 +4,7 @@ API module for [xFrame.ai](https://github.com/exergy-connect/xFrame.ai) that kee
 
 Endpoints (same origin as the deck, e.g. `https://xframe-ai.jvb127.workers.dev`):
 
-- `POST /v1/chat/completions`: limited OpenAI-compatible chat for xFrame's runtime LLM and translation filters.
+- `POST /v1/chat/completions`: limited OpenAI-compatible chat for xFrame's runtime LLM and translation filters. Forwards `response_format` of type `json_object` / `json_schema` to Gemini structured outputs (`responseMimeType` + `responseJsonSchema`).
 - `POST /v1/live-token`: constrained, single-use ephemeral token for browser-to-Gemini Live TTS.
 - `GET /health`: deployment health check (requires an allowed `Origin`).
 
