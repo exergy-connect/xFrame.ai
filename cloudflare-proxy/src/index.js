@@ -213,7 +213,9 @@ function positiveInt(value, fallback) {
 }
 
 function requireSecret(value, name) {
-  if (!value) throw new Error(`${name} is not configured`);
+  if (typeof value !== "string" || !value.trim()) {
+    throw new ClientError(503, `${name} is not configured`);
+  }
 }
 
 function json(value, status = 200, headers = {}) {

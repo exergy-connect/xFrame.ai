@@ -60,6 +60,18 @@ test("rejects models that are not configured server-side", async () => {
   assert.equal(response.status, 400);
 });
 
+test("returns an error when GEMINI_API_KEY is not configured", async () => {
+  const response = await worker.fetch(new Request("https://proxy.example/v1/chat/completions", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "gemini-test", messages: [{ role: "user", content: "Hello" }] }),
+  }), { ...env, GEMINI_API_KEY: "" });
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    error: { message: "GEMINI_API_KEY is not configured", type: "proxy_error" },
+  });
+});
+
 test("issues constrained single-use Live tokens", async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => { globalThis.fetch = originalFetch; });
