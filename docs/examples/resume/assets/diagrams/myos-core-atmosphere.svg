@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" role="img" aria-labelledby="title desc">
+  <title id="title">MyOS Core and Atmosphere architecture</title>
+  <desc id="desc">A boot path loads a resident Core, which dynamically loads an Atmosphere module containing drivers, networking, and services.</desc>
+  <defs>
+    <linearGradient id="core" x1="0" x2="1">
+      <stop offset="0" stop-color="#263b57"/>
+      <stop offset="1" stop-color="#17263b"/>
+    </linearGradient>
+    <linearGradient id="atmosphere" x1="0" x2="1">
+      <stop offset="0" stop-color="#176b75"/>
+      <stop offset="1" stop-color="#134b5b"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#58c5d5"/>
+    </marker>
+    <style>
+      text { font-family: Inter, Arial, sans-serif; fill: #f4f7fb; }
+      .eyebrow { font-size: 18px; letter-spacing: 2px; fill: #9fb2c8; }
+      .heading { font-size: 30px; font-weight: 700; }
+      .label { font-size: 19px; }
+      .small { font-size: 16px; fill: #b8c8d8; }
+      .box { stroke: #58708e; stroke-width: 2; }
+    </style>
+  </defs>
+  <rect width="900" height="560" rx="22" fill="#0d1725"/>
+
+  <text x="52" y="54" class="eyebrow">MYOS3.x · MODULAR KERNEL</text>
+
+  <rect x="52" y="91" width="188" height="86" rx="12" fill="#19283b" class="box"/>
+  <text x="146" y="126" text-anchor="middle" class="heading">BOOT</text>
+  <text x="146" y="153" text-anchor="middle" class="small">x86 · decompress · map</text>
+
+  <path d="M240 134 H316" stroke="#58c5d5" stroke-width="4" marker-end="url(#arrow)"/>
+
+  <rect x="326" y="79" width="522" height="154" rx="15" fill="url(#core)" class="box"/>
+  <text x="358" y="123" class="eyebrow">RESIDENT</text>
+  <text x="358" y="161" class="heading">CORE / NUCLEO</text>
+  <text x="358" y="198" class="label">memory · interrupts · timers · threads · SMP · ELF loader</text>
+
+  <path d="M587 233 V286" stroke="#58c5d5" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="607" y="269" class="small">relocate + resolve</text>
+
+  <rect x="326" y="298" width="522" height="190" rx="15" fill="url(#atmosphere)" class="box"/>
+  <text x="358" y="342" class="eyebrow">ELF-LOADABLE MODULE</text>
+  <text x="358" y="380" class="heading">ATMOSPHERE</text>
+  <text x="358" y="418" class="label">repository · device drivers · networking · services</text>
+  <text x="358" y="451" class="small">Ethernet · ARP · IP · UDP · TCP · DHCP</text>
+
+  <path d="M326 393 H252" stroke="#58c5d5" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="52" y="350" width="188" height="86" rx="12" fill="#19283b" class="box"/>
+  <text x="146" y="385" text-anchor="middle" class="heading">HARDWARE</text>
+  <text x="146" y="412" text-anchor="middle" class="small">PCI · IDE · USB · NIC</text>
+
+  <text x="52" y="526" class="small">Versioned C++ interfaces + shared runtime context span both partitions</text>
+</svg>
