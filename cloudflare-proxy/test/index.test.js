@@ -65,7 +65,9 @@ test("invite page defaults to day selection through five business days", async (
   const html = await response.text();
   assert.match(html, /name="url"[^>]*value="https:\/\/proxy\.example\/"/);
   assert.match(html, /name="calls"[^>]*max="20" value="5"/);
-  assert.match(html, /name="context"[^>]*maxlength="500"/);
+  assert.match(html, /<textarea name="context"[^>]*maxlength="500"[^>]*rows="16"/);
+  assert.match(html, /id="context-length">0<\/span> \/ 500 characters/);
+  assert.match(html, /grid-template-columns:minmax\(0,1fr\) minmax\(24rem,1\.15fr\)/);
   assert.match(html, /name="notBefore" type="date"/);
   assert.match(html, /name="expiresAt" type="date"/);
   assert.match(html, /name="preciseTime" type="checkbox"/);

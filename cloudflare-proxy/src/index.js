@@ -221,26 +221,42 @@ async function mintInvite(request, env, cors = {}) {
 function invitePage(request) {
   const presentationUrl = `${new URL(request.url).origin}/`;
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mint xFrame invite</title><style>
-body{font:16px system-ui,sans-serif;max-width:44rem;margin:3rem auto;padding:0 1rem;color:#172033}
-form{display:grid;gap:1rem}
+body{font:16px system-ui,sans-serif;max-width:72rem;margin:3rem auto;padding:0 1rem;color:#172033}
+form{display:grid;grid-template-columns:minmax(0,1fr) minmax(24rem,1.15fr);gap:1rem 2rem;align-items:start}
+.invite-fields{display:grid;gap:1rem}
+.context-field{align-self:stretch}
 label{display:grid;gap:.35rem;font-weight:650}
 label.check{display:flex;align-items:center;gap:.55rem;font-weight:650}
 label.check input{width:auto;margin:0;padding:0}
-input,button{font:inherit;padding:.7rem;border:1px solid #aab3c3;border-radius:.45rem}
+input,textarea,button{font:inherit;padding:.7rem;border:1px solid #aab3c3;border-radius:.45rem}
+textarea{box-sizing:border-box;width:100%;min-height:25rem;resize:vertical;line-height:1.45}
+.context-meta{text-align:right;font-weight:400}
 button{background:#2959c8;color:#fff;border:0;font-weight:700;cursor:pointer}
+button{grid-column:1/-1}
 output{display:block;margin-top:1.5rem;padding:1rem;background:#f3f6fb;border-radius:.5rem;overflow-wrap:anywhere}
 small{color:#596579}
+@media(max-width:48rem){
+  body{margin:1.5rem auto}
+  form{grid-template-columns:1fr}
+  textarea{min-height:18rem}
+  button{grid-column:auto}
+}
 </style></head><body>
 <h1>Mint an invited URL</h1>
 <p>Create a signed link that activates runtime AI only during its time window. Call usage is loosely enforced by the recipient's browser cache.</p>
 <form id="mint">
-  <label>Presentation URL<input name="url" type="url" required value="${presentationUrl}"></label>
-  <label>Active from<input name="notBefore" type="date" required></label>
-  <label>Expires at<input name="expiresAt" type="date" required></label>
-  <label class="check"><input name="preciseTime" type="checkbox"> Set specific times of day</label>
-  <label>Maximum AI calls<input name="calls" type="number" min="1" max="20" value="5" required></label>
-  <label>Context description (optional)<input name="context" type="text" maxlength="${MAX_INVITE_CONTEXT_CHARS}" placeholder="Purpose or recipient of this invite"></label>
-  <label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label>
+  <div class="invite-fields">
+    <label>Presentation URL<input name="url" type="url" required value="${presentationUrl}"></label>
+    <label>Active from<input name="notBefore" type="date" required></label>
+    <label>Expires at<input name="expiresAt" type="date" required></label>
+    <label class="check"><input name="preciseTime" type="checkbox"> Set specific times of day</label>
+    <label>Maximum AI calls<input name="calls" type="number" min="1" max="20" value="5" required></label>
+    <label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label>
+  </div>
+  <label class="context-field">Context description (optional)
+    <textarea name="context" maxlength="${MAX_INVITE_CONTEXT_CHARS}" rows="16" placeholder="Purpose or recipient of this invite" aria-describedby="context-count"></textarea>
+    <small class="context-meta" id="context-count"><span id="context-length">0</span> / ${MAX_INVITE_CONTEXT_CHARS} characters</small>
+  </label>
   <button>Mint URL</button>
 </form>
 <output id="result" hidden></output>
@@ -249,6 +265,8 @@ const form = document.querySelector('#mint');
 const fromInput = form.elements.notBefore;
 const untilInput = form.elements.expiresAt;
 const precise = form.elements.preciseTime;
+const contextInput = form.elements.context;
+const contextLength = document.querySelector('#context-length');
 const pad = (n) => String(n).padStart(2, '0');
 const dateValue = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 const dateTimeValue = (d) => dateValue(d) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
@@ -291,6 +309,7 @@ function syncMode() {
   else applyDayDefaults();
 }
 precise.addEventListener('change', syncMode);
+contextInput.addEventListener('input', () => { contextLength.textContent = contextInput.value.length; });
 applyDayDefaults();
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
