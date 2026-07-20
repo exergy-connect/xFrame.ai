@@ -121,6 +121,14 @@ test("mints invite features and rejects unknown feature ids", async () => {
   const verified = await verifyInviteToken(body.token, "signing-secret", Date.now() + 2_000);
   assert.deepEqual(verified.features, ["pdf_extract"]);
 
+  const withTts = await request(["text_to_speech"]);
+  assert.equal(withTts.status, 201);
+  assert.deepEqual((await withTts.json()).claims.features, ["text_to_speech"]);
+
+  const withBoth = await request(["pdf_extract", "text_to_speech"]);
+  assert.equal(withBoth.status, 201);
+  assert.deepEqual((await withBoth.json()).claims.features, ["pdf_extract", "text_to_speech"]);
+
   const omitted = await request(undefined);
   assert.equal(omitted.status, 201);
   assert.equal(Object.hasOwn((await omitted.json()).claims, "features"), false);
@@ -130,11 +138,13 @@ test("mints invite features and rejects unknown feature ids", async () => {
   assert.match((await unknown.json()).error.message, /Unknown invite feature/);
 });
 
-test("invite page exposes Allow PDF extract checkbox", async () => {
+test("invite page exposes Allow PDF extract and text-to-speech checkboxes", async () => {
   const response = await worker.fetch(new Request("https://proxy.example/invite"), env);
   const html = await response.text();
   assert.match(html, /name="pdfExtract" type="checkbox"/);
   assert.match(html, /Allow PDF extract/);
+  assert.match(html, /name="textToSpeech" type="checkbox"/);
+  assert.match(html, /Allow text-to-speech/);
   assert.match(html, /features\.length \? \{ features \} : \{\}/);
 });
 

@@ -8,7 +8,7 @@ const DEFAULT_TTS_FALLBACK_MODEL = "gemini-2.5-flash-preview-tts";
 const DEFAULT_LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
 const DEFAULT_INVITE_MAX_CONTEXT_CHARS = 1000;
 /** Invite-granted runtime capabilities (aligned with xFrame.present invite-feature). */
-const INVITE_FEATURES = new Set(["pdf_extract"]);
+const INVITE_FEATURES = new Set(["pdf_extract", "text_to_speech"]);
 
 const GEMINI_MALE_VOICES = new Set([
   "Charon", "Orus", "Alnilam", "Fenrir", "Iapetus", "Algenib",
@@ -258,6 +258,7 @@ small{color:#596579}
     <label class="check"><input name="preciseTime" type="checkbox"> Set specific times of day</label>
     <label>Maximum AI calls<input name="calls" type="number" min="1" max="20" value="5" required></label>
     <label class="check"><input name="pdfExtract" type="checkbox"> Allow PDF extract</label>
+    <label class="check"><input name="textToSpeech" type="checkbox"> Allow text-to-speech</label>
     <label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label>
   </div>
   <label class="context-field">Context description (optional)
@@ -329,7 +330,9 @@ form.addEventListener('submit', async (event) => {
     const untilRaw = String(data.get('expiresAt') || '');
     const notBefore = precise.checked ? new Date(fromRaw) : startOfDay(parseLocalDate(fromRaw));
     const expiresAt = precise.checked ? new Date(untilRaw) : endOfDay(parseLocalDate(untilRaw));
-    const features = data.get('pdfExtract') === 'on' ? ['pdf_extract'] : [];
+    const features = [];
+    if (data.get('pdfExtract') === 'on') features.push('pdf_extract');
+    if (data.get('textToSpeech') === 'on') features.push('text_to_speech');
     const response = await fetch('/invite/mint', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + data.get('secret') },
