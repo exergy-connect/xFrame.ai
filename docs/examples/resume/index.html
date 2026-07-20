@@ -4702,17 +4702,7 @@ window.__XFRAME__.runtime.register("zoom", (runtime) => {
     return value.value;
   }
   function jsToRuntime(value) {
-    if (typeof value === "string") return { type: "StringValue", value, toString: () => value };
-    if (typeof value === "number") return { type: Number.isInteger(value) ? "IntegerValue" : "FloatValue", value, toString: () => String(value) };
-    if (typeof value === "boolean") return { type: "BooleanValue", value, toString: () => String(value) };
-    if (value === void 0) return { type: "UndefinedValue", value, toString: () => "" };
-    if (value === null) return { type: "NullValue", value, toString: () => "" };
-    if (Array.isArray(value)) {
-      const items = value.map(jsToRuntime);
-      return { type: "ArrayValue", value: items, toString: () => items.map(toString).join(",") };
-    }
-    const entries = Object.entries(value).map(([key, entry]) => [key, jsToRuntime(entry)]);
-    return { type: "ObjectValue", value: new Map(entries), toString: () => JSON.stringify(value) };
+    return new Environment().set("__xframe_value", value);
   }
   function toString(value) {
     return value.toString?.() ?? String(value.value ?? "");
@@ -4782,6 +4772,10 @@ window.__XFRAME__.runtime.register("zoom", (runtime) => {
       const call = filterCall(statement.filter, interpreter, env);
       if (registry.has(call.name)) return jsToRuntime(await registry.apply(call.name, runtimeToJs(operand), call.args, call.kwargs));
       return statement.type === "FilterExpression" ? interpreter.evaluateFilterExpression(statement, env) : interpreter.evaluateFilterStatement(statement, env);
+    }
+    if (statement.type === "Set" || statement.type === "Macro" || statement.type === "Comment") {
+      interpreter.evaluate(statement, env);
+      return jsToRuntime("");
     }
     return interpreter.evaluate(statement, env);
   }
