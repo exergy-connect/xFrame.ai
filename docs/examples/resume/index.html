@@ -748,148 +748,6 @@ a.xframe-snapshot:hover img { filter: brightness(1.03); }
     <option value="en-US">English</option>
   </select>
 </label>
-<script>
-(() => {
-  if (window.__xframeLanguageControlScheduled) return;
-  window.__xframeLanguageControlScheduled = true;
-  const STORAGE_KEY = "xframe-narrative-language";
-
-  const languageLabel = (locale) => {
-    try {
-      const display = new Intl.DisplayNames(["en"], { type: "language" });
-      const primary = locale.split("-")[0] || locale;
-      return display.of(primary) || locale;
-    } catch {
-      return locale;
-    }
-  };
-
-  const uniqueLocales = (voices) => {
-    const byLanguage = new Map();
-    for (const voice of voices) {
-      const locale = String(voice.lang || "").trim();
-      if (!locale) continue;
-      const language = locale.split("-")[0].toLowerCase();
-      const existing = byLanguage.get(language);
-      if (!existing) {
-        byLanguage.set(language, locale);
-        continue;
-      }
-      // Prefer region-qualified English locales (en-US) when available.
-      if (language === "en" && !existing.includes("-") && locale.includes("-")) {
-        byLanguage.set(language, locale);
-      }
-    }
-    return [...byLanguage.values()].sort((a, b) => {
-      const la = languageLabel(a);
-      const lb = languageLabel(b);
-      return la.localeCompare(lb) || a.localeCompare(b);
-    });
-  };
-
-  const pickDefault = (locales) => {
-    const english = locales.find((code) => code.toLowerCase() === "en-us")
-      || locales.find((code) => code.toLowerCase() === "en")
-      || locales.find((code) => code.toLowerCase().startsWith("en-"));
-    return english || locales[0] || "en-US";
-  };
-
-  const loadStored = () => {
-    try { return localStorage.getItem(STORAGE_KEY) || ""; } catch { return ""; }
-  };
-
-  const resolveSelection = (locales, requested) => {
-    if (!requested) return pickDefault(locales);
-    const exact = locales.find((code) => code.toLowerCase() === requested.toLowerCase());
-    if (exact) return exact;
-    const primary = requested.split("-")[0]?.toLowerCase() ?? "";
-    return locales.find((code) => code.toLowerCase() === primary || code.toLowerCase().startsWith(primary + "-"))
-      || pickDefault(locales);
-  };
-
-  const applyLanguage = (locale, { persist = true, source } = {}) => {
-    const root = document.getElementById("xframe");
-    if (!root || !locale) return;
-    const language = locale.split("-")[0] || locale;
-    root.dataset.narrationLanguage = locale;
-    root.dataset.narrationLocale = locale;
-    for (const select of root.querySelectorAll("[data-xframe-language-select]")) {
-      if (!(select instanceof HTMLSelectElement)) continue;
-      if (![...select.options].some((option) => option.value === locale)) {
-        const option = document.createElement("option");
-        option.value = locale;
-        option.textContent = languageLabel(locale);
-        select.append(option);
-      }
-      select.value = locale;
-    }
-    root.querySelectorAll("[data-narrative-language-button]").forEach((button) => {
-      if (!(button instanceof HTMLButtonElement)) return;
-      const code = button.dataset.narrativeLanguageButton ?? "";
-      const primary = language.toLowerCase();
-      const pressed = code === locale
-        || code.toLowerCase() === primary
-        || code.toLowerCase().startsWith(primary + "-");
-      button.setAttribute("aria-pressed", String(pressed));
-    });
-    if (persist) {
-      try { localStorage.setItem(STORAGE_KEY, locale); } catch {}
-    }
-    root.dispatchEvent(new CustomEvent("xframe:languagechange", {
-      bubbles: true,
-      detail: { language, locale, source: source || "control" },
-    }));
-  };
-
-  const populate = () => {
-    if (!("speechSynthesis" in window)) return;
-    const root = document.getElementById("xframe");
-    if (!root) return;
-    const selects = [...root.querySelectorAll("[data-xframe-language-select]")]
-      .filter((el) => el instanceof HTMLSelectElement);
-    if (!selects.length) return;
-    const locales = uniqueLocales(speechSynthesis.getVoices());
-    if (!locales.length) return;
-    const selected = resolveSelection(locales, loadStored() || root.dataset.narrationLanguage || "en-US");
-    for (const select of selects) {
-      select.replaceChildren();
-      for (const locale of locales) {
-        const option = document.createElement("option");
-        option.value = locale;
-        option.textContent = languageLabel(locale);
-        select.append(option);
-      }
-      select.value = selected;
-      if (!select.dataset.xframeLanguageWired) {
-        select.dataset.xframeLanguageWired = "true";
-        select.addEventListener("change", () => applyLanguage(select.value, { source: "control" }));
-      }
-    }
-    applyLanguage(selected, { persist: true, source: "init" });
-  };
-
-  const initialize = () => {
-    populate();
-    if ("speechSynthesis" in window) {
-      speechSynthesis.addEventListener("voiceschanged", populate);
-    }
-    document.addEventListener("click", (event) => {
-      const button = event.target instanceof Element
-        ? event.target.closest("[data-narrative-language-button]")
-        : null;
-      if (!(button instanceof HTMLButtonElement)) return;
-      const language = button.dataset.narrativeLanguageButton;
-      if (language) applyLanguage(language, { source: "narrative-button" });
-    });
-  };
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initialize, { once: true });
-  } else {
-    initialize();
-  }
-})();
-</script>
   </div>
 <div class="layout-container layout-stack" data-layout-direction="vertical" style="gap: 1rem; align-items: stretch; --layout-weight: 1.618; --layout-shrink: 1; --layout-basis: 0%">
     <div class="region horizontal-split-image" data-region="image" style="--layout-weight: 0; --layout-shrink: 0; --layout-basis: auto">
@@ -1395,124 +1253,6 @@ Ethernet + ARP + IP + UDP + TCP + DHCP</pre>
   <button type="button" data-deck-fullscreen title="Enter full screen (f)" aria-label="Enter full screen">⛶</button>
   
 </nav>
-<script>
-(() => {
-  if (window.__xframeDeckControlsScheduled) return;
-  window.__xframeDeckControlsScheduled = true;
-  const initialize = () => {
-    const root = document.getElementById("xframe");
-    if (!root) return;
-    const slides = [...root.querySelectorAll(".segment")];
-    const hud = root.querySelector(".hud");
-    const deckThemes = (hud?.dataset.themes || root.dataset.themes || "")
-      .split(",").map((name) => name.trim()).filter(Boolean);
-    let index = 0;
-    const fromHash = () => {
-      const n = Number.parseInt((location.hash || "").replace("#", ""), 10);
-      return Number.isNaN(n) ? 0 : Math.min(Math.max(n - 1, 0), Math.max(slides.length - 1, 0));
-    };
-    const fitCanvas = () => {
-      if (document.fullscreenElement === root) {
-        root.style.transform = "";
-        return;
-      }
-      const w = root.offsetWidth || 1;
-      const h = root.offsetHeight || 1;
-      const chrome = hud ? hud.offsetHeight + 16 : 0;
-      const scale = Math.min((window.innerWidth * 0.92) / w, (window.innerHeight * 0.82) / (h + chrome), 1);
-      root.style.transform = "scale(" + scale + ")";
-    };
-    const applyTheme = (name) => {
-      if (!name) return;
-      root.dataset.theme = name;
-      slides.forEach((slide) => { slide.dataset.theme = name; });
-      document.documentElement.dataset.theme = name;
-    };
-    const show = (nextIndex) => {
-      index = Math.min(Math.max(nextIndex, 0), Math.max(slides.length - 1, 0));
-      slides.forEach((slide, slideIndex) => slide.classList.toggle("active", slideIndex === index));
-      const counter = hud?.querySelector("[data-deck-counter]");
-      if (counter) counter.textContent = (index + 1) + " / " + Math.max(slides.length, 1);
-      const prev = hud?.querySelector("[data-deck-previous]");
-      const next = hud?.querySelector("[data-deck-next]");
-      if (prev instanceof HTMLButtonElement) prev.disabled = index === 0;
-      if (next instanceof HTMLButtonElement) next.disabled = index >= slides.length - 1;
-      const themeBtn = hud?.querySelector("[data-deck-theme]");
-      if (themeBtn instanceof HTMLButtonElement) {
-        themeBtn.disabled = deckThemes.length < 2;
-        themeBtn.hidden = deckThemes.length < 1;
-      }
-      if (!root.dataset.theme) applyTheme(deckThemes[0]);
-      const hash = "#" + (index + 1);
-      if (hash !== location.hash) {
-        try { history.replaceState(null, "", hash); } catch {}
-      }
-      root.dispatchEvent(new CustomEvent("xframe:slidechange", { detail: { index } }));
-    };
-    const cycleTheme = () => {
-      if (deckThemes.length < 2) return;
-      const current = root.dataset.theme || deckThemes[0];
-      const at = deckThemes.indexOf(current);
-      const nextTheme = deckThemes[(at < 0 ? 0 : at + 1) % deckThemes.length];
-      applyTheme(nextTheme);
-    };
-    const updateFullscreenControl = () => {
-      const button = hud?.querySelector("[data-deck-fullscreen]");
-      if (!(button instanceof HTMLButtonElement)) return;
-      const active = document.fullscreenElement === root;
-      button.textContent = active ? "⤢" : "⛶";
-      button.title = active ? "Exit full screen (f)" : "Enter full screen (f)";
-      button.setAttribute("aria-label", active ? "Exit full screen" : "Enter full screen");
-    };
-    const toggleFullscreen = async () => {
-      try {
-        if (document.fullscreenElement === root) await document.exitFullscreen();
-        else await root.requestFullscreen();
-      } catch {}
-    };
-    hud?.querySelector("[data-deck-previous]")?.addEventListener("click", () => show(index - 1));
-    hud?.querySelector("[data-deck-next]")?.addEventListener("click", () => show(index + 1));
-    hud?.querySelector("[data-deck-theme]")?.addEventListener("click", cycleTheme);
-    hud?.querySelector("[data-deck-fullscreen]")?.addEventListener("click", toggleFullscreen);
-    window.addEventListener("keydown", (event) => {
-      const target = event.target;
-      // Do not steal keys from form fields or contentEditable editors (editable-slot).
-      if (
-        target instanceof HTMLInputElement
-        || target instanceof HTMLTextAreaElement
-        || target instanceof HTMLSelectElement
-        || (target instanceof HTMLElement && (target.isContentEditable || Boolean(target.closest("[contenteditable='true']"))))
-      ) return;
-      if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
-        event.preventDefault(); show(index + 1);
-      }
-      if (event.key === "ArrowLeft" || event.key === "PageUp") {
-        event.preventDefault(); show(index - 1);
-      }
-      if (event.key === "Home") show(0);
-      if (event.key === "End") show(slides.length - 1);
-      if (event.key === "t") cycleTheme();
-      if (event.key === "f") toggleFullscreen();
-    });
-    window.addEventListener("hashchange", () => show(fromHash()));
-    window.addEventListener("resize", fitCanvas);
-    document.addEventListener("fullscreenchange", () => {
-      updateFullscreenControl();
-      fitCanvas();
-    });
-    applyTheme(root.dataset.theme || deckThemes[0]);
-    show(fromHash());
-    updateFullscreenControl();
-    fitCanvas();
-
-  };
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initialize, { once: true });
-  } else {
-    initialize();
-  }
-})();
-</script>
   </div>
   </div>
 <aside class="xframe-narrative-dock" aria-label="Slide narration"><div class="xframe-narrative-slide" data-xframe-narrative-slide="0"><div class="xframe-narrative" data-xframe-narrative data-selected-language="en-US"><div data-narrative-text><span data-narrative-language="en-US" data-selected="true">I&#39;m Jeroen van Bemmel. I design and build systems that make complex technology practical to adopt and sustainable to operate. My work spans carrier networks, cloud infrastructure, automation, and AI-powered applications. The common thread is simple: make complexity manageable through architecture, models, and automation.</span></div><audio controls preload="none" data-narrative-audio data-narrative-language="en-US" src="audio/title-en-US.mp3"></audio></div></div>
@@ -1531,11 +1271,606 @@ Ethernet + ARP + IP + UDP + TCP + DHCP</pre>
 <div class="xframe-narrative-slide" data-xframe-narrative-slide="13" hidden><div class="xframe-narrative" data-xframe-narrative data-selected-language="en-US"><div data-narrative-text><span data-narrative-language="en-US" data-selected="true">The common thread throughout my career has been a progression from models, to automation, to operational confidence. I have helped organizations move from manual processes to structured systems, from static architectures to dynamic platforms, and from experimental technology to reliable operations. Across carrier networks, cloud infrastructure, and AI-assisted systems, the principle remains the same: make complexity manageable through architecture, models, and automation.</span></div><audio controls preload="none" data-narrative-audio data-narrative-language="en-US" src="audio/common-thread-en-US.mp3"></audio></div></div>
 <div class="xframe-narrative-slide" data-xframe-narrative-slide="14" hidden><div class="xframe-narrative" data-xframe-narrative data-selected-language="en-US"><div data-narrative-text><span data-narrative-language="en-US" data-selected="true">Thank you for watching. I am looking for my next opportunity to apply these skills — designing systems, building automation, and making complex technology practical to operate. If you are working on a problem where this experience could be useful, I would be glad to talk. And if you know someone who is, please feel free to put us in touch. You can find me on GitHub and LinkedIn, or reach me at j v b one two seven at gmail dot com.</span></div><audio controls preload="none" data-narrative-audio data-narrative-language="en-US" src="audio/next-steps-en-US.mp3"></audio></div></div></aside>
 </main>
+<script data-xframe-bootstrap>"use strict";
+(() => {
+  // src/runtime/bootstrap.ts
+  var root = window;
+  var g = root.__XFRAME__ ?? (root.__XFRAME__ = {});
+  if (!g.runtime) {
+    const pending = [];
+    const seen = /* @__PURE__ */ new Set();
+    let flushed = false;
+    let listening = false;
+    const run = (fn) => {
+      try {
+        fn();
+      } catch (error) {
+        console.error("[xFrame] runtime init failed", error);
+      }
+    };
+    const flush = () => {
+      if (flushed) return;
+      flushed = true;
+      const queue = pending.splice(0);
+      for (const fn of queue) run(fn);
+    };
+    const enqueue = (fn) => {
+      if (flushed || document.readyState !== "loading") {
+        if (pending.length) {
+          pending.push(fn);
+          flush();
+          return;
+        }
+        run(fn);
+        flushed = true;
+        return;
+      }
+      pending.push(fn);
+      if (!listening) {
+        listening = true;
+        document.addEventListener("DOMContentLoaded", flush, { once: true });
+      }
+    };
+    g.runtime = {
+      register(id, init) {
+        if (typeof id !== "string" || !id || typeof init !== "function") return;
+        if (seen.has(id)) return;
+        seen.add(id);
+        enqueue(init);
+      },
+      ready(fn) {
+        if (typeof fn !== "function") return;
+        enqueue(fn);
+      }
+    };
+  }
+})();
+</script>
 
 
 
 <script>
-(() => {
+window.__XFRAME__.runtime.register("ai-index", () => {
+  const decodeJson = (raw) => {
+    try { return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(raw || ""), (c) => c.charCodeAt(0)))); }
+    catch { return null; }
+  };
+  const languageDisplayName = (locale) => {
+    try { return new Intl.DisplayNames(["en"], { type: "language" }).of(locale.split("-")[0] || locale) || locale; }
+    catch { return locale; }
+  };
+  /** Navigate by 1-based slide number (`#N`). */
+  const goToSlide = (slide) => {
+    if (!Number.isInteger(slide) || slide < 1) return;
+    const hash = `#${slide}`;
+    if (location.hash !== hash) location.hash = hash;
+    else window.dispatchEvent(new HashChangeEvent("hashchange"));
+  };
+
+  const root = document.getElementById("xframe");
+  if (!root) return;
+
+  root.querySelectorAll("[data-xframe-control='ai-index']").forEach((control) => {
+    if (!(control instanceof HTMLElement)) return;
+    root.appendChild(control);
+
+    const variable = document.getElementById(control.dataset.variableId || "");
+    const destination = document.getElementById(control.dataset.targetId || "");
+    const input = document.getElementById(control.dataset.inputId || "");
+    const action = control.dataset.action || "generate-index";
+    const baselineName = control.dataset.baseline || "baseline_narrative";
+    const results = control.querySelector("[data-xframe-ai-index-results]");
+    if (!(variable instanceof HTMLElement) || !(results instanceof HTMLOListElement)) return;
+    const variableName = variable.dataset.xframeVariable || "";
+
+    const inputText = () => input instanceof HTMLTextAreaElement ? input.value.trim() : "";
+    const context = () => {
+      const locale = root.dataset.narrationLocale || root.dataset.narrationLanguage || "en-US";
+      const language = locale.split("-")[0] || "en";
+      const preferred = languageDisplayName(locale);
+      const viewer_notes = inputText();
+      const base = decodeJson(root.dataset.xframeTemplateContext) || {};
+      const baseline_narrative = String(base[baselineName] || "").trim();
+      return {
+        adaptation_input: [
+          "## Baseline narrative", baseline_narrative, "", "## Viewer context",
+          `Notes: ${viewer_notes || "(not provided)"}`,
+          `Preferred language: ${preferred} (${locale})`,
+          language.toLowerCase() === "en" ? "Keep the narration in English." : `Rewrite the narration in ${preferred}.`,
+        ].join("\n"),
+        viewer_notes, baseline_narrative, target_language: preferred,
+        target_locale: locale, voice_language: language,
+      };
+    };
+
+    let timer = 0;
+    const generate = (refresh = false) => {
+      clearTimeout(timer);
+      timer = window.setTimeout(() => variable.dispatchEvent(new CustomEvent("xframe:render-template", {
+        bubbles: true, detail: { context: context(), refresh },
+      })), refresh ? 0 : 50);
+    };
+
+    const navigateAndGenerate = () => {
+      const slideEl = destination || variable.closest(".segment");
+      if (!(slideEl instanceof HTMLElement)) { generate(true); return; }
+      const index = Number(slideEl.dataset.index);
+      if (slideEl.classList.contains("active")) { generate(true); return; }
+      const onArrive = (event) => {
+        if (!(event instanceof CustomEvent) || Number(event.detail?.index) !== index) return;
+        root.removeEventListener("xframe:slidechange", onArrive);
+        generate(true);
+      };
+      root.addEventListener("xframe:slidechange", onArrive);
+      goToSlide(index + 1);
+    };
+
+    const syncCurrent = (index) => {
+      const slide = Number(index) + 1;
+      control.querySelectorAll("[data-xframe-ai-index-slide]").forEach((node) => {
+        if (!(node instanceof HTMLElement)) return;
+        const active = Number(node.dataset.xframeAiIndexSlide) === slide;
+        node.classList.toggle("is-current", active);
+        if (active) node.setAttribute("aria-current", "step");
+        else node.removeAttribute("aria-current");
+      });
+    };
+
+    const render = (structured) => {
+      const links = Array.isArray(structured?.links) ? structured.links : [];
+      results.replaceChildren();
+      for (const entry of links) {
+        const slide = Number(entry?.slide);
+        const label = typeof entry?.label === "string" ? entry.label.trim() : "";
+        const aspect = typeof entry?.aspect === "string" ? entry.aspect.trim() : "";
+        if (!Number.isInteger(slide) || slide < 1 || !label) continue;
+        const item = document.createElement("li");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "xframe-ai-index-step";
+        button.dataset.xframeAiIndexSlide = String(slide);
+        button.title = aspect || label;
+        const name = document.createElement("span");
+        name.className = "xframe-ai-index-label";
+        name.textContent = label;
+        button.append(name);
+        if (aspect) {
+          const note = document.createElement("span");
+          note.className = "xframe-ai-index-aspect";
+          note.textContent = aspect;
+          button.append(note);
+        }
+        button.addEventListener("click", () => goToSlide(slide));
+        item.append(button);
+        results.append(item);
+      }
+      control.hidden = !results.childElementCount;
+      const active = root.querySelector(".segment.active");
+      if (active instanceof HTMLElement) syncCurrent(Number(active.dataset.index));
+    };
+
+    root.addEventListener("xframe:action", (event) => {
+      if (event instanceof CustomEvent && event.detail?.action === action) navigateAndGenerate();
+    });
+    root.addEventListener("xframe:template-request", (event) => {
+      if (!(event instanceof CustomEvent) || event.detail?.target !== variable) return;
+      Object.assign(event.detail.context, context());
+    });
+    root.addEventListener("xframe:variablechange", (event) => {
+      if (event instanceof CustomEvent && event.detail?.name === variableName) render(event.detail.structured);
+    });
+    root.addEventListener("xframe:slidechange", (event) => {
+      if (event instanceof CustomEvent) syncCurrent(Number(event.detail?.index));
+    });
+    root.addEventListener("xframe:languagechange", () => {
+      if (variable.closest(".segment")?.classList.contains("active")) generate(true);
+    });
+  });
+});
+</script>
+
+<script>
+window.__XFRAME__.runtime.register("hud", () => {
+  const root = document.getElementById("xframe");
+  if (!root) return;
+
+  const slides = [...root.querySelectorAll(".segment")];
+  const hud = root.querySelector(".hud");
+  const button = (selector) => {
+    const element = hud?.querySelector(selector);
+    return element instanceof HTMLButtonElement ? element : null;
+  };
+  const counter = hud?.querySelector("[data-deck-counter]");
+  const previousButton = button("[data-deck-previous]");
+  const nextButton = button("[data-deck-next]");
+  const themeButton = button("[data-deck-theme]");
+  const fullscreenButton = button("[data-deck-fullscreen]");
+  const deckThemes = (hud?.dataset.themes || root.dataset.themes || "")
+    .split(",").map((name) => name.trim()).filter(Boolean);
+  const lastIndex = Math.max(slides.length - 1, 0);
+  const clampIndex = (value) => Math.min(Math.max(value, 0), lastIndex);
+  let index = -1;
+
+  const fromHash = () => {
+    const value = Number.parseInt(location.hash.slice(1), 10);
+    return Number.isNaN(value) ? 0 : clampIndex(value - 1);
+  };
+
+  const fitCanvas = () => {
+    if (document.fullscreenElement === root) {
+      root.style.transform = "";
+      return;
+    }
+    const w = root.offsetWidth || 1;
+    const h = root.offsetHeight || 1;
+    const chrome = hud ? hud.offsetHeight + 16 : 0;
+    const scale = Math.min((window.innerWidth * 0.92) / w, (window.innerHeight * 0.82) / (h + chrome), 1);
+    root.style.transform = "scale(" + scale + ")";
+  };
+  let fitFrame = 0;
+  const scheduleCanvasFit = () => {
+    if (fitFrame) return;
+    fitFrame = requestAnimationFrame(() => {
+      fitFrame = 0;
+      fitCanvas();
+    });
+  };
+
+  const applyTheme = (name) => {
+    if (!name) return;
+    root.dataset.theme = name;
+    slides.forEach((slide) => { slide.dataset.theme = name; });
+    document.documentElement.dataset.theme = name;
+  };
+
+  const show = (nextIndex) => {
+    const previousIndex = index;
+    index = clampIndex(nextIndex);
+    if (previousIndex !== index) {
+      slides[previousIndex]?.classList.remove("active");
+      slides[index]?.classList.add("active");
+    }
+    if (counter) counter.textContent = (index + 1) + " / " + Math.max(slides.length, 1);
+    if (previousButton) previousButton.disabled = index === 0;
+    if (nextButton) nextButton.disabled = index >= slides.length - 1;
+    const hash = "#" + (index + 1);
+    if (hash !== location.hash) {
+      try { history.replaceState(null, "", hash); } catch {}
+    }
+    root.dispatchEvent(new CustomEvent("xframe:slidechange", { detail: { index } }));
+  };
+
+  const cycleTheme = () => {
+    if (deckThemes.length < 2) return;
+    const current = root.dataset.theme || deckThemes[0];
+    const at = deckThemes.indexOf(current);
+    const nextTheme = deckThemes[(at < 0 ? 0 : at + 1) % deckThemes.length];
+    applyTheme(nextTheme);
+  };
+
+  const updateFullscreenControl = () => {
+    if (!fullscreenButton) return;
+    const active = document.fullscreenElement === root;
+    fullscreenButton.textContent = active ? "⤢" : "⛶";
+    fullscreenButton.title = active ? "Exit full screen (f)" : "Enter full screen (f)";
+    fullscreenButton.setAttribute("aria-label", active ? "Exit full screen" : "Enter full screen");
+  };
+
+  const toggleFullscreen = async () => {
+    try {
+      if (document.fullscreenElement === root) await document.exitFullscreen();
+      else await root.requestFullscreen();
+    } catch {}
+  };
+
+  const isEditing = (target) => target instanceof HTMLInputElement
+    || target instanceof HTMLTextAreaElement
+    || target instanceof HTMLSelectElement
+    || (target instanceof HTMLElement
+      && (target.isContentEditable || Boolean(target.closest("[contenteditable='true']"))));
+
+  previousButton?.addEventListener("click", () => show(index - 1));
+  nextButton?.addEventListener("click", () => show(index + 1));
+  themeButton?.addEventListener("click", cycleTheme);
+  fullscreenButton?.addEventListener("click", toggleFullscreen);
+  window.addEventListener("keydown", (event) => {
+    // Do not steal keys from form fields or contentEditable editors (editable-slot).
+    if (isEditing(event.target)) return;
+    switch (event.key) {
+      case "ArrowRight":
+      case "PageDown":
+      case " ":
+        event.preventDefault();
+        show(index + 1);
+        break;
+      case "ArrowLeft":
+      case "PageUp":
+        event.preventDefault();
+        show(index - 1);
+        break;
+      case "Home": show(0); break;
+      case "End": show(lastIndex); break;
+      case "t": cycleTheme(); break;
+      case "f": toggleFullscreen(); break;
+    }
+  });
+  window.addEventListener("hashchange", () => show(fromHash()));
+  window.addEventListener("resize", scheduleCanvasFit, { passive: true });
+  document.addEventListener("fullscreenchange", () => {
+    updateFullscreenControl();
+    fitCanvas();
+  });
+
+  if (themeButton) {
+    themeButton.disabled = deckThemes.length < 2;
+    themeButton.hidden = deckThemes.length < 1;
+  }
+  applyTheme(root.dataset.theme || deckThemes[0]);
+  show(fromHash());
+  updateFullscreenControl();
+  fitCanvas();
+});
+</script>
+
+<script>
+window.__XFRAME__.runtime.register("input", () => {
+  const decodeJson = (raw) => {
+    try { return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(raw || ""), (c) => c.charCodeAt(0)))); }
+    catch { return null; }
+  };
+
+  const inviteContext = async () => {
+    try {
+      const token = new URLSearchParams(location.search).get("xframe_invite")?.trim();
+      const payload = token?.split(".")[0];
+      if (!payload) return "";
+      const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const claims = decodeJson(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "="));
+      if (typeof claims?.contextGzip !== "string" || !claims.contextGzip) return "";
+      const encoded = claims.contextGzip.replace(/-/g, "+").replace(/_/g, "/");
+      const bytes = Uint8Array.from(
+        atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, "=")),
+        (c) => c.charCodeAt(0),
+      );
+      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+      return (await new Response(stream).text()).trim();
+    } catch (error) {
+      console.warn("[xFrame] Could not read invite context", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return "";
+    }
+  };
+
+  const input = document.querySelector("textarea[data-xframe-input]");
+  if (!(input instanceof HTMLTextAreaElement)) return;
+  const initialValue = input.value;
+  inviteContext().then((context) => {
+    if (!context || input.value !== initialValue) return;
+    input.value = context;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+});
+</script>
+
+<script>
+window.__XFRAME__.runtime.register("language", () => {
+  const STORAGE_KEY = "xframe-narrative-language";
+
+  const languageLabel = (locale) => {
+    try {
+      const display = new Intl.DisplayNames(["en"], { type: "language" });
+      const primary = locale.split("-")[0] || locale;
+      return display.of(primary) || locale;
+    } catch {
+      return locale;
+    }
+  };
+
+  const uniqueLocales = (voices) => {
+    const byLanguage = new Map();
+    for (const voice of voices) {
+      const locale = String(voice.lang || "").trim();
+      if (!locale) continue;
+      const language = locale.split("-")[0].toLowerCase();
+      const existing = byLanguage.get(language);
+      if (!existing) {
+        byLanguage.set(language, locale);
+        continue;
+      }
+      // Prefer region-qualified English locales (en-US) when available.
+      if (language === "en" && !existing.includes("-") && locale.includes("-")) {
+        byLanguage.set(language, locale);
+      }
+    }
+    return [...byLanguage.values()].sort((a, b) => {
+      const la = languageLabel(a);
+      const lb = languageLabel(b);
+      return la.localeCompare(lb) || a.localeCompare(b);
+    });
+  };
+
+  const pickDefault = (locales) => {
+    const english = locales.find((code) => code.toLowerCase() === "en-us")
+      || locales.find((code) => code.toLowerCase() === "en")
+      || locales.find((code) => code.toLowerCase().startsWith("en-"));
+    return english || locales[0] || "en-US";
+  };
+
+  const loadStored = () => {
+    try { return localStorage.getItem(STORAGE_KEY) || ""; } catch { return ""; }
+  };
+
+  const resolveSelection = (locales, requested) => {
+    if (!requested) return pickDefault(locales);
+    const exact = locales.find((code) => code.toLowerCase() === requested.toLowerCase());
+    if (exact) return exact;
+    const primary = requested.split("-")[0]?.toLowerCase() ?? "";
+    return locales.find((code) => code.toLowerCase() === primary || code.toLowerCase().startsWith(primary + "-"))
+      || pickDefault(locales);
+  };
+
+  const applyLanguage = (locale, { persist = true, source } = {}) => {
+    const root = document.getElementById("xframe");
+    if (!root || !locale) return;
+    const language = locale.split("-")[0] || locale;
+    root.dataset.narrationLanguage = locale;
+    root.dataset.narrationLocale = locale;
+    for (const select of root.querySelectorAll("[data-xframe-language-select]")) {
+      if (!(select instanceof HTMLSelectElement)) continue;
+      if (![...select.options].some((option) => option.value === locale)) {
+        const option = document.createElement("option");
+        option.value = locale;
+        option.textContent = languageLabel(locale);
+        select.append(option);
+      }
+      select.value = locale;
+    }
+    root.querySelectorAll("[data-narrative-language-button]").forEach((button) => {
+      if (!(button instanceof HTMLButtonElement)) return;
+      const code = button.dataset.narrativeLanguageButton ?? "";
+      const primary = language.toLowerCase();
+      const pressed = code === locale
+        || code.toLowerCase() === primary
+        || code.toLowerCase().startsWith(primary + "-");
+      button.setAttribute("aria-pressed", String(pressed));
+    });
+    if (persist) {
+      try { localStorage.setItem(STORAGE_KEY, locale); } catch {}
+    }
+    root.dispatchEvent(new CustomEvent("xframe:languagechange", {
+      bubbles: true,
+      detail: { language, locale, source: source || "control" },
+    }));
+  };
+
+  const populate = () => {
+    if (!("speechSynthesis" in window)) return;
+    const root = document.getElementById("xframe");
+    if (!root) return;
+    const selects = [...root.querySelectorAll("[data-xframe-language-select]")]
+      .filter((el) => el instanceof HTMLSelectElement);
+    if (!selects.length) return;
+    const locales = uniqueLocales(speechSynthesis.getVoices());
+    if (!locales.length) return;
+    const selected = resolveSelection(locales, loadStored() || root.dataset.narrationLanguage || "en-US");
+    for (const select of selects) {
+      select.replaceChildren();
+      for (const locale of locales) {
+        const option = document.createElement("option");
+        option.value = locale;
+        option.textContent = languageLabel(locale);
+        select.append(option);
+      }
+      select.value = selected;
+      if (!select.dataset.xframeLanguageWired) {
+        select.dataset.xframeLanguageWired = "true";
+        select.addEventListener("change", () => applyLanguage(select.value, { source: "control" }));
+      }
+    }
+    applyLanguage(selected, { persist: true, source: "init" });
+  };
+
+  populate();
+  if ("speechSynthesis" in window) {
+    speechSynthesis.addEventListener("voiceschanged", populate);
+  }
+  document.addEventListener("click", (event) => {
+    const button = event.target instanceof Element
+      ? event.target.closest("[data-narrative-language-button]")
+      : null;
+    if (!(button instanceof HTMLButtonElement)) return;
+    const language = button.dataset.narrativeLanguageButton;
+    if (language) applyLanguage(language, { source: "narrative-button" });
+  });
+});
+</script>
+
+<script>
+window.__XFRAME__.runtime.register("narrative", () => {
+  const STORAGE_KEY = "xframe-narrative-language";
+  const root = document.getElementById("xframe");
+  const resolveLanguage = (narrative, requested) => {
+    const codes = [...narrative.querySelectorAll("[data-narrative-language]")]
+      .map((entry) => entry instanceof HTMLElement ? entry.dataset.narrativeLanguage : undefined)
+      .filter((value) => typeof value === "string" && value);
+    if (codes.includes(requested)) return requested;
+    const primary = requested.split("-")[0] ?? requested;
+    return codes.find((code) => code === primary || code.startsWith(primary + "-")) ?? codes[0];
+  };
+  const applyNarrativeLanguage = (language) => {
+    if (!root || !language) return;
+    root.dataset.narrationLanguage = language;
+    root.querySelectorAll("[data-narrative-language-button]").forEach((button) => {
+      if (!(button instanceof HTMLButtonElement)) return;
+      const code = button.dataset.narrativeLanguageButton ?? "";
+      const primary = language.split("-")[0] ?? language;
+      const pressed = code === language || code === primary || code.startsWith(primary + "-");
+      button.setAttribute("aria-pressed", String(pressed));
+    });
+    root.querySelectorAll("[data-xframe-narrative]").forEach((narrative) => {
+      if (!(narrative instanceof HTMLElement)) return;
+      const selectedLanguage = resolveLanguage(narrative, language);
+      if (!selectedLanguage) return;
+      narrative.dataset.selectedLanguage = selectedLanguage;
+      narrative.querySelectorAll("[data-narrative-language]").forEach((entry) => {
+        if (!(entry instanceof HTMLElement)) return;
+        const selected = entry.dataset.narrativeLanguage === selectedLanguage;
+        entry.hidden = !selected;
+        if (selected) entry.dataset.selected = "true";
+        else delete entry.dataset.selected;
+      });
+      narrative.querySelectorAll("audio[data-narrative-audio]").forEach((audio) => {
+        if (!(audio instanceof HTMLAudioElement)) return;
+        const selected = audio.dataset.narrativeLanguage === selectedLanguage;
+        if (!selected) audio.pause();
+        audio.hidden = !selected;
+      });
+    });
+    try { localStorage.setItem(STORAGE_KEY, language); } catch {}
+  };
+  document.addEventListener("click", (event) => {
+    const button = event.target instanceof Element
+      ? event.target.closest("[data-narrative-language-button]")
+      : null;
+    if (!(button instanceof HTMLButtonElement)) return;
+    const language = button.dataset.narrativeLanguageButton;
+    if (language) applyNarrativeLanguage(language);
+  });
+  root?.addEventListener("xframe:languagechange", (event) => {
+    const locale = event instanceof CustomEvent ? String(event.detail?.locale || event.detail?.language || "") : "";
+    if (locale) applyNarrativeLanguage(locale);
+  });
+  if (!root) return;
+  const controls = [...root.querySelectorAll("[data-xframe-narrative-slide]")];
+  const showNarrative = (index) => controls.forEach((control) => {
+    if (!(control instanceof HTMLElement)) return;
+    const selected = Number(control.dataset.xframeNarrativeSlide) === index;
+    control.hidden = !selected;
+    if (!selected) control.querySelectorAll("audio").forEach((audio) => audio.pause());
+  });
+  root.addEventListener("xframe:slidechange", (event) => {
+    const index = event instanceof CustomEvent ? Number(event.detail?.index) : 0;
+    showNarrative(Number.isFinite(index) ? index : 0);
+  });
+  const active = root.querySelector(".segment.active");
+  showNarrative(active instanceof HTMLElement ? Number(active.dataset.index ?? 0) : 0);
+  const available = [...root.querySelectorAll("[data-narrative-language-button]")]
+    .map((button) => button instanceof HTMLButtonElement ? button.dataset.narrativeLanguageButton : undefined)
+    .filter((value) => typeof value === "string" && value);
+  let initial = available[0];
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored && available.some((code) => code === stored || code?.split("-")[0] === stored.split("-")[0])) {
+      initial = available.find((code) => code === stored || code?.split("-")[0] === stored.split("-")[0]) ?? initial;
+    }
+  } catch {}
+  if (initial) applyNarrativeLanguage(initial);
+});
+</script>
+
+<script>
+window.__XFRAME__.runtime.register("zoom", () => {
   const overlay = document.createElement("div");
   overlay.className = "xframe-zoom-overlay";
   overlay.hidden = true;
@@ -1554,155 +1889,7 @@ Ethernet + ARP + IP + UDP + TCP + DHCP</pre>
     overlay.hidden = false;
   });
   window.addEventListener("keydown", (event) => { if (event.key === "Escape" && !overlay.hidden) close(); });
-})();
-</script>
-
-<script>
-(() => {
-  if (window.__xframeAiIndexScheduled) return;
-  window.__xframeAiIndexScheduled = true;
-
-  const decodeJson = (raw) => {
-    try { return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(raw || ""), (c) => c.charCodeAt(0)))); }
-    catch { return null; }
-  };
-  const languageDisplayName = (locale) => {
-    try { return new Intl.DisplayNames(["en"], { type: "language" }).of(locale.split("-")[0] || locale) || locale; }
-    catch { return locale; }
-  };
-  /** Navigate by 1-based slide number (`#N`). */
-  const goToSlide = (slide) => {
-    if (!Number.isInteger(slide) || slide < 1) return;
-    const hash = `#${slide}`;
-    if (location.hash !== hash) location.hash = hash;
-    else window.dispatchEvent(new HashChangeEvent("hashchange"));
-  };
-
-  const initialize = () => {
-    const root = document.getElementById("xframe");
-    if (!root) return;
-
-    root.querySelectorAll("[data-xframe-control='ai-index']").forEach((control) => {
-      if (!(control instanceof HTMLElement)) return;
-      root.appendChild(control);
-
-      const variable = document.getElementById(control.dataset.variableId || "");
-      const destination = document.getElementById(control.dataset.targetId || "");
-      const input = document.getElementById(control.dataset.inputId || "");
-      const action = control.dataset.action || "generate-index";
-      const baselineName = control.dataset.baseline || "baseline_narrative";
-      const results = control.querySelector("[data-xframe-ai-index-results]");
-      if (!(variable instanceof HTMLElement) || !(results instanceof HTMLOListElement)) return;
-      const variableName = variable.dataset.xframeVariable || "";
-
-      const inputText = () => input instanceof HTMLTextAreaElement ? input.value.trim() : "";
-      const context = () => {
-        const locale = root.dataset.narrationLocale || root.dataset.narrationLanguage || "en-US";
-        const language = locale.split("-")[0] || "en";
-        const preferred = languageDisplayName(locale);
-        const viewer_notes = inputText();
-        const base = decodeJson(root.dataset.xframeTemplateContext) || {};
-        const baseline_narrative = String(base[baselineName] || "").trim();
-        return {
-          adaptation_input: [
-            "## Baseline narrative", baseline_narrative, "", "## Viewer context",
-            `Notes: ${viewer_notes || "(not provided)"}`,
-            `Preferred language: ${preferred} (${locale})`,
-            language.toLowerCase() === "en" ? "Keep the narration in English." : `Rewrite the narration in ${preferred}.`,
-          ].join("\n"),
-          viewer_notes, baseline_narrative, target_language: preferred,
-          target_locale: locale, voice_language: language,
-        };
-      };
-
-      let timer = 0;
-      const generate = (refresh = false) => {
-        clearTimeout(timer);
-        timer = window.setTimeout(() => variable.dispatchEvent(new CustomEvent("xframe:render-template", {
-          bubbles: true, detail: { context: context(), refresh },
-        })), refresh ? 0 : 50);
-      };
-
-      const navigateAndGenerate = () => {
-        const slideEl = destination || variable.closest(".segment");
-        if (!(slideEl instanceof HTMLElement)) { generate(true); return; }
-        const index = Number(slideEl.dataset.index);
-        if (slideEl.classList.contains("active")) { generate(true); return; }
-        const onArrive = (event) => {
-          if (!(event instanceof CustomEvent) || Number(event.detail?.index) !== index) return;
-          root.removeEventListener("xframe:slidechange", onArrive);
-          generate(true);
-        };
-        root.addEventListener("xframe:slidechange", onArrive);
-        goToSlide(index + 1);
-      };
-
-      const syncCurrent = (index) => {
-        const slide = Number(index) + 1;
-        control.querySelectorAll("[data-xframe-ai-index-slide]").forEach((node) => {
-          if (!(node instanceof HTMLElement)) return;
-          const active = Number(node.dataset.xframeAiIndexSlide) === slide;
-          node.classList.toggle("is-current", active);
-          if (active) node.setAttribute("aria-current", "step");
-          else node.removeAttribute("aria-current");
-        });
-      };
-
-      const render = (structured) => {
-        const links = Array.isArray(structured?.links) ? structured.links : [];
-        results.replaceChildren();
-        for (const entry of links) {
-          const slide = Number(entry?.slide);
-          const label = typeof entry?.label === "string" ? entry.label.trim() : "";
-          const aspect = typeof entry?.aspect === "string" ? entry.aspect.trim() : "";
-          if (!Number.isInteger(slide) || slide < 1 || !label) continue;
-          const item = document.createElement("li");
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "xframe-ai-index-step";
-          button.dataset.xframeAiIndexSlide = String(slide);
-          button.title = aspect || label;
-          const name = document.createElement("span");
-          name.className = "xframe-ai-index-label";
-          name.textContent = label;
-          button.append(name);
-          if (aspect) {
-            const note = document.createElement("span");
-            note.className = "xframe-ai-index-aspect";
-            note.textContent = aspect;
-            button.append(note);
-          }
-          button.addEventListener("click", () => goToSlide(slide));
-          item.append(button);
-          results.append(item);
-        }
-        control.hidden = !results.childElementCount;
-        const active = root.querySelector(".segment.active");
-        if (active instanceof HTMLElement) syncCurrent(Number(active.dataset.index));
-      };
-
-      root.addEventListener("xframe:action", (event) => {
-        if (event instanceof CustomEvent && event.detail?.action === action) navigateAndGenerate();
-      });
-      root.addEventListener("xframe:template-request", (event) => {
-        if (!(event instanceof CustomEvent) || event.detail?.target !== variable) return;
-        Object.assign(event.detail.context, context());
-      });
-      root.addEventListener("xframe:variablechange", (event) => {
-        if (event instanceof CustomEvent && event.detail?.name === variableName) render(event.detail.structured);
-      });
-      root.addEventListener("xframe:slidechange", (event) => {
-        if (event instanceof CustomEvent) syncCurrent(Number(event.detail?.index));
-      });
-      root.addEventListener("xframe:languagechange", () => {
-        if (variable.closest(".segment")?.classList.contains("active")) generate(true);
-      });
-    });
-  };
-
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialize, { once: true });
-  else initialize();
-})();
+});
 </script>
 
 <script>document.getElementById("xframe")?.setAttribute("data-xframe-template-context", "eyJsYXlvdXQiOiJmcmFtZWQtZGVjayIsImNvbnN0cmFpbnRzIjp7IndpZHRoIjoiMTI4MCIsImhlaWdodCI6Ijc5MiJ9LCJ0aGVtZXMiOlsibGlnaHQiLCJkYXJrIl0sInByZXNlbnRhdGlvbiI6InNsaWRlZGVjayIsInRpdGxlIjoiSmVyb2VuIHZhbiBCZW1tZWwg4oCUIFN5c3RlbXMgQXJjaGl0ZWN0dXJlIiwiYXV0aG9yIjoiSmVyb2VuIHZhbiBCZW1tZWwiLCJzdHlsZSI6eyJ0ZXh0X2FsaWduIjoibGVmdCIsInR5cG9ncmFwaHkiOnsidGl0bGUiOnsic2l6ZSI6Mi41NSwibGluZUhlaWdodCI6MS4wNX0sInN1YnRpdGxlIjp7InNpemUiOjEuMiwibGluZUhlaWdodCI6MS4yNX0sImJvZHkiOnsic2l6ZSI6MSwibGluZUhlaWdodCI6MS40fX0sInNwYWNpbmciOnsiY29udGVudFBhZGRpbmdYIjoyLjgsImNvbnRlbnRQYWRkaW5nWSI6MS44fX0sIm5hcnJhdGl2ZSI6eyJ2b2ljZSI6Im1hbGUiLCJwcm92aWRlciI6eyJzdGF0aWMiOiJlZGdlIiwiZHluYW1pYyI6ImdlbWluaSJ9fSwic3R5bGVzIjpbImhvcml6b250YWwtc3BsaXQiLCJyZXN1bWUtdGl0bGUiLCJyZXN1bWUtaW50YWtlIl0sImxsbSI6eyJiYXNlVXJsIjoiaHR0cHM6Ly94ZnJhbWUtYWkuanZiMTI3LndvcmtlcnMuZGV2L3YxIiwibW9kZWwiOiJnZW1pbmktMy4xLWZsYXNoLWxpdGUifSwiYmFzZWxpbmVfbmFycmF0aXZlIjoiSSdtIEplcm9lbiB2YW4gQmVtbWVsLiBJIGRlc2lnbiBhbmQgYnVpbGQgc3lzdGVtcyB0aGF0IG1ha2UgY29tcGxleCB0ZWNobm9sb2d5IHByYWN0aWNhbCB0byBhZG9wdCBhbmQgc3VzdGFpbmFibGUgdG8gb3BlcmF0ZS4gTXkgd29yayBzcGFucyBjYXJyaWVyIG5ldHdvcmtzLCBjbG91ZCBpbmZyYXN0cnVjdHVyZSwgYXV0b21hdGlvbiwgYW5kIEFJLXBvd2VyZWQgYXBwbGljYXRpb25zLiBUaGUgY29tbW9uIHRocmVhZCBpcyBzaW1wbGU6IG1ha2UgY29tcGxleGl0eSBtYW5hZ2VhYmxlIHRocm91Z2ggYXJjaGl0ZWN0dXJlLCBtb2RlbHMsIGFuZCBhdXRvbWF0aW9uLiIsInNlZ21lbnRzIjpbeyJpbmRleCI6MCwic2xpZGUiOjEsImhyZWYiOiIjMSIsInRleHQiOiJKZXJvZW4gdmFuIEJlbW1lbFxuUsOJU1VNw4kgwrcgU1lTVEVNUyBBUkNISVRFQ1Rcbkplcm9lbiB2YW4gQmVtbWVsXG5CcmlkZ2luZyB0aGUgZ2FwIGJldHdlZW4gaW5ub3ZhdGlvbiBhbmQgb3BlcmF0aW9ucyBieSB0dXJuaW5nIGNvbXBsZXgsIGVtZXJnaW5nIHRlY2hub2xvZ2llcyBpbnRvIHJlbGlhYmxlLCBzdXN0YWluYWJsZSBwcm9kdWN0aW9uIHN5c3RlbXNcbkknbSBKZXJvZW4gdmFuIEJlbW1lbC4gSSBkZXNpZ24gYW5kIGJ1aWxkIHN5c3RlbXMgdGhhdCBtYWtlIGNvbXBsZXggdGVjaG5vbG9neSBwcmFjdGljYWwgdG8gYWRvcHQgYW5kIHN1c3RhaW5hYmxlIHRvIG9wZXJhdGUuIE15IHdvcmsgc3BhbnMgY2FycmllciBuZXR3b3JrcywgY2xvdWQgaW5mcmFzdHJ1Y3R1cmUsIGF1dG9tYXRpb24sIGFuZCBBSS1wb3dlcmVkIGFwcGxpY2F0aW9ucy4gVGhlIGNvbW1vbiB0aHJlYWQgaXMgc2ltcGxlOiBtYWtlIGNvbXBsZXhpdHkgbWFuYWdlYWJsZSB0aHJvdWdoIGFyY2hpdGVjdHVyZSwgbW9kZWxzLCBhbmQgYXV0b21hdGlvbi4iLCJpZCI6InRpdGxlIiwidGl0bGUiOiJSw4lTVU3DiSDCtyBTWVNURU1TIEFSQ0hJVEVDVCIsInN1YnRpdGxlIjoiSmVyb2VuIHZhbiBCZW1tZWwifSx7ImluZGV4IjoxLCJzbGlkZSI6MiwiaHJlZiI6IiMyIiwidGV4dCI6IkJFRk9SRSBXRSBDT05USU5VRVxuRm9jdXMgdGhpcyB3YWxrdGhyb3VnaFxuTXkgcsOpc3Vtw6kgc3RheXMgdGhlIHNvdXJjZSBvZiB0cnV0aC4gQW4gQUkgbGF5ZXIgY2FuIHJlZm9jdXMgdGhlIG5leHQgb3ZlcnZpZXcgZm9yIHlvdXIgY29udGV4dCDigJQgc2VsZWN0aW5nIHRoZW1lcyBhbmQgZXZpZGVuY2UsIG5vdCBpbnZlbnRpbmcgYSBuZXcgc3RvcnkuXG5QcmVmZXJyZWQgbGFuZ3VhZ2Vcbkplcm9lbiB2YW4gQmVtbWVsXG5XaGF0IGFyZSB5b3UgbG9va2luZyBmb3I/XG5BIGRlZmF1bHQgZ3VpZGFuY2UgaXMgcHJlLWZpbGxlZCBiZWxvdy4gRWRpdCBpdCB0byBtYXRjaCB5b3VyIGNvbnRleHQgYW5kIHByaW9yaXRpZXMg4oCUIHRoZSByb2xlLCBwcm9ibGVtIHNwYWNlLCBvciBjYXBhYmlsaXRpZXMgeW91IHdhbnQgdG8gZXZhbHVhdGUg4oCUIHRoZW4gYXBwbHkgaXQgdG8gZ2VuZXJhdGUgYSB0YWlsb3JlZCBvdmVydmlldyBhbmQgc3VnZ2VzdGVkIHBhdGguXG5CZWZvcmUgd2UgY29udGludWUsIHlvdSBjYW4gZm9jdXMgdGhlIG5leHQgb3ZlcnZpZXcgb24gd2hhdCBtYXR0ZXJzIGZvciB0aGlzIGNvbnZlcnNhdGlvbi4gTXkgcmVzdW1lZSBzdGF5cyB0aGUgc291cmNlIG9mIHRydXRoLiBBbiBBSSBsYXllciB3aWxsIHNlbGVjdCB0aGUgdGhlbWVzIGFuZCBldmlkZW5jZSBtb3N0IHJlbGV2YW50IHRvIHlvdXIgY29udGV4dCDigJQgaXQgZG9lcyBub3QgaW52ZW50IGEgbmV3IHN0b3J5LiBFZGl0IHRoZSBndWlkYW5jZSwgdGhlbiBhcHBseSBpdCB0byBnZW5lcmF0ZSB5b3VyIGpvdXJuZXkuXG5KZXJvZW4gdmFuIEJlbW1lbCIsImlkIjoiaW50YWtlIiwidGl0bGUiOiJCRUZPUkUgV0UgQ09OVElOVUUiLCJzdWJ0aXRsZSI6IkZvY3VzIHRoaXMgd2Fsa3Rocm91Z2gifSx7ImluZGV4IjoyLCJzbGlkZSI6MywiaHJlZiI6IiMzIiwidGV4dCI6IlLDiVNVTcOJIMK3IFNZU1RFTVMgQVJDSElURUNUXG5KZXJvZW4gdmFuIEJlbW1lbFxuQnJpZGdpbmcgdGhlIGdhcCBiZXR3ZWVuIGlubm92YXRpb24gYW5kIG9wZXJhdGlvbnMgYnkgdHVybmluZyBjb21wbGV4LCBlbWVyZ2luZyB0ZWNobm9sb2dpZXMgaW50byByZWxpYWJsZSwgc3VzdGFpbmFibGUgcHJvZHVjdGlvbiBzeXN0ZW1zXG57eyB0YWlsb3JlZF9uYXJyYXRpdmUgfX1cbkplcm9lbiB2YW4gQmVtbWVsXG5Db250YWN0XG7igKIgZ2l0aHViLmNvbS9qYmVtbWVsXG7igKIgbGlua2VkaW4uY29tL2luL2plcm9lbnZiZW1tZWxcbuKAoiBqdmIxMjdAZ21haWwuY29tXG7igKIgSG91c3RvbiwgVFhcbuKAoiArMSAoNTA0KSAyNTAtNTk4OVxue3sgdGFpbG9yZWRfbmFycmF0aXZlLnRleHQgfX1cbkplcm9lbiB2YW4gQmVtbWVsIiwiaWQiOiJ0YWlsb3JlZCIsInRpdGxlIjoiUsOJU1VNw4kgwrcgU1lTVEVNUyBBUkNISVRFQ1QiLCJzdWJ0aXRsZSI6Ikplcm9lbiB2YW4gQmVtbWVsIn0seyJpbmRleCI6Mywic2xpZGUiOjQsImhyZWYiOiIjNCIsInRleHQiOiJCRUxMIExBQlMgSU5OT1ZBVElPTlMgwrcgMjAwMeKAkzIwMDZcbldoZXJlIGNvbnRyb2wtcGxhbmUgZW5naW5lZXJpbmcgc3RhcnRlZFxuUmVzZWFyY2ggJiBEZXZlbG9wbWVudCBFbmdpbmVlciDCtyBMdWNlbnQgVGVjaG5vbG9naWVzIC8gQmVsbCBMYWJzXG5EZXNpZ25lZCBhbmQgaW1wbGVtZW50ZWQgY2Fycmllci1ncmFkZSBzaWduYWxpbmcgc3lzdGVtcywgZm9jdXNpbmcgb24gdGhlIGdhcCBiZXR3ZWVuIHByb3RvY29sIG1vZGVscyBhbmQgcmVhbC13b3JsZCBjb25jdXJyZW50IGV4ZWN1dGlvbi5cbuKAoiBCdWlsdCBIUEpTUywgYSBoaWdoLXBlcmZvcm1hbmNlIEphdmEgU0lQIHN0YWNrIGZvciBjYXJyaWVyIHNlcnZpY2UgcGxhdGZvcm1zIHdoaWNoIGVuYWJsZWQgdGhlIEx1Y2VudCBTZXJ2aWNlIEJyb2tlciBwcm9kdWN0IHRvIG1lZXQgaXRzIHBlcmZvcm1hbmNlIEtQSXMgZm9yIGNvbW1lcmNpYWwgbGF1bmNoXG7igKIgUmVzZWFyY2hlZCBtdWx0aXByb2Nlc3NvciBzY2hlZHVsaW5nLCBkaXN0cmlidXRlZCBzaWduYWxpbmcsIGFuZCBwcm90b2NvbC1vcmllbnRlZCBpbmZyYXN0cnVjdHVyZVxu4oCiIENvbnRyaWJ1dGVkIHRvIEV1cm9wZWFuIHJlc2VhcmNoIHByb2plY3RzIGFuZCBjb25mZXJlbmNlIHB1YmxpY2F0aW9uc1xu4oCiIEVuZ2luZWVyZWQgY29udHJvbCBhbmQgZGF0YS1wbGFuZSBzeXN0ZW1zIHdoZXJlIGNvcnJlY3RuZXNzLCBzY2FsYWJpbGl0eSwgYW5kIGNvbmN1cnJlbmN5IHdlcmUgY3JpdGljYWxcbkx1Y2VudCBUZWNobm9sb2dpZXNcblNJUCBtZXNzYWdlIHByaW9yaXRpemF0aW9uIMK3IEJlbGwgTGFicyBUZWNobmljYWwgSm91cm5hbCDCtyBNYXJjaCAyMDA2XG5JbnRlbGxlY3R1YWwgUHJvcGVydHlcbjMzIFUuUy4gcGF0ZW50c1xuSW52ZW50b3IgYWNyb3NzIHNpZ25hbGluZywgbmV0d29ya2luZywgYW5kIGRpc3RyaWJ1dGVkIHN5c3RlbXMuIFNJUCBtZXNzYWdlIHByaW9yaXRpemF0aW9uIGZyb20gdGhpcyBCZWxsIExhYnMgd29yayBpcyBvbmUgb2YgdGhlbSDigJQgVVMgMjAwNy8wMjUzNDEyLlxuTXkgZm91bmRhdGlvbnMgYXJlIGF0IEJlbGwgTGFicy4gRnJvbSAyMDAxIHRvIDIwMDYgSSB3YXMgYSByZXNlYXJjaCBhbmQgZGV2ZWxvcG1lbnQgZW5naW5lZXIgYXQgTHVjZW50IFRlY2hub2xvZ2llcywgZGVzaWduaW5nIGFuZCBpbXBsZW1lbnRpbmcgY2Fycmllci1ncmFkZSBzaWduYWxpbmcgc3lzdGVtcy4gSSB3YXMgZm9jdXNlZCBvbiBhIGZ1bmRhbWVudGFsIGVuZ2luZWVyaW5nIHByb2JsZW06IHdoYXQgaGFwcGVucyB3aGVuIHByb3RvY29sIG1vZGVscyBvbiBwYXBlciBoYXZlIHRvIHJ1biBjb25jdXJyZW50bHkgaW4gdGhlIHJlYWwgd29ybGQ/IEkgYnVpbHQgSFBKU1MsIGEgaGlnaC1wZXJmb3JtYW5jZSBKYXZhIFNJUCBzdGFjayBmb3IgY2FycmllciBzZXJ2aWNlIHBsYXRmb3Jtcywgd2hpY2ggZW5hYmxlZCB0aGUgTHVjZW50IFNlcnZpY2UgQnJva2VyIHByb2R1Y3QgdG8gbWVldCBpdHMgcGVyZm9ybWFuY2UgS1BJcyBmb3IgY29tbWVyY2lhbCBsYXVuY2guIEkgYWxzbyB3b3JrZWQgb24gbXVsdGlwcm9jZXNzb3Igc2NoZWR1bGluZywgZGlzdHJpYnV0ZWQgc2lnbmFsaW5nLCBhbmQgcHJvdG9jb2wtb3JpZW50ZWQgaW5mcmFzdHJ1Y3R1cmUuIEkgY29udHJpYnV0ZWQgdG8gRXVyb3BlYW4gcmVzZWFyY2ggcHJvamVjdHMgYW5kIGNvbmZlcmVuY2UgcHVibGljYXRpb25zLCBpbmNsdWRpbmcgU0lQIG1lc3NhZ2UgcHJpb3JpdGl6YXRpb24gd29yayB0aGF0IGFwcGVhcmVkIGluIHRoZSBCZWxsIExhYnMgVGVjaG5pY2FsIEpvdXJuYWwgaW4gTWFyY2ggMjAwNi4gQWNyb3NzIG15IGNhcmVlciBJIGFtIGFuIGludmVudG9yIG9uIDMzIFUuUy4gcGF0ZW50czsgU0lQIG1lc3NhZ2UgcHJpb3JpdGl6YXRpb24gZnJvbSB0aGlzIEJlbGwgTGFicyB3b3JrIGlzIG9uZSBvZiB0aGVtLiBUaGF0IGlzIHdoZXJlIG15IGNvbnRyb2wtcGxhbmUgZW5naW5lZXJpbmcgc3RhcnRlZC5cbkplcm9lbiB2YW4gQmVtbWVsIiwiaWQiOiJiZWxsLWxhYnMiLCJ0aXRsZSI6IkJFTEwgTEFCUyBJTk5PVkFUSU9OUyDCtyAyMDAx4oCTMjAwNiIsInN1YnRpdGxlIjoiV2hlcmUgY29udHJvbC1wbGFuZSBlbmdpbmVlcmluZyBzdGFydGVkIn0seyJpbmRleCI6NCwic2xpZGUiOjUsImhyZWYiOiIjNSIsInRleHQiOiJTWVNURU1TIFBST0dSQU1NSU5HIMK3IEMrK1xuSFBqU1MrKzogY2Fycmllci1ncmFkZSBTSVAgZnJvbSB0aGUgc29ja2V0IHVwXG5IaWdoLXBlcmZvcm1hbmNlIEMrKyBzaWduYWxpbmcgc3RhY2sgwrcgQWxjYXRlbC1MdWNlbnQgLyBCZWxsIExhYnMgRXVyb3BlIMK3IDIwMDbigJMyMDA3XG5BIHByb2R1Y3Rpb24tb3JpZW50ZWQgaW1wbGVtZW50YXRpb24gb2YgUkZDIDMyNjEsIGVuZ2luZWVyZWQgZm9yIHByZWRpY3RhYmxlIHJlc291cmNlIHVzZSBhbmQgaGlnaCBzaWduYWxpbmcgdGhyb3VnaHB1dC5cbuKAoiB+NTEsNzAwIGxpbmVzIMK3IDIzNSBDL0MrKyBmaWxlcyBhY3Jvc3MgcHVibGljIEFQSXMsIHBhcnNlciwgdHJhbnNhY3Rpb25zLCBkaWFsb2dzLCB0cmFuc3BvcnRzLCB1dGlsaXRpZXMsIGFwcGxpY2F0aW9ucywgYW5kIHRlc3RzXG7igKIgQnVmZmVyLW9yaWVudGVkIHBhcnNpbmcgd2l0aCBsaWdodHdlaWdodCBzdHJpbmcgdmlld3MsIGxhenkgdHlwZWQgaGVhZGVycywgYW5kIHJlY2VpdmUtY29udGV4dCBvd25lcnNoaXAgdG8gbGltaXQgY29weWluZ1xu4oCiIFRyYWZmaWMtcHJvZmlsZS1kcml2ZW4gcHJlYWxsb2NhdGlvbiBvZiByZWNlaXZlIGNvbnRleHRzLCB0cmFuc2FjdGlvbnMsIHRpbWVycywgYW5kIHJlbGF0ZWQgb2JqZWN0cyBmb3Igc3RhYmxlIG1lbW9yeSBiZWhhdmlvciB1bmRlciBsb2FkXG7igKIgQ29uY3VycmVudCBwcm90b2NvbCBtYWNoaW5lcnk6IGF0b21pYyBzdGF0ZSB0cmFuc2l0aW9ucywgdGltZXIgcXVldWVzLCByZXRyYW5zbWlzc2lvbiwgY2FuY2VsbGF0aW9uLCBhbmQgdGltZW91dCBoYW5kbGluZ1xuUHJvZHVjdGlvbi1ncmFkZSBkZXB0aFxuSFBqU1MrKyBydW5uaW5nIGluIHRoZSBlY0Nsb3VkIFZORiBzY2FsaW5nIGRlbW9uc3RyYXRpb25cbkhQalNTKysgaW4gYWN0aW9uIMK3IGVjQ2xvdWQgVk5GIHNjYWxpbmcgZGVtbyDCtyBvcGVucyBhdCA1OjE2XG5Db21wbGV0ZSBzaWduYWxpbmcgcGF0aFxuRW5naW5lZXJpbmcgY29uY2VybnMgbWFkZSBleHBsaWNpdFxu4oCiIEJvdW5kZWQgYWxsb2NhdGlvbiBvbiBjcml0aWNhbCBwYXRoc1xu4oCiIEV4cGxpY2l0IG93bmVyc2hpcCBhbmQgb2JqZWN0IGxpZmV0aW1lc1xu4oCiIFRocmVhZGluZywgbG9ja3MsIGF0b21pY3MsIGFuZCB0aW1lcnNcbuKAoiBEZWJ1ZyBhbmQgb3B0aW1pemVkIHN0YXRpYy1saWJyYXJ5IGJ1aWxkc1xu4oCiIFJ1bm5hYmxlIGVuZHBvaW50IGFuZCBwcm94eSBhcHBsaWNhdGlvbnNcbkluc3BlY3QgdGhlIEhQalNTKysgc291cmNlXG5IUGpTUysrIGlzIGRpcmVjdCBldmlkZW5jZSBvZiBteSBwcm9kdWN0aW9uLWdyYWRlLCBoaWdoLXBlcmZvcm1hbmNlIEMrKyBzeXN0ZW1zIHByb2dyYW1taW5nLiBJIGJ1aWx0IGEgY29tcGxldGUgU0lQIHNpZ25hbGluZyBzdGFjayBmcm9tIExpbnV4IHNvY2tldHMgdXB3YXJkOiBVRFAsIFRDUCwgYW5kIFNDVFAgdHJhbnNwb3J0czsgYSBidWZmZXItb3JpZW50ZWQgcGFyc2VyOyBSRkMgMzI2MSB0cmFuc2FjdGlvbiBzdGF0ZSBtYWNoaW5lczsgZGlhbG9nczsgYXV0aGVudGljYXRpb247IGFuZCBoaWdoZXItbGV2ZWwgc2lnbmFsaW5nIHNlcnZpY2VzLiBUaGUgbWFpbnRhaW5lZCBzb3VyY2UgdHJlZSBpcyByb3VnaGx5IGZpZnR5LW9uZSB0aG91c2FuZCBzZXZlbiBodW5kcmVkIGxpbmVzIGFjcm9zcyB0d28gaHVuZHJlZCB0aGlydHktZml2ZSBDIGFuZCBDKysgZmlsZXMsIGluY2x1ZGluZyBydW5uYWJsZSB1c2VyLWFnZW50IGFuZCBzdGF0ZWZ1bCBwcm94eSBhcHBsaWNhdGlvbnMuIEl0cyBwZXJmb3JtYW5jZSBzdHJhdGVneSB3YXMgYXJjaGl0ZWN0dXJhbCwgbm90IGNvc21ldGljOiBzaXplIHJlc291cmNlcyBmcm9tIGFuIGV4cGVjdGVkIHRyYWZmaWMgcHJvZmlsZSwgcHJlYWxsb2NhdGUgdHJhbnNhY3Rpb24gYW5kIHJlY2VpdmUgc3RhdGUsIG1pbmltaXplIGNvcHlpbmcgd2l0aCBzdHJpbmcgdmlld3MgYW5kIGxhenkgcGFyc2luZywgYW5kIG1ha2Ugb3duZXJzaGlwIGFuZCBsaWZldGltZSBib3VuZGFyaWVzIGV4cGxpY2l0LiBDb25jdXJyZW5jeSBpcyBoYW5kbGVkIHRocm91Z2ggYXRvbWljIHN0YXRlIHRyYW5zaXRpb25zLCBsb2NrcywgdGltZXIgcXVldWVzLCByZXRyYW5zbWlzc2lvbiwgY2FuY2VsbGF0aW9uLCBhbmQgdGltZW91dCBtYWNoaW5lcnkuIFRoaXMgaXMgdGhlIGtpbmQgb2Ygc3lzdGVtcyB3b3JrIHdoZXJlIHByb3RvY29sIGNvcnJlY3RuZXNzLCBtZW1vcnkgYmVoYXZpb3IsIGNvbmN1cnJlbmN5LCBhbmQgbmV0d29yayBJL08gYWxsIGhhdmUgdG8gaG9sZCB0b2dldGhlciB1bmRlciBzdXN0YWluZWQgbG9hZC5cbkplcm9lbiB2YW4gQmVtbWVsIiwiaWQiOiJocGpzcy1wbHVzcGx1cyIsInRpdGxlIjoiU1lTVEVNUyBQUk9HUkFNTUlORyDCtyBDKysiLCJzdWJ0aXRsZSI6IkhQalNTKys6IGNhcnJpZXItZ3JhZGUgU0lQIGZyb20gdGhlIHNvY2tldCB1cCJ9LHsiaW5kZXgiOjUsInNsaWRlIjo2LCJocmVmIjoiIzYiLCJ0ZXh0IjoiT1BFUkFUSU5HIFNZU1RFTSBFTkdJTkVFUklORyDCtyAyMDAy4oCTMjAxMlxuTXlPUzogYXJjaGl0ZWN0dXJlIGFsbCB0aGUgd2F5IGRvd25cbkV4cGVyaW1lbnRhbCBmcmVlc3RhbmRpbmcgMzItYml0IHg4NiBvcGVyYXRpbmcgc3lzdGVtIMK3IEMrKyBhbmQgYXNzZW1ibHlcbkEgZGVjYWRlLWxvbmcgcGVyc29uYWwgc3lzdGVtcyBwcm9qZWN0IGV4cGxvcmluZyBob3cgZXhwbGljaXQgaW50ZXJmYWNlcyBhbmQgY29tcG9uZW50IG1vZGVscyBjYW4gb3JnYW5pemUgYW4gb3BlcmF0aW5nIHN5c3RlbSBmcm9tIGJvb3QgdG8gbmV0d29yayBzZXJ2aWNlcy5cbkltcGxlbWVudGVkIHRoZSBleGVjdXRpb24gcGF0aCBmcm9tIGJvb3Qgc2VjdG9yIHRocm91Z2ggcGFnaW5nLCBpbnRlcnJ1cHRzLCB0aW1lcnMsIHRocmVhZHMsIFNNUCwgZGV2aWNlIGRyaXZlcnMsIGZpbGVzeXN0ZW1zLCBhbmQgVENQL0lQIG5ldHdvcmtpbmcuXG5Nb2RlbGVkIHZlcnNpb25lZCBjb21wb25lbnRzIGFuZCBpbnRlcmZhY2VzIGluIFhNTCwgdXNpbmcgWFNMVCB0byBnZW5lcmF0ZSBjb21wb3NpdGlvbiBhbmQgaW5pdGlhbGl6YXRpb24gY29kZS5cbkV2b2x2ZWQgdGhlIGFyY2hpdGVjdHVyZSBmcm9tIGEgc3RhdGljYWxseSBsaW5rZWQga2VybmVsIGludG8gYSByZXNpZGVudCBDb3JlIHBsdXMgYSBkeW5hbWljYWxseSBsb2FkZWQgRUxGIEF0bW9zcGhlcmUgbW9kdWxlLCB3aXRoIGNvbXBvbmVudHMgZGlzY292ZXJpbmcgb25lIGFub3RoZXIgdGhyb3VnaCBhIHNoYXJlZCBydW50aW1lIGNvbnRleHQgcmF0aGVyIHRoYW4gaGlkZGVuIGRlcGVuZGVuY2llcy5cbkluc3BlY3QgdGhlIE15T1Mgc291cmNlXG5NeU9TMy54IHJlc2lkZW50IENvcmUgYW5kIGxvYWRhYmxlIEF0bW9zcGhlcmUgYXJjaGl0ZWN0dXJlXG5EZXB0aCBhY3Jvc3MgdGhlIHN0YWNrXG5NeU9TMy54IMK3IH40Nyw1MDAgbGluZXMgwrcgMzU2IHNvdXJjZSBmaWxlc1xuVGhlIGFyY2hpdGVjdHVyYWwgc2hpZnQgbW92ZWQgaGlnaGVyLWxldmVsIGZhY2lsaXRpZXMgb3V0IG9mIHRoZSByZXNpZGVudCBrZXJuZWwgd2hpbGUgcHJlc2VydmluZyB0aGUgc2FtZSBjb21wb25lbnQgY29udHJhY3RzIGFjcm9zcyB0aGUgYmluYXJ5IGJvdW5kYXJ5LlxuTXlPUyBpcyB0aGUgcHJvamVjdCB3aGVyZSBJIGV4cGxvcmVkIHN5c3RlbXMgYXJjaGl0ZWN0dXJlIGFsbCB0aGUgd2F5IGRvd24gdG8gdGhlIGhhcmR3YXJlLiBPdmVyIHJvdWdobHkgYSBkZWNhZGUsIGZyb20gMjAwMiB0aHJvdWdoIDIwMTIsIEkgYnVpbHQgYW4gZXhwZXJpbWVudGFsIGZyZWVzdGFuZGluZyB0aGlydHktdHdvLWJpdCB4ODYgb3BlcmF0aW5nIHN5c3RlbSBpbiBDKysgYW5kIGFzc2VtYmx5LiBJdCBzcGFucyB0aGUgY29tcGxldGUgcGF0aCBmcm9tIGJvb3QgYW5kIG1lbW9yeSBtYW5hZ2VtZW50IHRocm91Z2ggaW50ZXJydXB0cywgbXVsdGlwcm9jZXNzaW5nLCB0aHJlYWRzLCBkZXZpY2UgZHJpdmVycywgZmlsZXN5c3RlbXMsIGFuZCBhIFRDUC9JUCBzdGFjayB3aXRoIHNlcnZpY2VzIHN1Y2ggYXMgREhDUC4gVGhlIGNlbnRyYWwgZGVzaWduIGlkZWEgd2FzIHRvIG9yZ2FuaXplIGtlcm5lbCBmYWNpbGl0aWVzIGFzIHZlcnNpb25lZCBjb21wb25lbnRzIGFuZCBpbnRlcmZhY2VzLCB3aXRoIFhNTCBtb2RlbHMgYW5kIFhTTFQtZ2VuZXJhdGVkIGNvbXBvc2l0aW9uIG1ha2luZyBkZXBlbmRlbmNpZXMgYW5kIGluaXRpYWxpemF0aW9uIG9yZGVyIGV4cGxpY2l0LiBNeU9TMyBldm9sdmVkIHRoYXQgYXJjaGl0ZWN0dXJlIGZyb20gb25lIHN0YXRpY2FsbHkgbGlua2VkIGtlcm5lbCBpbnRvIGEgc21hbGwgcmVzaWRlbnQgQ29yZSBhbmQgYW4gRUxGLWxvYWRhYmxlIEF0bW9zcGhlcmUgbW9kdWxlIGNvbnRhaW5pbmcgaGlnaGVyLWxldmVsIGRyaXZlcnMsIG5ldHdvcmtpbmcsIGFuZCBzZXJ2aWNlcy4gVGhlIENvcmUgbG9hZGVyIHJlbG9jYXRlcyB0aGUgbW9kdWxlIGFuZCByZXNvbHZlcyBpdHMgaW1wb3J0cyBhZ2FpbnN0IGV4cG9ydGVkIGtlcm5lbCBzeW1ib2xzLCB3aGlsZSBib3RoIHBhcnRpdGlvbnMgY29udGludWUgdG8gY29tbXVuaWNhdGUgdGhyb3VnaCB0aGUgc2FtZSBpbnRlcmZhY2VzIGFuZCBzaGFyZWQgcnVudGltZSBjb250ZXh0LiBUaGlzIHByb2plY3QgZGVtb25zdHJhdGVzIG5vdCBvbmx5IGxvdy1sZXZlbCBpbXBsZW1lbnRhdGlvbiBkZXB0aCwgYnV0IGEgbG9uZy1ydW5uaW5nIGludGVyZXN0IGluIG1ha2luZyBjb21wbGV4IHN5c3RlbXMgbW9kdWxhciwgaW5zcGVjdGFibGUsIGFuZCBldm9sdmFibGUuXG5KZXJvZW4gdmFuIEJlbW1lbCIsImlkIjoibXlvcyIsInRpdGxlIjoiT1BFUkFUSU5HIFNZU1RFTSBFTkdJTkVFUklORyDCtyAyMDAy4oCTMjAxMiIsInN1YnRpdGxlIjoiTXlPUzogYXJjaGl0ZWN0dXJlIGFsbCB0aGUgd2F5IGRvd24ifSx7ImluZGV4Ijo2LCJzbGlkZSI6NywiaHJlZiI6IiM3IiwidGV4dCI6IkFMQ0FURUwtTFVDRU5UIMK3IDIwMDfigJMyMDEyXG5Gcm9tIFJlc2VhcmNoIHRvIEN1c3RvbWVyIEltcGFjdFxuQ3VzdG9tZXItZmFjaW5nIGFyY2hpdGVjdHVyZSBhbmQgYnVzaW5lc3MgZGV2ZWxvcG1lbnQgwrcgQWxjYXRlbC1MdWNlbnRcblNwZW50IHNpeCB5ZWFycyBicmlkZ2luZyBlbmdpbmVlcmluZywgcHJvZHVjdCBzdHJhdGVneSwgYW5kIGN1c3RvbWVyIGRlbGl2ZXJ54oCUdHJhbnNsYXRpbmcgZW1lcmdpbmcgdGVjaG5vbG9neSBpbnRvIGNvbW1lcmNpYWxseSBzdWNjZXNzZnVsIHNvbHV0aW9ucy5cbuKAoiAyMDA34oCTMjAwOSDCtyBCdXNpbmVzcyBEZXZlbG9wbWVudCBNYW5hZ2VyIOKAlCBLUE4gc3RyYXRlZ2ljIGFjY291bnQgdGVhbSwgcG9zaXRpb25pbmcgSU1TLCBmZW10b2NlbGwsIGFuZCBhcHBsaWNhdGlvbiBzb2x1dGlvbnMgd2l0aCB0ZWNobmljYWwgYW5kIGNvbW1lcmNpYWwgc3Rha2Vob2xkZXJzLlxu4oCiIDIwMDnigJMyMDEwIMK3IE11bHRpbWVkaWEgU29sdXRpb24gQXJjaGl0ZWN0IOKAlCBEaWdpdGFsIEhvbWUgJiBBcHBsaWNhdGlvbnMsIGRlZmluaW5nIHNvbHV0aW9uIHJlcXVpcmVtZW50cyBhbmQgYnVpbGRpbmcgcHJvdG90eXBlcyBmb3IgSG9tZSBNZWRpYSBTaGFyaW5nIGVuZ2FnZW1lbnRzLlxu4oCiIDIwMTHigJMyMDEyIMK3IEJ1c2luZXNzIERldmVsb3BtZW50IE1hbmFnZXIg4oCUIE11bHRpbWVkaWEg4oCUIFJlc3BvbnNpYmxlIGZvciB0aGUgQmVuZWx1eCBhbmQgTm9yZGljcyBtdWx0aW1lZGlhIHBvcnRmb2xpbywgaW5jbHVkaW5nIHRoZSBNdWx0aXNjcmVlbiBWaWRlbyBQbGF0Zm9ybSBhbmQgVmVsb2NpeCBDRE4sIHdvcmtpbmcgd2l0aCBjdXN0b21lcnMgc3VjaCBhcyBLUE4sIExpYmVydHkgR2xvYmFsL1VQQywgWmlnZ28sIGFuZCBUREMvWW91U2VlLlxuQWxjYXRlbC1MdWNlbnRcblB1cnBsZSBTdGFyIMK3IDIwMDhcbktQTiBtb2JpbGUgYmFja2hhdWwgZW50cnlcbldvbiB0aGUgY29tcGV0aXRpdmUgZXZhbHVhdGlvbiBhZ2FpbnN0IEVyaWNzc29uIFJlZEJhbmQgYnkgcG9zaXRpb25pbmcgQWxjYXRlbCA3MjUwIHJvdXRlcnMgdXNpbmcgU1NSUCBmb3IgY3JpdGljYWwgc2VydmljZSByZWxpYWJpbGl0eSDigJQgYSBmaXJzdC10aW1lIElQLWRvbWFpbiBlbnRyeSBhdCBLUE4uXG5BbGNhdGVsLUx1Y2VudCByZWNvZ25pdGlvbiBmb3IgYSBzdHJhdGVnaWMgY3VzdG9tZXIgd2luXG5Gcm9tIDIwMDcgdG8gMjAxMiBhdCBBbGNhdGVsLUx1Y2VudCwgSSBzcGVudCBzaXggeWVhcnMgYnJpZGdpbmcgZW5naW5lZXJpbmcsIHByb2R1Y3Qgc3RyYXRlZ3ksIGFuZCBjdXN0b21lciBkZWxpdmVyeSDigJQgdHJhbnNsYXRpbmcgZW1lcmdpbmcgdGVjaG5vbG9neSBpbnRvIGNvbW1lcmNpYWxseSBzdWNjZXNzZnVsIHNvbHV0aW9ucy4gQXMgQnVzaW5lc3MgRGV2ZWxvcG1lbnQgTWFuYWdlciBvbiB0aGUgS1BOIHN0cmF0ZWdpYyBhY2NvdW50LCBJIHBvc2l0aW9uZWQgSU1TLCBmZW10b2NlbGwsIGFuZCBhcHBsaWNhdGlvbiBzb2x1dGlvbnMgd2l0aCB0ZWNobmljYWwgYW5kIGNvbW1lcmNpYWwgc3Rha2Vob2xkZXJzLiBUaGUgaGlnaGxpZ2h0IG9mIHRoYXQgYWNjb3VudCB3b3JrIHdhcyB0aGUgUHVycGxlIFN0YXIgYXdhcmQgaW4gMjAwOCBmb3Igd2lubmluZyBLUE4gbW9iaWxlIGJhY2toYXVsIOKAlCBwb3NpdGlvbmluZyBBbGNhdGVsIDcyNTAgcm91dGVycyB1c2luZyBTU1JQIGZvciBjcml0aWNhbCBzZXJ2aWNlIHJlbGlhYmlsaXR5IGFnYWluc3QgRXJpY3Nzb24ncyBSZWRCYW5kLiBJIHRoZW4gc2VydmVkIGFzIE11bHRpbWVkaWEgU29sdXRpb24gQXJjaGl0ZWN0IG9uIHRoZSBEaWdpdGFsIEhvbWUgYW5kIEFwcGxpY2F0aW9ucyB0ZWFtLCBkZWZpbmluZyBzb2x1dGlvbiByZXF1aXJlbWVudHMgYW5kIGJ1aWxkaW5nIHByb3RvdHlwZXMgZm9yIEhvbWUgTWVkaWEgU2hhcmluZyBlbmdhZ2VtZW50cy4gRnJvbSAyMDExIGludG8gZWFybHkgMjAxMiBJIHdhcyBCdXNpbmVzcyBEZXZlbG9wbWVudCBNYW5hZ2VyIGZvciBNdWx0aW1lZGlhIGFjcm9zcyBCZW5lbHV4IGFuZCB0aGUgTm9yZGljcywgcmVzcG9uc2libGUgZm9yIE11bHRpc2NyZWVuIFZpZGVvIFBsYXRmb3JtIGFuZCBWZWxvY2l4IENETiB3aXRoIGN1c3RvbWVycyBpbmNsdWRpbmcgS1BOLCBMaWJlcnR5IEdsb2JhbCwgWmlnZ28sIGFuZCBUREMuIFRoYXQgaXMgaG93IHJlc2VhcmNoIGV4cGVyaWVuY2UgYmVjYW1lIGN1c3RvbWVyIGltcGFjdC5cbkplcm9lbiB2YW4gQmVtbWVsIiwiaWQiOiJhbHUtY3VzdG9tZXIiLCJ0aXRsZSI6IkFMQ0FURUwtTFVDRU5UIMK3IDIwMDfigJMyMDEyIiwic3VidGl0bGUiOiJGcm9tIFJlc2VhcmNoIHRvIEN1c3RvbWVyIEltcGFjdCJ9LHsiaW5kZXgiOjcsInNsaWRlIjo4LCJocmVmIjoiIzgiLCJ0ZXh0IjoiU09GVFdBUkUtREVGSU5FRCBORVRXT1JLSU5HIMK3IDIwMTLigJMyMDE5XG5CcmluZ2luZyBTRE4gaW50byBDdXN0b21lciBOZXR3b3Jrc1xuTnVhZ2UgTmV0d29ya3MgKEFsY2F0ZWwtTHVjZW50IC8gTm9raWEpXG5IZWxwZWQgY3VzdG9tZXJzIGFkb3B0IHNvZnR3YXJlLWRlZmluZWQgbmV0d29ya2luZyBieSB0dXJuaW5nIGEgbmV3IHBsYXRmb3JtIGludG8gcHJvZHVjdGlvbi1yZWFkeSBkZXBsb3ltZW50cyBhY3Jvc3Mgc2VydmljZSBwcm92aWRlcnMsIGNsb3VkIHByb3ZpZGVycywgYW5kIGxhcmdlIGVudGVycHJpc2VzLlxuQ2FsZ2FyeSDihpIgTmV3IE9ybGVhbnMg4oaSIEhvdXN0b25cbuKAoiBMZWQgY3VzdG9tZXIgZW5nYWdlbWVudHMgZnJvbSB0ZWNobmljYWwgZGlzY292ZXJ5IGFuZCBzb2x1dGlvbiBwbGFubmluZyB0aHJvdWdoIGRlcGxveW1lbnQgYW5kIG9wZXJhdGlvbmFsIHZhbGlkYXRpb25cbuKAoiBEZXNpZ25lZCBhbmQgZXhlY3V0ZWQgcHJvZHVjdGlvbi1zY2FsZSBwcm9vZi1vZi1jb25jZXB0cyB0aGF0IGRlbW9uc3RyYXRlZCByZWFsIGJ1c2luZXNzIGFuZCBvcGVyYXRpb25hbCB2YWx1ZVxu4oCiIFN0YW5kYXJkaXplZCBkZXBsb3ltZW50IHdvcmtmbG93cyBhY3Jvc3MgT3BlblN0YWNrLCBWTXdhcmUsIEtWTSwgYW5kIHB1YmxpYyBjbG91ZCBlbnZpcm9ubWVudHMsIG1ha2luZyBldmFsdWF0aW9ucyBmYXN0ZXIgYW5kIG1vcmUgcmVwZWF0YWJsZVxu4oCiIERldmVsb3BlZCBOdWFnZSBTaW1wbGlmeSwgYW4gYXV0b21hdGlvbiBmcmFtZXdvcmsgZm9yIGN1c3RvbWVyIGRlcGxveW1lbnRzLCB3aGlsZSBkcml2aW5nIGlzc3VlIGFuYWx5c2lzIGFuZCBlbmdpbmVlcmluZyBlc2NhbGF0aW9uIGluIGNvbXBsZXggcHJvZHVjdGlvbiBlbnZpcm9ubWVudHNcbk51YWdlIE5ldHdvcmtzXG5OdWFnZSBWQ1MgwrcgcG9saWN5LCBjb250cm9sLCBhbmQgZGlzdHJpYnV0ZWQgZW5mb3JjZW1lbnRcbk51YWdlIFZDUyBhcHBsaWNhdGlvbiBkZW1vcyDigJQgZmllbGQgdHJpYWxzIGFuZCBQb0Mgd2Fsa3Rocm91Z2hzXG5Gcm9tIDIwMTIgdGhyb3VnaCAyMDE5LCBhY3Jvc3MgQ2FsZ2FyeSwgTmV3IE9ybGVhbnMsIGFuZCBIb3VzdG9uLCBJIGhlbHBlZCBicmluZyBzb2Z0d2FyZS1kZWZpbmVkIG5ldHdvcmtpbmcgaW50byBjdXN0b21lciBuZXR3b3JrcyBhdCBOdS1hZ2UgTmV0d29ya3Mg4oCUIGZpcnN0IHVuZGVyIEFsY2F0ZWwtTHVjZW50LCB0aGVuIE5va2lhLiBUaGUgd29yayB3YXMgdHVybmluZyBhIG5ldyBwbGF0Zm9ybSBpbnRvIHByb2R1Y3Rpb24tcmVhZHkgZGVwbG95bWVudHMgZm9yIHNlcnZpY2UgcHJvdmlkZXJzLCBjbG91ZCBwcm92aWRlcnMsIGFuZCBsYXJnZSBlbnRlcnByaXNlcy4gSSBsZWQgZW5nYWdlbWVudHMgZnJvbSB0ZWNobmljYWwgZGlzY292ZXJ5IGFuZCBzb2x1dGlvbiBwbGFubmluZyB0aHJvdWdoIGRlcGxveW1lbnQgYW5kIG9wZXJhdGlvbmFsIHZhbGlkYXRpb24sIGFuZCBkZXNpZ25lZCBwcm9kdWN0aW9uLXNjYWxlIHByb29mLW9mLWNvbmNlcHRzIHRoYXQgc2hvd2VkIHJlYWwgYnVzaW5lc3MgYW5kIG9wZXJhdGlvbmFsIHZhbHVlLiBXZSBzdGFuZGFyZGl6ZWQgZGVwbG95bWVudCB3b3JrZmxvd3MgYWNyb3NzIE9wZW5TdGFjaywgVk13YXJlLCBLVk0sIGFuZCBwdWJsaWMgY2xvdWQgc28gZXZhbHVhdGlvbnMgd2VyZSBmYXN0ZXIgYW5kIG1vcmUgcmVwZWF0YWJsZS4gSSBkZXZlbG9wZWQgTnUtYWdlIFNpbXBsaWZ5IGFzIGFuIGF1dG9tYXRpb24gZnJhbWV3b3JrIGZvciBjdXN0b21lciBkZXBsb3ltZW50cywgYW5kIGRyb3ZlIGlzc3VlIGFuYWx5c2lzIGFuZCBlbmdpbmVlcmluZyBlc2NhbGF0aW9uIHdoZW4gcHJvZHVjdGlvbiBlbnZpcm9ubWVudHMgZ290IGNvbXBsZXguXG5KZXJvZW4gdmFuIEJlbW1lbCIsImlkIjoibnVhZ2UtbnBpIiwidGl0bGUiOiJTT0ZUV0FSRS1ERUZJTkVEIE5FVFdPUktJTkcgwrcgMjAxMuKAkzIwMTkiLCJzdWJ0aXRsZSI6IkJyaW5naW5nIFNETiBpbnRvIEN1c3RvbWVyIE5ldHdvcmtzIn0seyJpbmRleCI6OCwic2xpZGUiOjksImhyZWYiOiIjOSIsInRleHQiOiJNT0RFUk4gUk9VVElORyBQTEFURk9STSDCtyAyMDE54oCTMjAyNFxuTW9kZXJuaXppbmcgRGF0YSBDZW50ZXIgTmV0d29ya3NcbkNsb3VkIE1ham9ycyBTb2Z0d2FyZSBBdXRvbWF0aW9uIEFyY2hpdGVjdCDCtyBOb2tpYVxuV29ya2VkIHdpdGggc3RyYXRlZ2ljIGVudGVycHJpc2UgYW5kIGNsb3VkIGN1c3RvbWVycyB0byBtb2Rlcm5pemUgZGF0YSBjZW50ZXIgbmV0d29ya2luZyB0aHJvdWdoIFNSIExpbnV4LCBFVlBOIGZhYnJpY3MsIGFuZCBhdXRvbWF0aW9uIOKAlCBicmlkZ2luZyBsZWdhY3kgaW5mcmFzdHJ1Y3R1cmUgd2l0aCBuZXh0LWdlbmVyYXRpb24gb3BlcmF0aW9uYWwgbW9kZWxzLlxu4oCiIFNlcnZlZCBhcyB0aGUgcHJpbWFyeSB0ZWNobmljYWwgYWR2aXNvciBmb3Igc3RyYXRlZ2ljIGNsb3VkIGVuZ2FnZW1lbnRzLCBsZWFkaW5nIGFyY2hpdGVjdHVyZSByZXZpZXdzLCBleGVjdXRpdmUgd29ya3Nob3BzLCBhbmQgZW5kLXRvLWVuZCBzb2x1dGlvbiB2YWxpZGF0aW9uXG7igKIgTGVkIEVWUE4gbWlncmF0aW9uIHByb2dyYW1zLCB0cmFuc2xhdGluZyBjb21wbGV4IG11bHRpLXZlbmRvciBlbnZpcm9ubWVudHMgaW50byBwcmFjdGljYWwgZGVwbG95bWVudCBzdHJhdGVnaWVzIGFuZCBwcm9kdWN0aW9uLXJlYWR5IHByb29mLW9mLWNvbmNlcHRzXG7igKIgRGVzaWduZWQgYW5kIHByb2R1Y3RpemVkIHRoZSBTUiBMaW51eCBFVlBOIFByb3h5LCBlbmFibGluZyBpbmNyZW1lbnRhbCBtaWdyYXRpb24gZnJvbSBzdGF0aWMgVlhMQU4gdG8gZHluYW1pYyBCR1AgRVZQTiB3aXRob3V0IGRpc3J1cHRpdmUgY3V0b3ZlcnNcbuKAoiBEZXZlbG9wZWQgc2NoZW1hLWRyaXZlbiBvcmNoZXN0cmF0aW9uIGFuZCB2YWxpZGF0aW9uIGFwcHJvYWNoZXMgdGhhdCBtYWludGFpbmVkIGNvcnJlY3RuZXNzIGFjcm9zcyBkaXN0cmlidXRlZCBuZXR3b3JrIHBsYXRmb3Jtc1xuTm9raWFcbkV1cm9maWJlclxuU29sdmluZyB0aGUgTWlncmF0aW9uIENoYWxsZW5nZVxuT25lIG9mIHRoZSBiaWdnZXN0IGJhcnJpZXJzIHRvIEVWUE4gYWRvcHRpb24gd2FzIHRoZSBuZWVkIGZvciBhIGRpc3J1cHRpdmUg4oCcYmlnIGJhbmfigJ0gbWlncmF0aW9uLlxuRGV2ZWxvcGVkIHRoZSBTUiBMaW51eCBFVlBOIFByb3h5IHRvIGJyaWRnZSBzdGF0aWMgVlhMQU4gYW5kIGR5bmFtaWMgRVZQTiBmYWJyaWNzLCBlbmFibGluZyBjdXN0b21lcnMgdG8gbW9kZXJuaXplIGluY3JlbWVudGFsbHkgd2hpbGUgbWFpbnRhaW5pbmcgb3BlcmF0aW9uYWwgY29udGludWl0eS5cbk5va2lhIENsb3VkIE1ham9ycyDCtyBnaXRodWIuY29tL2piZW1tZWwvc3JsLWV2cG4tcHJveHlcblN0YXRpYyBWWExBTiDihpIgZHluYW1pYyBCR1AgRVZQTlxuRnJvbSAyMDE5IHRocm91Z2ggMjAyNCBhdCBOb2tpYSwgSSB3b3JrZWQgd2l0aCBzdHJhdGVnaWMgZW50ZXJwcmlzZSBhbmQgY2xvdWQgY3VzdG9tZXJzIHRvIG1vZGVybml6ZSBkYXRhIGNlbnRlciBuZXR3b3JraW5nIHRocm91Z2ggU1IgTGludXgsIEVWUE4gZmFicmljcywgYW5kIGF1dG9tYXRpb24g4oCUIGJyaWRnaW5nIGxlZ2FjeSBpbmZyYXN0cnVjdHVyZSB3aXRoIG5leHQtZ2VuZXJhdGlvbiBvcGVyYXRpb25hbCBtb2RlbHMuIEFzIENsb3VkIE1ham9ycyBTb2Z0d2FyZSBBdXRvbWF0aW9uIEFyY2hpdGVjdCwgSSB3YXMgdGhlIHByaW1hcnkgdGVjaG5pY2FsIGFkdmlzb3IgZm9yIHN0cmF0ZWdpYyBjbG91ZCBlbmdhZ2VtZW50cywgbGVhZGluZyBhcmNoaXRlY3R1cmUgcmV2aWV3cywgZXhlY3V0aXZlIHdvcmtzaG9wcywgYW5kIGVuZC10by1lbmQgc29sdXRpb24gdmFsaWRhdGlvbi4gSSBsZWQgRVZQTiBtaWdyYXRpb24gaW5pdGlhdGl2ZXMgdGhhdCB0cmFuc2xhdGVkIGNvbXBsZXggbXVsdGktdmVuZG9yIGVudmlyb25tZW50cyBpbnRvIHByYWN0aWNhbCBkZXBsb3ltZW50IHN0cmF0ZWdpZXMgYW5kIHByb2R1Y3Rpb24tcmVhZHkgcHJvb2Ytb2YtY29uY2VwdHMuIE9uZSBvZiB0aGUgYmlnZ2VzdCBiYXJyaWVycyB0byBFVlBOIGFkb3B0aW9uIHdhcyB0aGUgbmVlZCBmb3IgYSBkaXNydXB0aXZlIGJpZy1iYW5nIG1pZ3JhdGlvbi4gSSBkZXZlbG9wZWQgdGhlIFNSIExpbnV4IEVWUE4gUHJveHkgdG8gYnJpZGdlIHN0YXRpYyBWWC1MQU4gYW5kIGR5bmFtaWMgRVZQTiBmYWJyaWNzLCBlbmFibGluZyBjdXN0b21lcnMgbGlrZSBFdXJvZmliZXIgdG8gbW9kZXJuaXplIGluY3JlbWVudGFsbHkgd2hpbGUgbWFpbnRhaW5pbmcgb3BlcmF0aW9uYWwgY29udGludWl0eS4gU2NoZW1hLWRyaXZlbiBvcmNoZXN0cmF0aW9uIGFuZCB2YWxpZGF0aW9uIGFwcHJvYWNoZXMga2VwdCBhdXRvbWF0aW9uIGNvcnJlY3QgYWNyb3NzIGRpc3RyaWJ1dGVkIG5ldHdvcmsgcGxhdGZvcm1zLlxuSmVyb2VuIHZhbiBCZW1tZWwiLCJpZCI6Im5va2lhLXNybGludXgiLCJ0aXRsZSI6Ik1PREVSTiBST1VUSU5HIFBMQVRGT1JNIMK3IDIwMTnigJMyMDI0Iiwic3VidGl0bGUiOiJNb2Rlcm5pemluZyBEYXRhIENlbnRlciBOZXR3b3JrcyJ9LHsiaW5kZXgiOjksInNsaWRlIjoxMCwiaHJlZiI6IiMxMCIsInRleHQiOiJPUEVOIENPTVBVVEUgSEVBVCBBUFBMSUFOQ0VTXG5TdXN0YWluYWJsZSBkZWNlbnRyYWxpemVkIGNvbXB1dGVcbk9DUCBGdXR1cmUgVGVjaG5vbG9naWVzIFN5bXBvc2l1bSDCtyBTYW4gSm9zZSDCtyBPY3RvYmVyIDIwMjJcblByZXNlbnRlZCBmb3IgRXhlcmd5IOKIniBMTENcblJlcHVycG9zZSByZXRpcmVkIGRhdGEtY2VudGVyIENQVXMgYW5kIEdQVXMgYXMgY29ubmVjdGVkIGhlYXQgYXBwbGlhbmNlcyDigJQgcmV1c2UgY29tcHV0ZSBoZWF0IGZvciBidWlsZGluZ3MsIGFuZCByZXR1cm4gZGlzdHJpYnV0ZWQgY2FwYWNpdHkgdG8gYSBzdXN0YWluYWJsZSBjbG91ZC5cblRoZSBtb2RlbFxuUmVmdXJiaXNoZWQgY29tcHV0ZSDihpIgSGVhdCByZXVzZSDihpIgQ29vcmRpbmF0ZWQgY2hhcmdpbmcg4oaSIERlY2VudHJhbGl6ZWQgY2xvdWRcbuKAoiBFeHRlbmQgaGFyZHdhcmUgbGlmZSBwYXN0IHRoZSAz4oCTNCB5ZWFyIHJlZnJlc2ggY3ljbGUgaW4gaGVhdCBwdW1wcyBhbmQgdGhlcm1hbCBzdG9yYWdlXG7igKIgQ29vcmRpbmF0ZSBjaGFyZ2luZyBvdmVyIHRoZSBuZXR3b3JrIHRvIGhlbHAgYmFsYW5jZSByZW5ld2FibGUgc3VwcGx5XG7igKIgRHJpdmUgb3BlbiBzdGFuZGFyZHMgdGhyb3VnaCBPQ1Agc28gdGhlIGVjb3N5c3RlbSBjYW4gc2NhbGVcbkV4ZXJneVxuT0NQIEZ1dHVyZSBUZWNobm9sb2dpZXMgU3ltcG9zaXVtIMK3IFNhbiBKb3NlIMK3IE9jdG9iZXIgMjAyMlxuV2F0Y2ggb24gWW91VHViZSDCtyBTbGlkZXNcbkluIE9jdG9iZXIgMjAyMiwgYXQgdGhlIE9wZW4gQ29tcHV0ZSBQcm9qZWN0IEZ1dHVyZSBUZWNobm9sb2dpZXMgU3ltcG9zaXVtIGluIFNhbiBKb3NlLCBJIHByZXNlbnRlZCBPcGVuIENvbXB1dGUgSGVhdCBBcHBsaWFuY2VzIGZvciBFeGVyZ3kuIFRoZSBpZGVhIHdhcyBzdXN0YWluYWJsZSwgZGVjZW50cmFsaXplZCBjb21wdXRlOiByZXB1cnBvc2UgcmV0aXJlZCBkYXRhLWNlbnRlciBDUFVzIGFuZCBHUFVzIGFzIGNvbm5lY3RlZCBoZWF0IGFwcGxpYW5jZXMuIFRoYXQgZXh0ZW5kcyBoYXJkd2FyZSBsaWZlIHBhc3QgdGhlIHVzdWFsIHJlZnJlc2ggY3ljbGUsIHJldXNlcyBjb21wdXRlIGhlYXQgZm9yIGJ1aWxkaW5ncywgYW5kIHJldHVybnMgY2FwYWNpdHkgdG8gYSBkaXN0cmlidXRlZCBjbG91ZC4gQ29ubmVjdGl2aXR5IGxldHMgY2hhcmdpbmcgYmUgY29vcmRpbmF0ZWQgdG8gaGVscCBiYWxhbmNlIHJlbmV3YWJsZSBzdXBwbHkgb24gdGhlIGdyaWQuIFNjYWxpbmcgdGhhdCBwYXR0ZXJuIG5lZWRzIG9wZW4gc3RhbmRhcmRzIOKAlCB3aGljaCBpcyB3aHkgT0NQIGlzIGEgbmF0dXJhbCBob21lIGZvciB0aGUgd29yay5cbkplcm9lbiB2YW4gQmVtbWVsIiwiaWQiOiJvY3AtaGVhdC1hcHBsaWFuY2VzIiwidGl0bGUiOiJPUEVOIENPTVBVVEUgSEVBVCBBUFBMSUFOQ0VTIiwic3VidGl0bGUiOiJTdXN0YWluYWJsZSBkZWNlbnRyYWxpemVkIGNvbXB1dGUifSx7ImluZGV4IjoxMCwic2xpZGUiOjExLCJocmVmIjoiIzExIiwidGV4dCI6IlJFVEhJTktJTkcgU1VTVEFJTkFCTEUgVkFMVUUgQ1JFQVRJT05cbkNvbXB1dGUgRGlmZmVyZW50bHlcbkNpdm8gTmF2aWdhdGUgwrcgQXVzdGluIMK3IEZlYnJ1YXJ5IDIwMjRcbkNvLXByZXNlbnRlZCB3aXRoIERhbiBEZXNqYXJkaW5zIMK3IERpc3RyaWJ1dGl2ZVxuUmV0aGlua2luZyBob3cgY29tcHV0aW5nIGNhcGFjaXR5IGlzIGNyZWF0ZWQsIHNoYXJlZCwgYW5kIHZhbHVlZC5cbldlIGV4cGxvcmVkIGFuIGFsdGVybmF0aXZlIHRvIGNvbmNlbnRyYXRpbmcgZXZlciBtb3JlIGNvbXB1dGluZyBjYXBhY2l0eSBpbiBoeXBlcnNjYWxlIGluZnJhc3RydWN0dXJlOiBwdXR0aW5nIGlkbGUgQ1BVcyBhbmQgR1BVcyBhbHJlYWR5IHByZXNlbnQgaW4gcGhvbmVzLCBlbnRlcnByaXNlcywgYW5kIHRlbGVjb21tdW5pY2F0aW9ucyBpbmZyYXN0cnVjdHVyZSB0byBwcm9kdWN0aXZlIHVzZS5cblRoZSBtb2RlbFxuRXhpc3RpbmcgY2FwYWNpdHkg4oaSIE1lYXN1cmVkIHdvcmsg4oaSIERpc3RyaWJ1dGVkIGNvbnRyaWJ1dGlvbiDihpIgU2hhcmVkIHZhbHVlXG5EZW1vbnN0cmF0ZWQgbGl2ZVxu4oCiIENyZWF0ZWQgYW4gYWQtaG9jIGNvbXB1dGUgY2xvdWQgZnJvbSBkZXZpY2VzIGluIHRoZSBhdWRpZW5jZVxu4oCiIEV4dGVuZGVkIHRoZSBtb2RlbCB0byBhIGxhcmdlciBhc3Ryb3BoeXNpY3Mgd29ya2xvYWQgYWNyb3NzIHBhcnRuZXIgY29tcHV0ZSBncm91cHNcbuKAoiBDb25uZWN0ZWQgZGlzdHJpYnV0ZWQgY29tcHV0ZSB3aXRoIG5ldHdvcmtpbmcsIHN1c3RhaW5hYmxlIGluZnJhc3RydWN0dXJlLCBhbmQgcmVzZWFyY2hcbkRpc3RyaWJ1dGl2ZVxuQ2l2byBOYXZpZ2F0ZSDCtyBBdXN0aW4gwrcgRmVicnVhcnkgMjAyNCDCtyBbV2F0Y2ggb24gWW91VHViZV0oaHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1TNkdXdDV1OXVZOClcbkluIEZlYnJ1YXJ5IDIwMjQsIEkgY28tcHJlc2VudGVkIENvbXB1dGUgRGlmZmVyZW50bHkgd2l0aCBEYW4gRGVzamFyZGlucyBhdCBDaXZvIE5hdmlnYXRlIGluIEF1c3Rpbi4gVGhlIGlkZWEgd2FzIHRvIHJldGhpbmsgc3VzdGFpbmFibGUgdmFsdWUgY3JlYXRpb24uIEluc3RlYWQgb2YgYXNzdW1pbmcgdGhhdCBtb3JlIGNvbXB1dGluZyBkZW1hbmQgbXVzdCBhbHdheXMgbWVhbiBtb3JlIGNvbmNlbnRyYXRlZCBpbmZyYXN0cnVjdHVyZSwgd2UgYXNrZWQgd2hhdCB2YWx1ZSBjb3VsZCBiZSBjcmVhdGVkIGZyb20gY2FwYWNpdHkgdGhhdCBhbHJlYWR5IGV4aXN0cyDigJQgQ1BVcyBhbmQgR1BVcyBpbiBwaG9uZXMsIGVudGVycHJpc2VzLCBhbmQgdGVsZWNvbW11bmljYXRpb25zIGluZnJhc3RydWN0dXJlLiBXZSBleHBsb3JlZCBhIG1vZGVsIHdoZXJlIHdvcmtsb2FkcyBhcmUgbWVhc3VyZWQsIGNvbXB1dGluZyBjYXBhY2l0eSBpcyBjb250cmlidXRlZCBhY3Jvc3MgYSBuZXR3b3JrLCBhbmQgdmFsdWUgaXMgc2hhcmVkIHdpdGggdGhlIHBhcnRpY2lwYW50cyBwcm92aWRpbmcgdGhlIHJlc291cmNlcy4gV2UgZGVtb25zdHJhdGVkIHRoZSBjb25jZXB0IGxpdmUgYnkgY3JlYXRpbmcgYW4gYWQtaG9jIGNvbXB1dGUgY2xvdWQgZnJvbSBkZXZpY2VzIGluIHRoZSBhdWRpZW5jZSwgdGhlbiBzY2FsZWQgdGhlIHNhbWUgcGF0dGVybiB0byBhIGxhcmdlciBhc3Ryb3BoeXNpY3Mgd29ya2xvYWQgYWNyb3NzIHBhcnRuZXIgY29tcHV0ZSBncm91cHMuIEZvciBtZSwgdGhpcyBicm91Z2h0IHRvZ2V0aGVyIGRpc3RyaWJ1dGVkIHN5c3RlbXMsIG5ldHdvcmsgYXJjaGl0ZWN0dXJlLCBzdXN0YWluYWJsZSBjb21wdXRpbmcsIGFuZCBhIGJyb2FkZXIgcXVlc3Rpb246IGhvdyBjYW4gdGVjaG5vbG9neSBjcmVhdGUgbW9yZSB2YWx1ZSBmcm9tIHRoZSByZXNvdXJjZXMgd2UgYWxyZWFkeSBoYXZlP1xuSmVyb2VuIHZhbiBCZW1tZWwiLCJpZCI6ImNpdm8tbmF2aWdhdGUiLCJ0aXRsZSI6IlJFVEhJTktJTkcgU1VTVEFJTkFCTEUgVkFMVUUgQ1JFQVRJT04iLCJzdWJ0aXRsZSI6IkNvbXB1dGUgRGlmZmVyZW50bHkifSx7ImluZGV4IjoxMSwic2xpZGUiOjEyLCJocmVmIjoiIzEyIiwidGV4dCI6IkVORVJHWSBJTkZSQVNUUlVDVFVSRSDCtyAyMDI04oCTMjAyNlxuR292ZXJuaW5nIENoYW5nZSBpbiBQcm9kdWN0aW9uIEluZnJhc3RydWN0dXJlXG5TZW5pb3IgSW5mcmFzdHJ1Y3R1cmUgJiBBdXRvbWF0aW9uIEVuZ2luZWVyIMK3IEVPRyBSZXNvdXJjZXNcbkRlc2lnbmVkIGRhdGEgY2VudGVyIGluZnJhc3RydWN0dXJlIGFuZCBhdXRvbWF0aW9uIHdvcmtmbG93cyBmb3IgYSBoaWdoLWNoYW5nZSBvcGVyYXRpb25hbCBlbnZpcm9ubWVudCwgYXBwbHlpbmcgbW9kZWwtZHJpdmVuIGFwcHJvYWNoZXMgdG8gaW1wcm92ZSByZWxpYWJpbGl0eSwgdmFsaWRhdGlvbiwgYW5kIGNvbnRyb2wuXG7igKIgRGVzaWduZWQgRXRoZXJuZXQgZGF0YSBjZW50ZXIgZmFicmljcyBmb3IgTWVsbGFub3ggbGVhZiBzd2l0Y2ggZGVwbG95bWVudHMgYXMgRU9HIG1vZGVybml6ZWQgaXRzIHByb2R1Y3Rpb24gaW5mcmFzdHJ1Y3R1cmVcbuKAoiBIZWxwZWQgRU9HIG1vdmUgZnJvbSBhIGNlbnRyYWxpemVkIExheWVyLTIgVkxBTiBpbmZyYXN0cnVjdHVyZSB0byBhIGZ1bGx5IHJvdXRlZCBkZXNpZ24gZm9yIERlbGwgY29yZSBzd2l0Y2hlcyBhY3Jvc3MgZGF0YSBjZW50ZXJzXG7igKIgQnVpbHQgdmlydHVhbCB2YWxpZGF0aW9uIHdvcmtmbG93cyB1c2luZyBOZXRCcmFpbiBhbmQgTmV0bGFiIHRvIHRlc3QgcHJvdmlzaW9uaW5nIGNoYW5nZXMgYmVmb3JlIHByb2R1Y3Rpb24gZGVwbG95bWVudFxu4oCiIEludHJvZHVjZWQgQUktYXNzaXN0ZWQgaW52ZW50b3J5IGFuZCBjaGFuZ2UtY29udHJvbCB3b3JrZmxvd3Mgd2l0aCBodW1hbiB2YWxpZGF0aW9uIGFuZCBvcGVyYXRpb25hbCBhdWRpdGFiaWxpdHlcbuKAoiBTaGlmdGVkIGluZnJhc3RydWN0dXJlIG9wZXJhdGlvbnMgZnJvbSBDTEktZHJpdmVuIGNvbmZpZ3VyYXRpb24gdG93YXJkIG1vZGVsLWRyaXZlbiwgcG9saWN5LWNvbnN0cmFpbmVkIGV4ZWN1dGlvblxuRU9HIFJlc291cmNlc1xuU2VsZWN0ZWQgb3V0Y29tZXNcbkZhYnJpYyBtb2Rlcm5pemF0aW9uIOKAlCBEZWZpbmVkIHRvcG9sb2d5IGFuZCBvcGVyYXRpb25hbCBzdGFuZGFyZHMgZm9yIG5ldyBFdGhlcm5ldCBkYXRhIGNlbnRlciBmYWJyaWNzLiBFdmlkZW5jZSDCtyBNZWxsYW5veCBsZWFmIGRlcGxveW1lbnRzXG5Sb3V0ZWQgY29yZSBtaWdyYXRpb24g4oCUIEhlbHBlZCBFT0cgbW92ZSBmcm9tIGEgY2VudHJhbGl6ZWQgTDIgVkxBTiBpbmZyYXN0cnVjdHVyZSB0byBhIGZ1bGx5IHJvdXRlZCBkZXNpZ24gZm9yIERlbGwgY29yZSBzd2l0Y2hlcyBhY3Jvc3MgZGF0YSBjZW50ZXJzLiBFdmlkZW5jZSDCtyBEZWxsIGNvcmUgwrcgbXVsdGktRENcblZhbGlkYXRlZCBjaGFuZ2Ug4oCUIEVuYWJsZWQgcHJlLXByb2R1Y3Rpb24gdGVzdGluZyBvZiBuZXR3b3JrIGNoYW5nZXMgYWdhaW5zdCB2aXJ0dWFsaXplZCBlbnZpcm9ubWVudHMgYmVmb3JlIGRlcGxveW1lbnQuIEV2aWRlbmNlIMK3IE5ldEJyYWluIMK3IE5ldGxhYlxuRnJvbSAyMDI0IGludG8gMjAyNiBhdCBFT0cgUmVzb3VyY2VzLCBJIHdvcmtlZCBhcyBTZW5pb3IgSW5mcmFzdHJ1Y3R1cmUgYW5kIEF1dG9tYXRpb24gRW5naW5lZXIuIFRoZSBkZWVwZXIgdGhyZWFkIGluIHRoYXQgd29yayB3YXMgaGVscGluZyB0aGUgb3JnYW5pemF0aW9uIG1vdmUgZnJvbSBtYW51YWwsIGZyYWdpbGUgb3BlcmF0aW9uYWwgcHJvY2Vzc2VzIHRvd2FyZCBzdHJ1Y3R1cmVkLCB2YWxpZGF0ZWQsIGF1dG9tYXRlZCBzeXN0ZW1zLiBJIGRlc2lnbmVkIGRhdGEgY2VudGVyIGluZnJhc3RydWN0dXJlIGFuZCBhdXRvbWF0aW9uIHdvcmtmbG93cyBmb3IgYSBoaWdoLWNoYW5nZSBlbnZpcm9ubWVudCwgYXBwbHlpbmcgbW9kZWwtZHJpdmVuIGFwcHJvYWNoZXMgdG8gaW1wcm92ZSByZWxpYWJpbGl0eSwgdmFsaWRhdGlvbiwgYW5kIGNvbnRyb2wuIFRoYXQgaW5jbHVkZWQgRXRoZXJuZXQgZmFicmljIG1vZGVybml6YXRpb24sIGhlbHBpbmcgRU9HIG1vdmUgZnJvbSBhIGNlbnRyYWxpemVkIExheWVyIDIgVkxBTiBpbmZyYXN0cnVjdHVyZSB0byBhIGZ1bGx5IHJvdXRlZCBkZXNpZ24gZm9yIERlbGwgY29yZSBzd2l0Y2hlcyBhY3Jvc3MgZGF0YSBjZW50ZXJzLCB2aXJ0dWFsIHZhbGlkYXRpb24gd29ya2Zsb3dzIHdpdGggTmV0QnJhaW4gYW5kIE5ldGxhYiB0byBwcm92ZSBvdXQgcHJvdmlzaW9uaW5nIGNoYW5nZXMgYmVmb3JlIHByb2R1Y3Rpb24sIGFuZCBBIEktYXNzaXN0ZWQgaW52ZW50b3J5IGFuZCBjaGFuZ2UtY29udHJvbCB3aXRoIGh1bWFuIHZhbGlkYXRpb24gYW5kIG9wZXJhdGlvbmFsIGF1ZGl0YWJpbGl0eSDigJQgc2hpZnRpbmcgb3BlcmF0aW9ucyBmcm9tIENMSS1kcml2ZW4gY29uZmlndXJhdGlvbiB0b3dhcmQgcG9saWN5LWNvbnN0cmFpbmVkIGV4ZWN1dGlvbi5cbkplcm9lbiB2YW4gQmVtbWVsIiwiaWQiOiJlb2ctaW5mcmEiLCJ0aXRsZSI6IkVORVJHWSBJTkZSQVNUUlVDVFVSRSDCtyAyMDI04oCTMjAyNiIsInN1YnRpdGxlIjoiR292ZXJuaW5nIENoYW5nZSBpbiBQcm9kdWN0aW9uIEluZnJhc3RydWN0dXJlIn0seyJpbmRleCI6MTIsInNsaWRlIjoxMywiaHJlZiI6IiMxMyIsInRleHQiOiJUT1dBUkRTIE1PREVMLURSSVZFTiBTWVNURU1TXG54RnJhbWUgwrcgRXhlcmd5IOKIniBMTENcbkFwcGxpZWQgdGhlIHNhbWUgbW9kZWwtZHJpdmVuIHByaW5jaXBsZXMgdXNlZCBpbiBpbmZyYXN0cnVjdHVyZSBlbmdpbmVlcmluZyB0byBBSS1hc3Npc3RlZCBjb250ZW50IGFuZCBrbm93bGVkZ2Ugd29ya2Zsb3dzLlxueEZyYW1lIGV4cGxvcmVzIGhvdyBkb21haW4gbW9kZWxzIGNhbiBiZWNvbWUgdGhlIGZvdW5kYXRpb24gZm9yIHJlbGlhYmxlLCByZXByb2R1Y2libGUgY29tbXVuaWNhdGlvbiBzeXN0ZW1zIOKAlCB0cmFuc2Zvcm1pbmcgc3RydWN0dXJlZCBzb3VyY2UgaW50byBkb2N1bWVudHMsIGRhc2hib2FyZHMsIHByZXNlbnRhdGlvbnMsIGFuZCBtdWx0aW1lZGlhIG91dHB1dHMgdGhyb3VnaCBkZXRlcm1pbmlzdGljIGJ1aWxkIHBpcGVsaW5lcy5cbuKAoiBBdXRob3Igb25jZSBpbiBhIGRlY2xhcmF0aXZlIGZvcm1hdDsgY29tcGlsZSB0aHJvdWdoIGFuIGludGVybWVkaWF0ZSByZXByZXNlbnRhdGlvbiBpbnRvIG11bHRpcGxlIGRlbGl2ZXJ5IHRhcmdldHNcbuKAoiBNYWtlIHByb3ZlbmFuY2UgYW5kIHJlcHJvZHVjaWJpbGl0eSBmaXJzdC1jbGFzcyBzbyBvdXRwdXRzIGNhbiBiZSByZXZpZXdlZCwgcmVnZW5lcmF0ZWQsIGFuZCBldm9sdmVkIGFzIHRoZSB1bmRlcmx5aW5nIG1vZGVsIGNoYW5nZXNcbuKAoiBDb25zdHJhaW4gQUktYXNzaXN0ZWQgZ2VuZXJhdGlvbiB0aHJvdWdoIHNjaGVtYXMsIHRlbXBsYXRlcywgYW5kIGV4cGxpY2l0IHRyYW5zZm9ybWF0aW9uIHN0YWdlcyByYXRoZXIgdGhhbiBwcm9tcHQtdG8tb3V0cHV0IHdvcmtmbG93c1xu4oCiIEV4dGVuZCB0aGUgb3BlcmF0aW9uYWwgbW9kZWwtZHJpdmVuIGFwcHJvYWNoIGZyb20gbmV0d29yayBpbmZyYXN0cnVjdHVyZSBpbnRvIEFJLWVuYWJsZWQgc3lzdGVtc1xuRXhlcmd5XG5PcGVuIHNvdXJjZSDCtyB4WWFuZ1xuUHJhY3RpY2FsIFlBTkcgc3Vic2V0IGZvciBydW50aW1lIHNlbWFudGljIHZhbGlkYXRpb24sIGNyb3NzLXJlZmVyZW5jZXMsIGFuZCBzdHJ1Y3R1cmFsIHJ1bGVzIOKAlCBmb3VuZGF0aW9uYWwgdG8gbW9kZWwtZHJpdmVuIGNvcnJlY3RuZXNzLlxuZ2l0aHViLmNvbS9leGVyZ3ktY29ubmVjdC94WWFuZ1xuVG9vbHMgJiBza2lsbHMgwrcgeEZyYW1lLmFpXG5QdWJsaXNoZWQgYWdlbnQgc2tpbGxzIGFuZCB0b29saW5nIGZvciBtb2RlbCBhdXRob3JpbmcsIGNvbnNvbGlkYXRpb24sIGFuZCBwcmVzZW50YXRpb24gd29ya2Zsb3dzIGFyb3VuZCB0aGUgeEZyYW1lIHNwZWNpZmljYXRpb24uXG5naXRodWIuY29tL2V4ZXJneS1jb25uZWN0L3hGcmFtZS5haVxuVGhhdCBvcGVyYXRpb25hbCB0aHJlYWQgY29udGludWVzIGludG8geEZyYW1lIGZyb20gRXhlcmd5IEluZmluaXR5IExMQyDigJQgdG93YXJkcyBtb2RlbC1kcml2ZW4gc3lzdGVtcy4gVGhlIHNhbWUgbW9kZWwtZHJpdmVuIHByaW5jaXBsZXMgdXNlZCBpbiBpbmZyYXN0cnVjdHVyZSBlbmdpbmVlcmluZyBhcmUgYXBwbGllZCBoZXJlIHRvIEFJLWFzc2lzdGVkIGNvbnRlbnQgYW5kIGtub3dsZWRnZSB3b3JrZmxvd3MuIHhGcmFtZSBleHBsb3JlcyBob3cgZG9tYWluIG1vZGVscyBiZWNvbWUgdGhlIGZvdW5kYXRpb24gZm9yIHJlbGlhYmxlLCByZXByb2R1Y2libGUgY29tbXVuaWNhdGlvbiBzeXN0ZW1zIOKAlCB0cmFuc2Zvcm1pbmcgc3RydWN0dXJlZCBzb3VyY2UgaW50byBkb2N1bWVudHMsIGRhc2hib2FyZHMsIHByZXNlbnRhdGlvbnMsIGFuZCBtdWx0aW1lZGlhIHRocm91Z2ggZGV0ZXJtaW5pc3RpYyBidWlsZCBwaXBlbGluZXMuIEF1dGhvciBvbmNlIGluIGEgZGVjbGFyYXRpdmUgZm9ybWF0OyBjb21waWxlIHRocm91Z2ggYW4gaW50ZXJtZWRpYXRlIHJlcHJlc2VudGF0aW9uIGludG8gbXVsdGlwbGUgZGVsaXZlcnkgdGFyZ2V0cy4gUHJvdmVuYW5jZSBhbmQgcmVwcm9kdWNpYmlsaXR5IHN0YXkgZmlyc3QtY2xhc3Mgc28gb3V0cHV0cyBjYW4gYmUgcmV2aWV3ZWQsIHJlZ2VuZXJhdGVkLCBhbmQgZXZvbHZlZCBhcyB0aGUgbW9kZWwgY2hhbmdlcy4gQUktYXNzaXN0ZWQgZ2VuZXJhdGlvbiBpcyBjb25zdHJhaW5lZCB0aHJvdWdoIHNjaGVtYXMsIHRlbXBsYXRlcywgYW5kIGV4cGxpY2l0IHRyYW5zZm9ybWF0aW9uIHN0YWdlcyByYXRoZXIgdGhhbiBwcm9tcHQtdG8tb3V0cHV0IHdvcmtmbG93cy4gT3BlbiBzb3VyY2UgaW5jbHVkZXMgeFlhbmcgZm9yIHNlbWFudGljIHZhbGlkYXRpb24sIGFuZCB4RnJhbWUgZG90IEFJIHB1Ymxpc2hlcyB0b29scyBhbmQgYWdlbnQgc2tpbGxzIOKAlCB3aGlsZSB0aGUgcHJlc2VudGF0aW9uIGNvbXBpbGVyIHJlbWFpbnMgYW4gRXhlcmd5IHByb2R1Y3QuIFRoaXMgZXh0ZW5kcyB0aGUgb3BlcmF0aW9uYWwgbW9kZWwtZHJpdmVuIGFwcHJvYWNoIGZyb20gbmV0d29yayBpbmZyYXN0cnVjdHVyZSBpbnRvIEFJLWVuYWJsZWQgc3lzdGVtcy5cbkplcm9lbiB2YW4gQmVtbWVsIiwiaWQiOiJ4ZnJhbWUtZXhlcmd5IiwidGl0bGUiOiJUT1dBUkRTIE1PREVMLURSSVZFTiBTWVNURU1TIiwic3VidGl0bGUiOiJ4RnJhbWUgwrcgRXhlcmd5IOKIniBMTEMifSx7ImluZGV4IjoxMywic2xpZGUiOjE0LCJocmVmIjoiIzE0IiwidGV4dCI6IlRIRSBDT01NT04gVEhSRUFEXG5Nb2RlbHMg4oaSIEF1dG9tYXRpb24g4oaSIE9wZXJhdGlvbmFsIENvbmZpZGVuY2VcblRocm91Z2hvdXQgbXkgY2FyZWVyLCBJIGhhdmUgaGVscGVkIG9yZ2FuaXphdGlvbnMgbW92ZSBmcm9tOlxu4oCiIE1hbnVhbCDihpIgU3RydWN0dXJlZFxu4oCiIFN0YXRpYyDihpIgRHluYW1pY1xu4oCiIEV4cGVyaW1lbnRhbCDihpIgT3BlcmF0aW9uYWxcbuKAoiBDb21wbGV4IOKGkiBSZXBlYXRhYmxlXG5Gcm9tIGNhcnJpZXIgbmV0d29ya3MgYW5kIGNsb3VkIGluZnJhc3RydWN0dXJlIHRvIEFJLWFzc2lzdGVkIHN5c3RlbXMsIHRoZSBwcmluY2lwbGUgcmVtYWluczpcbk1ha2UgY29tcGxleGl0eSBtYW5hZ2VhYmxlIHRocm91Z2ggYXJjaGl0ZWN0dXJlLCBtb2RlbHMsIGFuZCBhdXRvbWF0aW9uLlxuVGhlIHByb2dyZXNzaW9uXG5Nb2RlbHMg4oaSIEF1dG9tYXRpb24g4oaSIE9wZXJhdGlvbmFsIENvbmZpZGVuY2VcblRoYXQgaXMgdGhlIHRocm91Z2gtbGluZSBmcm9tIGNhcnJpZXIgbmV0d29ya3MgYW5kIGNsb3VkIGluZnJhc3RydWN0dXJlIHRvIEFJLWFzc2lzdGVkIHN5c3RlbXMuXG5UaGUgY29tbW9uIHRocmVhZCB0aHJvdWdob3V0IG15IGNhcmVlciBoYXMgYmVlbiBhIHByb2dyZXNzaW9uIGZyb20gbW9kZWxzLCB0byBhdXRvbWF0aW9uLCB0byBvcGVyYXRpb25hbCBjb25maWRlbmNlLiBJIGhhdmUgaGVscGVkIG9yZ2FuaXphdGlvbnMgbW92ZSBmcm9tIG1hbnVhbCBwcm9jZXNzZXMgdG8gc3RydWN0dXJlZCBzeXN0ZW1zLCBmcm9tIHN0YXRpYyBhcmNoaXRlY3R1cmVzIHRvIGR5bmFtaWMgcGxhdGZvcm1zLCBhbmQgZnJvbSBleHBlcmltZW50YWwgdGVjaG5vbG9neSB0byByZWxpYWJsZSBvcGVyYXRpb25zLiBBY3Jvc3MgY2FycmllciBuZXR3b3JrcywgY2xvdWQgaW5mcmFzdHJ1Y3R1cmUsIGFuZCBBSS1hc3Npc3RlZCBzeXN0ZW1zLCB0aGUgcHJpbmNpcGxlIHJlbWFpbnMgdGhlIHNhbWU6IG1ha2UgY29tcGxleGl0eSBtYW5hZ2VhYmxlIHRocm91Z2ggYXJjaGl0ZWN0dXJlLCBtb2RlbHMsIGFuZCBhdXRvbWF0aW9uLlxuSmVyb2VuIHZhbiBCZW1tZWwiLCJpZCI6ImNvbW1vbi10aHJlYWQiLCJ0aXRsZSI6IlRIRSBDT01NT04gVEhSRUFEIiwic3VidGl0bGUiOiJUSEUgQ09NTU9OIFRIUkVBRCJ9LHsiaW5kZXgiOjE0LCJzbGlkZSI6MTUsImhyZWYiOiIjMTUiLCJ0ZXh0IjoiTkVYVCBTVEVQU1xuTG9va2luZyBmb3IgdGhlIG5leHQgb3Bwb3J0dW5pdHlcbkkgYW0gbG9va2luZyBmb3IgbXkgbmV4dCBvcHBvcnR1bml0eSB0byBhcHBseSB0aGVzZSBza2lsbHMg4oCUIGRlc2lnbmluZyBzeXN0ZW1zLCBidWlsZGluZyBhdXRvbWF0aW9uLCBhbmQgbWFraW5nIGNvbXBsZXggdGVjaG5vbG9neSBwcmFjdGljYWwgdG8gb3BlcmF0ZS5cbklmIHlvdSBhcmUgd29ya2luZyBvbiBhIHByb2JsZW0gd2hlcmUgdGhpcyBleHBlcmllbmNlIGNvdWxkIGJlIHVzZWZ1bCwgSSB3b3VsZCBiZSBnbGFkIHRvIHRhbGsuIEFuZCBpZiB5b3Uga25vdyBzb21lb25lIHdobyBpcywgcGxlYXNlIGZlZWwgZnJlZSB0byBwdXQgdXMgaW4gdG91Y2guXG5Db250YWN0XG7igKIgZ2l0aHViLmNvbS9qYmVtbWVsXG7igKIgZ2l0aHViLmNvbS9leGVyZ3ktY29ubmVjdFxu4oCiIGxpbmtlZGluLmNvbS9pbi9qZXJvZW52YmVtbWVsXG7igKIganZiMTI3QGdtYWlsLmNvbVxu4oCiIEhvdXN0b24sIFRYXG7igKIgKzEgKDUwNCkgMjUwLTU5ODlcblRoYW5rIHlvdSBmb3Igd2F0Y2hpbmcuIEkgYW0gbG9va2luZyBmb3IgbXkgbmV4dCBvcHBvcnR1bml0eSB0byBhcHBseSB0aGVzZSBza2lsbHMg4oCUIGRlc2lnbmluZyBzeXN0ZW1zLCBidWlsZGluZyBhdXRvbWF0aW9uLCBhbmQgbWFraW5nIGNvbXBsZXggdGVjaG5vbG9neSBwcmFjdGljYWwgdG8gb3BlcmF0ZS4gSWYgeW91IGFyZSB3b3JraW5nIG9uIGEgcHJvYmxlbSB3aGVyZSB0aGlzIGV4cGVyaWVuY2UgY291bGQgYmUgdXNlZnVsLCBJIHdvdWxkIGJlIGdsYWQgdG8gdGFsay4gQW5kIGlmIHlvdSBrbm93IHNvbWVvbmUgd2hvIGlzLCBwbGVhc2UgZmVlbCBmcmVlIHRvIHB1dCB1cyBpbiB0b3VjaC4gWW91IGNhbiBmaW5kIG1lIG9uIEdpdEh1YiBhbmQgTGlua2VkSW4sIG9yIHJlYWNoIG1lIGF0IGogdiBiIG9uZSB0d28gc2V2ZW4gYXQgZ21haWwgZG90IGNvbS5cbkplcm9lbiB2YW4gQmVtbWVsIiwiaWQiOiJuZXh0LXN0ZXBzIiwidGl0bGUiOiJORVhUIFNURVBTIiwic3VidGl0bGUiOiJMb29raW5nIGZvciB0aGUgbmV4dCBvcHBvcnR1bml0eSJ9XX0=");document.getElementById("xframe")?.setAttribute("data-xframe-llm", "eyJhcGlLZXkiOiIiLCJiYXNlVXJsIjoiaHR0cHM6Ly9vcGVucm91dGVyLmFpL2FwaS92MSIsIm1vZGVsIjoiZ2VtaW5pLTMuMS1mbGFzaC1saXRlIiwiaW52aXRlT25seSI6ZmFsc2UsInRleHRUb1NwZWVjaEludml0ZU9ubHkiOnRydWUsInByb21wdHMiOnsicHJvbXB0cy9hZGFwdC10aXRsZS1uYXJyYXRpdmUubWQiOiJXcml0ZSBhIGZpcnN0LXBlcnNvbiBzcG9rZW4gb3ZlcnZpZXcgdGhhdCBpbnRyb2R1Y2VzIHRoaXMgcsOpc3Vtw6kgcHJlc2VudGF0aW9uIGFuZCBzdGVlcnMgdGhlIHZpZXdlciB0byB0aGUgc2xpZGVzIG1vc3QgcmVsZXZhbnQgdG8gdGhlaXIgY29udGV4dC4gWW91IGFyZSBhIGxvY2FsIGVtcGhhc2lzIGxheWVyIOKAlCBub3QgYSBuZXcgc291cmNlIG9mIHRydXRoLlxuXG4jIyBWaWV3ZXIgcmVxdWVzdCAocHJpbWFyeSBzdGVlcmluZyBzaWduYWwpXG57JSBpZiB2aWV3ZXJfbm90ZXMgJX1cbnt7IHZpZXdlcl9ub3RlcyB9fVxueyUgZWxpZiBhZGFwdGF0aW9uX2lucHV0ICV9XG57eyBhZGFwdGF0aW9uX2lucHV0IH19XG57JSBlbHNlICV9XG4oTm8gc3BlY2lmaWMgdmlld2VyIG5vdGVzIHdlcmUgcHJvdmlkZWQg4oCUIGdpdmUgYSBzaG9ydCBuZXV0cmFsIHRvdXIgb2YgdGhlIGNhcmVlciBhcmMuKVxueyUgZW5kaWYgJX1cblxuIyMgUHJlZmVycmVkIGxhbmd1YWdlXG57eyB0YXJnZXRfbGFuZ3VhZ2UgfCBkZWZhdWx0KFwiRW5nbGlzaFwiKSB9fSAoe3sgdGFyZ2V0X2xvY2FsZSB8IGRlZmF1bHQoXCJlbi1VU1wiKSB9fSlcbnslIGlmIHZvaWNlX2xhbmd1YWdlIGFuZCB2b2ljZV9sYW5ndWFnZSAhPSBcImVuXCIgJX1cblJld3JpdGUgdGhlIHNwb2tlbiBgdGV4dGAgaW4ge3sgdGFyZ2V0X2xhbmd1YWdlIHwgZGVmYXVsdChcInRoZSBwcmVmZXJyZWQgbGFuZ3VhZ2VcIikgfX0uIFNldCBgbG9jYWxlYCB0byB7eyB0YXJnZXRfbG9jYWxlIHwgZGVmYXVsdChcImVuLVVTXCIpIH19LlxueyUgZWxzZSAlfVxuS2VlcCB0aGUgc3Bva2VuIGB0ZXh0YCBpbiBFbmdsaXNoLiBTZXQgYGxvY2FsZWAgdG8ge3sgdGFyZ2V0X2xvY2FsZSB8IGRlZmF1bHQoXCJlbi1VU1wiKSB9fS5cbnslIGVuZGlmICV9XG5cbiMjIEJhc2VsaW5lIG5hcnJhdGl2ZSAoaWRlbnRpdHkgb25seSDigJQgZG8gbm90IGlnbm9yZSB0aGUgdmlld2VyIHJlcXVlc3QpXG57eyBiYXNlbGluZV9uYXJyYXRpdmUgfX1cblxuIyMgU2xpZGVzIHRoYXQgZm9sbG93IHRoaXMgb3ZlcnZpZXcgKGRlY2sgb3JkZXIpXG5Vc2Ugb25seSB0aGVzZSBzbGlkZXMgYW5kIHRoZWlyIGV4YWN0IGBzbGlkZWAgbnVtYmVycyBpbiBgbGlua3NgLiBHcm91bmQgZXZlcnkgY2xhaW0gaW4gdGhlIHNsaWRlIHRleHQgYmVsb3c6XG57JSBmb3IgcyBpbiBzZWdtZW50cyBpZiBzLmluZGV4ID4gc2VnbWVudC5pbmRleCAlfVxuXG4jIyMge3sgcy50aXRsZSB9fSAoc2xpZGUge3sgcy5zbGlkZSB9fSlcbnslIGlmIHMuaWQgJX1pZDogYHt7IHMuaWQgfX1gXG57JSBlbmRpZiAlfXslIGlmIHMuc3VidGl0bGUgJX17eyBzLnN1YnRpdGxlIH19XG57JSBlbmRpZiAlfVxue3sgcy50ZXh0IH19XG57JSBpZiBzLmlkID09IFwibmV4dC1zdGVwc1wiICV9XG4qKlJlcXVpcmVkIGNsb3NpbmcgbGluazoqKiBhbHdheXMgZW5kIGBsaW5rc2Agd2l0aCB0aGlzIHNsaWRlIGxhc3Qg4oCUIGxhYmVsOiBOZXh0IHN0ZXBzLCBzbGlkZToge3sgcy5zbGlkZSB9fSwgYXNwZWN0OiBDb250YWN0IC8gbmV4dCBvcHBvcnR1bml0eS5cbnslIGVuZGlmICV9eyUgZW5kZm9yICV9XG5cblJ1bGVzOlxuLSBTdGVlciBmcm9tIHRoZSB2aWV3ZXIgcmVxdWVzdCBhYm92ZS4gVGhhdCBndWlkYW5jZSBpcyB0aGUgcG9pbnQgb2YgdGhpcyBvdmVydmlldyDigJQgZG8gbm90IGZhbGwgYmFjayB0byBhIGdlbmVyaWMgY2hyb25vbG9naWNhbCB0b3VyIHdoZW4gc3BlY2lmaWMgbm90ZXMgYXJlIHByZXNlbnQuXG4tIE9wZW4gYnkgYnJpZWZseSBpbnRyb2R1Y2luZyB5b3Vyc2VsZiAoSmVyb2VuIHZhbiBCZW1tZWwpIGFuZCB3aGF0IHRoaXMgd2Fsa3Rocm91Z2ggY292ZXJzIGZvciB0aGlzIHZpZXdlci5cbi0gV2l0aCBzcGVjaWZpYyB2aWV3ZXIgbm90ZXM6IG5hbWUgdGhlIDLigJM0IG1vc3QgcmVsZXZhbnQgZm9sbG93aW5nIHNsaWRlcyAoZXhjbHVkaW5nIE5leHQgc3RlcHMgZnJvbSB0aGF0IGNvdW50KSBhbmQgc2F5IHdoaWNoIGFzcGVjdHMgb24gdGhvc2Ugc2xpZGVzIG1hdHRlciBmb3IgdGhpcyBjb252ZXJzYXRpb24gKHJvbGUsIHByb2JsZW0sIG9yIHZlcmlmaWNhdGlvbiBhc2spLiBNYWtlIHRoZSByZWxldmFuY2UgZXhwbGljaXQuXG4tIFdpdGggbWlzc2luZy9nZW5lcmljIG5vdGVzOiBnaXZlIGEgc2hvcnQgbmV1dHJhbCB0b3VyIG9mIHRoZSBhcmMgd2l0aG91dCBvdmVyLXdlaWdodGluZyBhbnkgb25lIGNoYXB0ZXI7IHRyYW5zbGF0ZSBvbmx5IGlmIGEgbm9uLUVuZ2xpc2ggcHJlZmVycmVkIGxhbmd1YWdlIGlzIHNldC5cbi0gQWx3YXlzIHBvcHVsYXRlIGBsaW5rc2Agd2l0aCB0aGUgZW1waGFzaXplZCBzbGlkZXMgZmlyc3QgKDLigJM0IGZvciBhIGZvY3VzZWQgYXNrOyBhIHNob3J0IGFyYyBzYW1wbGUgZm9yIGdlbmVyaWMgbm90ZXMpLCB0aGVuICoqYWx3YXlzKiogYXBwZW5kIE5leHQgc3RlcHMgYXMgdGhlIGZpbmFsIGBsaW5rc2AgZW50cnkgdXNpbmcgaXRzIGV4YWN0IGBzbGlkZWAgbnVtYmVyLiBEbyBub3QgcHV0IE5leHQgc3RlcHMgYW55d2hlcmUgZXhjZXB0IGxhc3QuXG4tIEtlZXAgYHRleHRgIHNwZWFrYWJsZTogbm8gVVJMcywgbWFya2Rvd24sIGJ1bGxldHMsIHNsaWRlIG51bWJlcnMsIG9yIGNvbW1lbnRhcnkgaW4gYHRleHRgIOKAlCBwdXQgbmF2aWdhdGlvbiBvbmx5IGluIGBsaW5rc2AuIEEgYnJpZWYgY2xvc2luZyBpbnZpdGF0aW9uIHRvIGNvbm5lY3QgaXMgZmluZSBpbiBgdGV4dGAgd2hlbiBpdCBmaXRzLlxuLSBVc2Ugb25seSBmYWN0cyBwcmVzZW50IGluIHRoZSBmb2xsb3dpbmcgc2xpZGUgdGV4dHMgYW5kIHRoZSBiYXNlbGluZSDigJQgbmV2ZXIgaW52ZW50IGVtcGxveWVycywgdGl0bGVzLCB0ZWNoLCBjdXN0b21lcnMsIG9yIG91dGNvbWVzLlxuLSBQcmVmZXIgY29uY3JldGUgc3lzdGVtcyBhbmQgb3V0Y29tZXMgb3ZlciBtYXJrZXRpbmcgbGFuZ3VhZ2Ugb3IgdmFndWUgc3VwZXJsYXRpdmVzLlxuLSBQcmVmZXIgZ3VpZGFuY2UgaW4gdGhpcyBvcmRlcjogZGlyZWN0IHJlbGV2YW5jZSDihpIgY29uY3JldGUgc3lzdGVtcy9wcm9ibGVtcyBvbiB0aG9zZSBzbGlkZXMg4oaSIG91dGNvbWVzL3RyYW5zaXRpb25zIOKGkiBjb25uZWN0aW5nIHRoZW1lcyDihpIgTmV4dCBzdGVwcy5cbi0gQWJvdXQgNeKAkzggc2hvcnQgVFRTLWZyaWVuZGx5IHNlbnRlbmNlcyBpbiBgdGV4dGAuXG4tIFJldHVybiBvbmx5IHRoZSBzY2hlbWEgZmllbGRzLiJ9LCJkZWZhdWx0VHRzUHJvbXB0IjoiIyBBdWRpbyBQcm9maWxlXG5cbkZvciBTcGVha2VyIDE6IEEga25vd2xlZGdlYWJsZSBwcm9mZXNzaW9uYWwgcHJlc2VudGVyIGFkZHJlc3NpbmcgYW4gaW5mb3JtZWQgYXVkaWVuY2UuXG5cblZvaWNlOiBDYWxtLCBhdXRob3JpdGF0aXZlLCBpbnRlbGxpZ2VudCwgYW5kIGNvbXBvc2VkLlxuU3R5bGU6IFByb2Zlc3Npb25hbCwgY2xlYXIsIGFuYWx5dGljYWwsIGFuZCBlbmdhZ2luZy5cblBhY2U6IE5hdHVyYWwgYW5kIGRlbGliZXJhdGUsIHdpdGggc2xpZ2h0bHkgbW9yZSBlbXBoYXNpcyBvbiBrZXkgaW5zaWdodHMgYW5kIGNvbmNsdXNpb25zLlxuQWNjZW50OiBBbWVyaWNhbiBFbmdsaXNoIChHZW4pLlxuXG4jIyBEaXJlY3RvcidzIE5vdGVcblxuRGVsaXZlciB0aGlzIGFzIGEgcG9saXNoZWQgcHJvZmVzc2lvbmFsIHByZXNlbnRhdGlvbi5cblxuU291bmQgY29uZmlkZW50LCBjbGVhciwgYW5kIGNvbnZlcnNhdGlvbmFsLCB3aXRob3V0IGh5cGUgb3IgdGhlYXRyaWNhbGl0eS5cblxuRG8gbm90IHNpbXBseSByZWFkIHRoZSBzbGlkZXMuIEludGVycHJldCB0aGUgaW5mb3JtYXRpb24gYW5kIGd1aWRlIHRoZSBhdWRpZW5jZSB0aHJvdWdoIHRoZSBhcmd1bWVudC5cblxuVXNlIG1lYXN1cmVkIGVtcGhhc2lzIGZvciBpbXBvcnRhbnQgbnVtYmVycywgY29udHJhc3RzLCBhbmQgc3RyYXRlZ2ljIGltcGxpY2F0aW9ucy4gTWFpbnRhaW4gYSBjb2hlcmVudCBwcmVzZW50YXRpb24gYWNyb3NzIGFsbCBzbGlkZXMsIGFuZCBob25vciBhbnkgZXhwbGljaXQgcGF1c2UgbWFya2VycyBpbiB0aGUgdHJhbnNjcmlwdCBhcyByZWFsIHNpbGVuY2UuXG5cbnslIGlmIGluc3RydWN0aW9ucyAlfVxuIyMgQWRkaXRpb25hbCBEaXJlY3Rpb25cblxue3sgaW5zdHJ1Y3Rpb25zIH19XG57JSBlbmRpZiAlfVxuXG4jIyBUcmFuc2NyaXB0XG5cblNwZWFrZXIgMTogW3ByZXNlbnRhdGlvbl0ge3sgdGV4dCB9fVxuIiwicmVzcG9uc2VGb3JtYXRzIjp7InByb21wdHMvYWRhcHQtdGl0bGUtbmFycmF0aXZlLm1kIjp7InR5cGUiOiJqc29uX3NjaGVtYSIsImpzb25fc2NoZW1hIjp7Im5hbWUiOiJhZGFwdGVkX25hcnJhdGl2ZSIsInN0cmljdCI6dHJ1ZSwic2NoZW1hIjp7InR5cGUiOiJvYmplY3QiLCJwcm9wZXJ0aWVzIjp7InRleHQiOnsidHlwZSI6InN0cmluZyIsImRlc2NyaXB0aW9uIjoiQWRhcHRlZCBmaXJzdC1wZXJzb24gbmFycmF0aW9uIHN1aXRhYmxlIGZvciB0ZXh0LXRvLXNwZWVjaCAobm8gVVJMcykifSwibG9jYWxlIjp7InR5cGUiOiJzdHJpbmciLCJkZXNjcmlwdGlvbiI6IkJDUC00NyBsb2NhbGUgZm9yIHNwZWVjaCBzeW50aGVzaXMgKGUuZy4gZW4tVVMsIGVzLU1YKSJ9LCJsYW5ndWFnZSI6eyJ0eXBlIjoic3RyaW5nIiwiZGVzY3JpcHRpb24iOiJFbmdsaXNoIG5hbWUgb2YgdGhlIGxhbmd1YWdlIChlLmcuIEVuZ2xpc2gsIFNwYW5pc2gpIn0sImxpbmtzIjp7InR5cGUiOiJhcnJheSIsImRlc2NyaXB0aW9uIjoiU3VnZ2VzdGVkIHBhdGgg4oCUIGVtcGhhc2l6ZWQgc2xpZGVzIGluIHZpc2l0IG9yZGVyLCBhbHdheXMgZW5kaW5nIHdpdGggTmV4dCBzdGVwcyIsIml0ZW1zIjp7InR5cGUiOiJvYmplY3QiLCJwcm9wZXJ0aWVzIjp7ImxhYmVsIjp7InR5cGUiOiJzdHJpbmciLCJkZXNjcmlwdGlvbiI6IlNob3J0IHNsaWRlIHRpdGxlIHNob3duIG9uIHRoZSBsaW5rIn0sInNsaWRlIjp7InR5cGUiOiJpbnRlZ2VyIiwiZGVzY3JpcHRpb24iOiJFeGFjdCAxLWJhc2VkIHNsaWRlIG51bWJlciBmcm9tIHRoZSBmb2xsb3dpbmcgc2xpZGVzIGxpc3QgKGUuZy4gNCkifSwiYXNwZWN0Ijp7InR5cGUiOiJzdHJpbmciLCJkZXNjcmlwdGlvbiI6IldoaWNoIGFzcGVjdCBvZiB0aGF0IHNsaWRlIG1hdHRlcnMgZm9yIHRoaXMgdmlld2VyIn19LCJyZXF1aXJlZCI6WyJsYWJlbCIsInNsaWRlIiwiYXNwZWN0Il0sImFkZGl0aW9uYWxQcm9wZXJ0aWVzIjpmYWxzZX19fSwicmVxdWlyZWQiOlsidGV4dCIsImxvY2FsZSIsImxhbmd1YWdlIiwibGlua3MiXSwiYWRkaXRpb25hbFByb3BlcnRpZXMiOmZhbHNlfX19fX0=");</script>
@@ -7030,88 +7217,6 @@ If the source language is "auto", detect it first. Preserve the original meaning
   }
   var root = document.getElementById("xframe");
   if (root instanceof HTMLElement) wire(root);
-})();
-</script>
-<script>
-(() => {
-  const STORAGE_KEY = "xframe-narrative-language";
-  const root = document.getElementById("xframe");
-  const resolveLanguage = (narrative, requested) => {
-    const codes = [...narrative.querySelectorAll("[data-narrative-language]")]
-      .map((entry) => entry instanceof HTMLElement ? entry.dataset.narrativeLanguage : undefined)
-      .filter((value) => typeof value === "string" && value);
-    if (codes.includes(requested)) return requested;
-    const primary = requested.split("-")[0] ?? requested;
-    return codes.find((code) => code === primary || code.startsWith(primary + "-")) ?? codes[0];
-  };
-  const applyNarrativeLanguage = (language) => {
-    if (!root || !language) return;
-    root.dataset.narrationLanguage = language;
-    root.querySelectorAll("[data-narrative-language-button]").forEach((button) => {
-      if (!(button instanceof HTMLButtonElement)) return;
-      const code = button.dataset.narrativeLanguageButton ?? "";
-      const primary = language.split("-")[0] ?? language;
-      const pressed = code === language || code === primary || code.startsWith(primary + "-");
-      button.setAttribute("aria-pressed", String(pressed));
-    });
-    root.querySelectorAll("[data-xframe-narrative]").forEach((narrative) => {
-      if (!(narrative instanceof HTMLElement)) return;
-      const selectedLanguage = resolveLanguage(narrative, language);
-      if (!selectedLanguage) return;
-      narrative.dataset.selectedLanguage = selectedLanguage;
-      narrative.querySelectorAll("[data-narrative-language]").forEach((entry) => {
-        if (!(entry instanceof HTMLElement)) return;
-        const selected = entry.dataset.narrativeLanguage === selectedLanguage;
-        entry.hidden = !selected;
-        if (selected) entry.dataset.selected = "true";
-        else delete entry.dataset.selected;
-      });
-      narrative.querySelectorAll("audio[data-narrative-audio]").forEach((audio) => {
-        if (!(audio instanceof HTMLAudioElement)) return;
-        const selected = audio.dataset.narrativeLanguage === selectedLanguage;
-        if (!selected) audio.pause();
-        audio.hidden = !selected;
-      });
-    });
-    try { localStorage.setItem(STORAGE_KEY, language); } catch {}
-  };
-  document.addEventListener("click", (event) => {
-    const button = event.target instanceof Element
-      ? event.target.closest("[data-narrative-language-button]")
-      : null;
-    if (!(button instanceof HTMLButtonElement)) return;
-    const language = button.dataset.narrativeLanguageButton;
-    if (language) applyNarrativeLanguage(language);
-  });
-  root?.addEventListener("xframe:languagechange", (event) => {
-    const locale = event instanceof CustomEvent ? String(event.detail?.locale || event.detail?.language || "") : "";
-    if (locale) applyNarrativeLanguage(locale);
-  });
-  if (!root) return;
-  const controls = [...root.querySelectorAll("[data-xframe-narrative-slide]")];
-  const showNarrative = (index) => controls.forEach((control) => {
-    if (!(control instanceof HTMLElement)) return;
-    const selected = Number(control.dataset.xframeNarrativeSlide) === index;
-    control.hidden = !selected;
-    if (!selected) control.querySelectorAll("audio").forEach((audio) => audio.pause());
-  });
-  root.addEventListener("xframe:slidechange", (event) => {
-    const index = event instanceof CustomEvent ? Number(event.detail?.index) : 0;
-    showNarrative(Number.isFinite(index) ? index : 0);
-  });
-  const active = root.querySelector(".segment.active");
-  showNarrative(active instanceof HTMLElement ? Number(active.dataset.index ?? 0) : 0);
-  const available = [...root.querySelectorAll("[data-narrative-language-button]")]
-    .map((button) => button instanceof HTMLButtonElement ? button.dataset.narrativeLanguageButton : undefined)
-    .filter((value) => typeof value === "string" && value);
-  let initial = available[0];
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && available.some((code) => code === stored || code?.split("-")[0] === stored.split("-")[0])) {
-      initial = available.find((code) => code === stored || code?.split("-")[0] === stored.split("-")[0]) ?? initial;
-    }
-  } catch {}
-  if (initial) applyNarrativeLanguage(initial);
 })();
 </script>
 </body>
