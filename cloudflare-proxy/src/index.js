@@ -6,6 +6,7 @@ const DEFAULT_MODEL = "gemini-2.5-flash";
 const DEFAULT_TTS_MODEL = "gemini-3.1-flash-tts-preview";
 const DEFAULT_TTS_FALLBACK_MODEL = "gemini-2.5-flash-preview-tts";
 const DEFAULT_LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
+const MAX_INVITE_CONTEXT_CHARS = 500;
 
 const GEMINI_MALE_VOICES = new Set([
   "Charon", "Orus", "Alnilam", "Fenrir", "Iapetus", "Algenib",
@@ -89,6 +90,25 @@ function base64UrlDecode(value) {
   return Uint8Array.from(atob(padded), (char) => char.charCodeAt(0));
 }
 
+async function transformBytes(bytes, stream) {
+  const writer = stream.writable.getWriter();
+  await writer.write(bytes);
+  await writer.close();
+  return new Uint8Array(await new Response(stream.readable).arrayBuffer());
+}
+
+async function compressText(value) {
+  return base64UrlEncode(await transformBytes(encoder.encode(value), new CompressionStream("gzip")));
+}
+
+async function decompressText(value) {
+  try {
+    return decoder.decode(await transformBytes(base64UrlDecode(value), new DecompressionStream("gzip")));
+  } catch {
+    throw new ClientError(401, "Invite context is invalid");
+  }
+}
+
 async function hmac(secret, value) {
   const key = await crypto.subtle.importKey(
     "raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"],
@@ -115,6 +135,12 @@ export async function verifyInviteToken(token, secret, now = Date.now()) {
   let claims;
   try { claims = JSON.parse(decoder.decode(base64UrlDecode(payload))); }
   catch { throw new ClientError(401, "Invite token payload is invalid"); }
+  if (claims.context !== undefined) throw new ClientError(401, "Invite context format is invalid");
+  if (claims.contextGzip !== undefined) {
+    if (typeof claims.contextGzip !== "string") throw new ClientError(401, "Invite context is invalid");
+    claims.context = await decompressText(claims.contextGzip);
+    delete claims.contextGzip;
+  }
   const nowSeconds = Math.floor(now / 1000);
   if (!Number.isInteger(claims.nbf) || nowSeconds < claims.nbf) throw new ClientError(401, "Invite is not active yet");
   if (!Number.isInteger(claims.exp) || nowSeconds >= claims.exp) throw new ClientError(401, "Invite has expired");
@@ -169,6 +195,13 @@ async function mintInvite(request, env, cors = {}) {
   if (!Number.isInteger(calls) || calls < 1 || calls > maxCalls) {
     throw new ClientError(400, `calls must be between 1 and ${maxCalls}`);
   }
+  if (body.context !== undefined && typeof body.context !== "string") {
+    throw new ClientError(400, "context must be a string");
+  }
+  const context = body.context?.trim();
+  if (context && context.length > MAX_INVITE_CONTEXT_CHARS) {
+    throw new ClientError(400, `context must be at most ${MAX_INVITE_CONTEXT_CHARS} characters`);
+  }
   const claims = {
     v: 1,
     id: crypto.randomUUID(),
@@ -176,10 +209,13 @@ async function mintInvite(request, env, cors = {}) {
     nbf: Math.floor(notBefore / 1000),
     exp: Math.floor(expiresAt / 1000),
     calls,
+    ...(context ? { contextGzip: await compressText(context) } : {}),
   };
   const token = await signInvite(claims, env.INVITE_SIGNING_SECRET);
   target.searchParams.set("xframe_invite", token);
-  return json({ url: target.toString(), token, claims }, 201, cors);
+  if (!context) return json({ url: target.toString(), token, claims }, 201, cors);
+  const { contextGzip: _, ...publicClaims } = claims;
+  return json({ url: target.toString(), token, claims: { ...publicClaims, context } }, 201, cors);
 }
 
 function invitePage(request) {
@@ -203,6 +239,7 @@ small{color:#596579}
   <label>Expires at<input name="expiresAt" type="date" required></label>
   <label class="check"><input name="preciseTime" type="checkbox"> Set specific times of day</label>
   <label>Maximum AI calls<input name="calls" type="number" min="1" max="20" value="5" required></label>
+  <label>Context description (optional)<input name="context" type="text" maxlength="${MAX_INVITE_CONTEXT_CHARS}" placeholder="Purpose or recipient of this invite"></label>
   <label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label>
   <button>Mint URL</button>
 </form>
@@ -274,6 +311,7 @@ form.addEventListener('submit', async (event) => {
         notBefore: notBefore.toISOString(),
         expiresAt: expiresAt.toISOString(),
         calls: Number(data.get('calls')),
+        context: String(data.get('context') || ''),
       }),
     });
     const body = await response.json();

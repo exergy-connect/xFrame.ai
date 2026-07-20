@@ -17,6 +17,20 @@ test("signs and verifies time-limited invite claims", async () => {
   await assert.rejects(() => verifyInviteToken(token, "signing-secret", now + 61_000), /expired/);
 });
 
+test("rejects invite tokens containing an uncompressed context claim", async () => {
+  const now = Date.now();
+  const token = await signInvite({
+    v: 1,
+    id: "legacy-context",
+    origin: "https://resume.example",
+    nbf: Math.floor(now / 1000) - 1,
+    exp: Math.floor(now / 1000) + 60,
+    calls: 1,
+    context: "Uncompressed context",
+  }, "signing-secret");
+  await assert.rejects(() => verifyInviteToken(token, "signing-secret", now), /context format is invalid/);
+});
+
 test("mints an invited presentation URL from the admin web API", async () => {
   const active = new Date(Date.now() + 5 * 60_000);
   const expires = new Date(active.getTime() + 24 * 60 * 60_000);
@@ -28,6 +42,7 @@ test("mints an invited presentation URL from the admin web API", async () => {
       notBefore: active.toISOString(),
       expiresAt: expires.toISOString(),
       calls: 7,
+      context: "  Candidate interview for platform role  ",
     }),
   }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
   assert.equal(response.status, 201);
@@ -37,6 +52,11 @@ test("mints an invited presentation URL from the admin web API", async () => {
   assert.equal(invited.searchParams.get("theme"), "dark");
   assert.equal(invited.searchParams.get("xframe_invite"), body.token);
   assert.equal(body.claims.calls, 7);
+  assert.equal(body.claims.context, "Candidate interview for platform role");
+  assert.equal((await verifyInviteToken(body.token, "signing-secret", active.getTime())).context, "Candidate interview for platform role");
+  const encodedClaims = JSON.parse(Buffer.from(body.token.split(".")[0], "base64url").toString());
+  assert.equal(typeof encodedClaims.contextGzip, "string");
+  assert.equal(Object.hasOwn(encodedClaims, "context"), false);
 });
 
 test("invite page defaults to day selection through five business days", async () => {
@@ -45,12 +65,39 @@ test("invite page defaults to day selection through five business days", async (
   const html = await response.text();
   assert.match(html, /name="url"[^>]*value="https:\/\/proxy\.example\/"/);
   assert.match(html, /name="calls"[^>]*max="20" value="5"/);
+  assert.match(html, /name="context"[^>]*maxlength="500"/);
   assert.match(html, /name="notBefore" type="date"/);
   assert.match(html, /name="expiresAt" type="date"/);
   assert.match(html, /name="preciseTime" type="checkbox"/);
   assert.match(html, /addBusinessDays\(today, 5\)/);
   assert.match(html, /applyDayDefaults\(\)/);
   assert.doesNotMatch(html, /preciseTime[^>]*checked/);
+});
+
+test("omits blank invite context and rejects invalid context descriptions", async () => {
+  const request = (context) => worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
+    body: JSON.stringify({
+      url: "https://resume.example/",
+      notBefore: new Date(Date.now() + 1_000).toISOString(),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      calls: 5,
+      context,
+    }),
+  }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+
+  const blank = await request("   ");
+  assert.equal(blank.status, 201);
+  assert.equal(Object.hasOwn((await blank.json()).claims, "context"), false);
+
+  const nonString = await request({ description: "no" });
+  assert.equal(nonString.status, 400);
+  assert.match((await nonString.json()).error.message, /context must be a string/);
+
+  const tooLong = await request("x".repeat(501));
+  assert.equal(tooLong.status, 400);
+  assert.match((await tooLong.json()).error.message, /at most 500/);
 });
 
 test("rejects invite activation times that are too far in the past", async () => {
