@@ -101,6 +101,43 @@ test("invite context limit can be configured through the environment", async () 
   assert.match((await tooLong.json()).error.message, /at most 1200/);
 });
 
+test("mints invite features and rejects unknown feature ids", async () => {
+  const request = (features) => worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
+    body: JSON.stringify({
+      url: "https://resume.example/",
+      notBefore: new Date(Date.now() + 1_000).toISOString(),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      calls: 5,
+      features,
+    }),
+  }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+
+  const withFeature = await request(["pdf_extract"]);
+  assert.equal(withFeature.status, 201);
+  const body = await withFeature.json();
+  assert.deepEqual(body.claims.features, ["pdf_extract"]);
+  const verified = await verifyInviteToken(body.token, "signing-secret", Date.now() + 2_000);
+  assert.deepEqual(verified.features, ["pdf_extract"]);
+
+  const omitted = await request(undefined);
+  assert.equal(omitted.status, 201);
+  assert.equal(Object.hasOwn((await omitted.json()).claims, "features"), false);
+
+  const unknown = await request(["not_a_feature"]);
+  assert.equal(unknown.status, 400);
+  assert.match((await unknown.json()).error.message, /Unknown invite feature/);
+});
+
+test("invite page exposes Allow PDF extract checkbox", async () => {
+  const response = await worker.fetch(new Request("https://proxy.example/invite"), env);
+  const html = await response.text();
+  assert.match(html, /name="pdfExtract" type="checkbox"/);
+  assert.match(html, /Allow PDF extract/);
+  assert.match(html, /features\.length \? \{ features \} : \{\}/);
+});
+
 test("omits blank invite context and rejects invalid context descriptions", async () => {
   const request = (context) => worker.fetch(new Request("https://proxy.example/invite/mint", {
     method: "POST",

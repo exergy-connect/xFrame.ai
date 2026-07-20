@@ -7,6 +7,8 @@ const DEFAULT_TTS_MODEL = "gemini-3.1-flash-tts-preview";
 const DEFAULT_TTS_FALLBACK_MODEL = "gemini-2.5-flash-preview-tts";
 const DEFAULT_LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
 const DEFAULT_INVITE_MAX_CONTEXT_CHARS = 1000;
+/** Invite-granted runtime capabilities (aligned with xFrame.present invite-feature). */
+const INVITE_FEATURES = new Set(["pdf_extract"]);
 
 const GEMINI_MALE_VOICES = new Set([
   "Charon", "Orus", "Alnilam", "Fenrir", "Iapetus", "Algenib",
@@ -203,6 +205,7 @@ async function mintInvite(request, env, cors = {}) {
   if (context && context.length > maxContextChars) {
     throw new ClientError(400, `context must be at most ${maxContextChars} characters`);
   }
+  const features = normalizeInviteFeatures(body.features);
   const claims = {
     v: 1,
     id: crypto.randomUUID(),
@@ -211,6 +214,7 @@ async function mintInvite(request, env, cors = {}) {
     exp: Math.floor(expiresAt / 1000),
     calls,
     ...(context ? { contextGzip: await compressText(context) } : {}),
+    ...(features.length ? { features } : {}),
   };
   const token = await signInvite(claims, env.INVITE_SIGNING_SECRET);
   target.searchParams.set("xframe_invite", token);
@@ -253,6 +257,7 @@ small{color:#596579}
     <label>Expires at<input name="expiresAt" type="date" required></label>
     <label class="check"><input name="preciseTime" type="checkbox"> Set specific times of day</label>
     <label>Maximum AI calls<input name="calls" type="number" min="1" max="20" value="5" required></label>
+    <label class="check"><input name="pdfExtract" type="checkbox"> Allow PDF extract</label>
     <label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label>
   </div>
   <label class="context-field">Context description (optional)
@@ -324,6 +329,7 @@ form.addEventListener('submit', async (event) => {
     const untilRaw = String(data.get('expiresAt') || '');
     const notBefore = precise.checked ? new Date(fromRaw) : startOfDay(parseLocalDate(fromRaw));
     const expiresAt = precise.checked ? new Date(untilRaw) : endOfDay(parseLocalDate(untilRaw));
+    const features = data.get('pdfExtract') === 'on' ? ['pdf_extract'] : [];
     const response = await fetch('/invite/mint', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + data.get('secret') },
@@ -333,6 +339,7 @@ form.addEventListener('submit', async (event) => {
         expiresAt: expiresAt.toISOString(),
         calls: Number(data.get('calls')),
         context: String(data.get('context') || ''),
+        ...(features.length ? { features } : {}),
       }),
     });
     const body = await response.json();
@@ -347,6 +354,27 @@ form.addEventListener('submit', async (event) => {
 });
 </script></body></html>`;
   return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+}
+
+/** Validate and normalize optional invite `features` against the known allowlist. */
+function normalizeInviteFeatures(raw) {
+  if (raw === undefined || raw === null) return [];
+  if (!Array.isArray(raw)) throw new ClientError(400, "features must be an array of strings");
+  const out = [];
+  const seen = new Set();
+  for (const entry of raw) {
+    if (typeof entry !== "string" || !entry.trim()) {
+      throw new ClientError(400, "features must be an array of strings");
+    }
+    const feature = entry.trim();
+    if (!INVITE_FEATURES.has(feature)) {
+      throw new ClientError(400, `Unknown invite feature: ${feature}`);
+    }
+    if (seen.has(feature)) continue;
+    seen.add(feature);
+    out.push(feature);
+  }
+  return out;
 }
 
 export async function chatCompletions(request, env, cors = {}) {
