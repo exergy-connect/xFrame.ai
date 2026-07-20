@@ -1873,8 +1873,8 @@ window.__XFRAME__.runtime.register("invite", { import: ["encoding.decodeBytes", 
   const loadInvite = async () => {
     const url = location.href;
     try {
-      // Local file:// opens have no invite token; grant every modeled feature for testing.
-      if (url.startsWith("file:")) {
+      // Local file:// / 127.0.0.1 opens have no invite token; grant every modeled feature for testing.
+      if (url.startsWith("file:") || location.hostname === "127.0.0.1") {
         return { context: "", url, features: [...known] };
       }
       const token = new URLSearchParams(location.search).get("xframe_invite")?.trim();

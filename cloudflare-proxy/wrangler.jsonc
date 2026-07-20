@@ -6,7 +6,7 @@
   "compatibility_date": "2026-07-18",
   "workers_dev": true,
   "vars": {
-    "ALLOWED_ORIGINS": "http://localhost:8000,http://localhost:3000,https://resume.jvb127.workers.dev,https://xframe-ai.jvb127.workers.dev",
+    "ALLOWED_ORIGINS": "http://localhost:8000,http://localhost:3000,http://127.0.0.1:5500,https://resume.jvb127.workers.dev,https://xframe-ai.jvb127.workers.dev",
     "GEMINI_MODEL": "gemini-3.1-flash-lite",
     "GEMINI_TTS_MODEL": "gemini-3.1-flash-tts-preview",
     "GEMINI_TTS_FALLBACK_MODEL": "gemini-2.5-flash-preview-tts",
