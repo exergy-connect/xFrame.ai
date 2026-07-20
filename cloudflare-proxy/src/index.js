@@ -6,7 +6,7 @@ const DEFAULT_MODEL = "gemini-2.5-flash";
 const DEFAULT_TTS_MODEL = "gemini-3.1-flash-tts-preview";
 const DEFAULT_TTS_FALLBACK_MODEL = "gemini-2.5-flash-preview-tts";
 const DEFAULT_LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
-const MAX_INVITE_CONTEXT_CHARS = 500;
+const DEFAULT_INVITE_MAX_CONTEXT_CHARS = 1000;
 
 const GEMINI_MALE_VOICES = new Set([
   "Charon", "Orus", "Alnilam", "Fenrir", "Iapetus", "Algenib",
@@ -16,7 +16,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/invite") {
-      return invitePage(request);
+      return invitePage(request, env);
     }
     const origin = request.headers.get("Origin");
     const cors = corsHeaders(origin, env.ALLOWED_ORIGINS);
@@ -199,8 +199,9 @@ async function mintInvite(request, env, cors = {}) {
     throw new ClientError(400, "context must be a string");
   }
   const context = body.context?.trim();
-  if (context && context.length > MAX_INVITE_CONTEXT_CHARS) {
-    throw new ClientError(400, `context must be at most ${MAX_INVITE_CONTEXT_CHARS} characters`);
+  const maxContextChars = positiveInt(env.INVITE_MAX_CONTEXT_CHARS, DEFAULT_INVITE_MAX_CONTEXT_CHARS);
+  if (context && context.length > maxContextChars) {
+    throw new ClientError(400, `context must be at most ${maxContextChars} characters`);
   }
   const claims = {
     v: 1,
@@ -218,8 +219,9 @@ async function mintInvite(request, env, cors = {}) {
   return json({ url: target.toString(), token, claims: { ...publicClaims, context } }, 201, cors);
 }
 
-function invitePage(request) {
+function invitePage(request, env) {
   const presentationUrl = `${new URL(request.url).origin}/`;
+  const maxContextChars = positiveInt(env.INVITE_MAX_CONTEXT_CHARS, DEFAULT_INVITE_MAX_CONTEXT_CHARS);
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mint xFrame invite</title><style>
 body{font:16px system-ui,sans-serif;max-width:72rem;margin:3rem auto;padding:0 1rem;color:#172033}
 form{display:grid;grid-template-columns:minmax(0,1fr) minmax(24rem,1.15fr);gap:1rem 2rem;align-items:start}
@@ -254,8 +256,8 @@ small{color:#596579}
     <label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label>
   </div>
   <label class="context-field">Context description (optional)
-    <textarea name="context" maxlength="${MAX_INVITE_CONTEXT_CHARS}" rows="16" placeholder="Purpose or recipient of this invite" aria-describedby="context-count"></textarea>
-    <small class="context-meta" id="context-count"><span id="context-length">0</span> / ${MAX_INVITE_CONTEXT_CHARS} characters</small>
+    <textarea name="context" maxlength="${maxContextChars}" rows="16" placeholder="Purpose or recipient of this invite" aria-describedby="context-count"></textarea>
+    <small class="context-meta" id="context-count"><span id="context-length">0</span> / ${maxContextChars} characters</small>
   </label>
   <button>Mint URL</button>
 </form>

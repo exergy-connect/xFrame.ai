@@ -65,8 +65,8 @@ test("invite page defaults to day selection through five business days", async (
   const html = await response.text();
   assert.match(html, /name="url"[^>]*value="https:\/\/proxy\.example\/"/);
   assert.match(html, /name="calls"[^>]*max="20" value="5"/);
-  assert.match(html, /<textarea name="context"[^>]*maxlength="500"[^>]*rows="16"/);
-  assert.match(html, /id="context-length">0<\/span> \/ 500 characters/);
+  assert.match(html, /<textarea name="context"[^>]*maxlength="1000"[^>]*rows="16"/);
+  assert.match(html, /id="context-length">0<\/span> \/ 1000 characters/);
   assert.match(html, /grid-template-columns:minmax\(0,1fr\) minmax\(24rem,1\.15fr\)/);
   assert.match(html, /name="notBefore" type="date"/);
   assert.match(html, /name="expiresAt" type="date"/);
@@ -74,6 +74,31 @@ test("invite page defaults to day selection through five business days", async (
   assert.match(html, /addBusinessDays\(today, 5\)/);
   assert.match(html, /applyDayDefaults\(\)/);
   assert.doesNotMatch(html, /preciseTime[^>]*checked/);
+});
+
+test("invite context limit can be configured through the environment", async () => {
+  const customEnv = { ...env, INVITE_MAX_CONTEXT_CHARS: "1200" };
+  const page = await worker.fetch(new Request("https://proxy.example/invite"), customEnv);
+  const html = await page.text();
+  assert.match(html, /<textarea name="context"[^>]*maxlength="1200"/);
+  assert.match(html, /id="context-length">0<\/span> \/ 1200 characters/);
+
+  const request = (context) => worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
+    body: JSON.stringify({
+      url: "https://resume.example/",
+      notBefore: new Date(Date.now() + 1_000).toISOString(),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      calls: 5,
+      context,
+    }),
+  }), { ...customEnv, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+
+  assert.equal((await request("x".repeat(1200))).status, 201);
+  const tooLong = await request("x".repeat(1201));
+  assert.equal(tooLong.status, 400);
+  assert.match((await tooLong.json()).error.message, /at most 1200/);
 });
 
 test("omits blank invite context and rejects invalid context descriptions", async () => {
@@ -97,9 +122,9 @@ test("omits blank invite context and rejects invalid context descriptions", asyn
   assert.equal(nonString.status, 400);
   assert.match((await nonString.json()).error.message, /context must be a string/);
 
-  const tooLong = await request("x".repeat(501));
+  const tooLong = await request("x".repeat(1001));
   assert.equal(tooLong.status, 400);
-  assert.match((await tooLong.json()).error.message, /at most 500/);
+  assert.match((await tooLong.json()).error.message, /at most 1000/);
 });
 
 test("rejects invite activation times that are too far in the past", async () => {
