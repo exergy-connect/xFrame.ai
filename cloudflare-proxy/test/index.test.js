@@ -370,13 +370,53 @@ test("mints invite features and rejects unknown feature ids", async () => {
   assert.match((await unknown.json()).error.message, /Unknown invite feature/);
 });
 
-test("invite page exposes Allow PDF extract and text-to-speech checkboxes", async () => {
+test("mints opportunity flag with invite context claims", async () => {
+  const request = (opportunity, context = "Enterprise Architect role") => worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
+    body: JSON.stringify({
+      url: "https://resume.example/",
+      notBefore: new Date(Date.now() + 1_000).toISOString(),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      calls: 5,
+      context,
+      contextStorage: "token",
+      ...(opportunity === undefined ? {} : { opportunity }),
+    }),
+  }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+
+  const withFlag = await request(true);
+  assert.equal(withFlag.status, 201);
+  const body = await withFlag.json();
+  assert.equal(body.claims.opportunity, true);
+  assert.equal(body.claims.context, "Enterprise Architect role");
+  const verified = await verifyInviteToken(body.token, "signing-secret", Date.now() + 2_000);
+  assert.equal(verified.opportunity, true);
+
+  const omitted = await request(undefined);
+  assert.equal(omitted.status, 201);
+  assert.equal(Object.hasOwn((await omitted.json()).claims, "opportunity"), false);
+
+  const falseFlag = await request(false);
+  assert.equal(falseFlag.status, 201);
+  assert.equal(Object.hasOwn((await falseFlag.json()).claims, "opportunity"), false);
+
+  const invalid = await request("yes");
+  assert.equal(invalid.status, 400);
+  assert.match((await invalid.json()).error.message, /opportunity must be a boolean/);
+});
+
+test("invite page exposes opportunity checkbox with context, not as a feature", async () => {
   const response = await worker.fetch(new Request("https://proxy.example/invite"), env);
   const html = await response.text();
   assert.match(html, /name="pdfExtract" type="checkbox"/);
   assert.match(html, /Allow PDF extract/);
   assert.match(html, /name="textToSpeech" type="checkbox"/);
   assert.match(html, /Allow text-to-speech/);
+  assert.match(html, /name="opportunity" type="checkbox"/);
+  assert.match(html, /Specific opportunity/);
+  assert.match(html, /opportunity: true/);
+  assert.doesNotMatch(html, /features\.push\('opportunity'\)/);
   assert.match(html, /features\.length \? \{ features \} : \{\}/);
 });
 

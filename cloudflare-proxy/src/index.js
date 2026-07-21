@@ -386,6 +386,7 @@ async function mintInvite(request, env, cors = {}) {
     throw new ClientError(400, `context must be at most ${maxKvContextChars} characters when stored in KV`);
   }
   const features = normalizeInviteFeatures(body.features);
+  const opportunity = normalizeOpportunityFlag(body.opportunity);
   const inviteId = crypto.randomUUID();
   const claims = {
     v: context && contextStorage === "file" ? 2 : 1,
@@ -395,6 +396,7 @@ async function mintInvite(request, env, cors = {}) {
     exp: Math.floor(expiresAt / 1000),
     calls,
     ...(features.length ? { features } : {}),
+    ...(opportunity ? { opportunity: true } : {}),
   };
 
   let contextStored = false;
@@ -474,10 +476,13 @@ small{color:#596579}
     <label class="check"><input name="textToSpeech" type="checkbox"> Allow text-to-speech</label>
     <label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label>
   </div>
-  <label class="context-field">Context description (optional)
-    <textarea name="context" rows="16" placeholder="Purpose or recipient of this invite" aria-describedby="context-count"></textarea>
-    <small class="context-meta" id="context-count"><span id="context-length">0</span><span id="context-limit"></span></small>
-  </label>
+  <div class="context-field">
+    <label>Context description (optional)
+      <textarea name="context" rows="16" placeholder="Purpose or recipient of this invite" aria-describedby="context-count"></textarea>
+      <small class="context-meta" id="context-count"><span id="context-length">0</span><span id="context-limit"></span></small>
+    </label>
+    <label class="check"><input name="opportunity" type="checkbox"> Specific opportunity (context targets the opportunity field)</label>
+  </div>
   <button>Mint URL</button>
 </form>
 <output id="result" hidden></output>
@@ -572,6 +577,7 @@ form.addEventListener('submit', async (event) => {
         context: String(data.get('context') || ''),
         contextStorage: String(data.get('contextStorage') || 'file'),
         ...(features.length ? { features } : {}),
+        ...(data.get('opportunity') === 'on' ? { opportunity: true } : {}),
       }),
     });
     const body = await response.json();
@@ -591,6 +597,13 @@ form.addEventListener('submit', async (event) => {
 });
 </script></body></html>`;
   return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+}
+
+/** Optional invite claim: context describes a specific opportunity. */
+function normalizeOpportunityFlag(raw) {
+  if (raw === undefined || raw === null || raw === false) return false;
+  if (raw === true) return true;
+  throw new ClientError(400, "opportunity must be a boolean");
 }
 
 /** Validate and normalize optional invite `features` against the known allowlist. */
