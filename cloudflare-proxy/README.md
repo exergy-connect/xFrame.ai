@@ -50,10 +50,28 @@ npx wrangler login
 npx wrangler secret put GEMINI_API_KEY
 npx wrangler secret put INVITE_SIGNING_SECRET
 npx wrangler secret put INVITE_ADMIN_SECRET
+# Optional: commit encrypted invite context files into the presentation repo
+npx wrangler secret put CONTEXT_COMMIT_TOKEN
 npx wrangler deploy
 ```
 
-Open `/invite`, enter the target presentation URL, allowed time window, AI-call allowance, optional context description, optional **Allow PDF extract** / **Allow text-to-speech** features, and `INVITE_ADMIN_SECRET`, then share the resulting URL. The context is trimmed, limited by `INVITE_MAX_CONTEXT_CHARS` (1,000 characters when unset or invalid), and gzip-compressed in the signed token; token verification transparently returns it as the `context` claim. Optional `features` (for example `["pdf_extract", "text_to_speech"]`) are stored on the signed claims; unknown feature ids are rejected. `INVITE_SIGNING_SECRET` requires a signed invite for `/v1/audio/speech` and `/v1/live-token` (Gemini TTS / Live). `/v1/chat/completions` stays origin-gated (and rate-limited) so résumé adaptation works without an invite; when an invite Bearer is sent, it is still verified. Use separate, long random values for the two secrets. During migration, omitting `INVITE_SIGNING_SECRET` leaves the existing origin-based behavior in place.
+Open `/invite`, enter the target presentation URL, allowed time window, AI-call allowance, optional context description, context storage mode, optional **Allow PDF extract** / **Allow text-to-speech** features, and `INVITE_ADMIN_SECRET`, then share the resulting URL.
+
+**Context storage (default: encrypted file):**
+- Context is trimmed and limited by `INVITE_MAX_CONTEXT_CHARS` (1,000 characters when unset or invalid).
+- **File mode (default):** gzip → AES-256-GCM into `contexts/<invite-id>.ctx`. The signed token carries only `contextFile` (relative path) and `contextKey` (decode key). When `CONTEXT_COMMIT_TOKEN` and `CONTEXT_COMMIT_REPO` are set, minting fires a GitHub `repository_dispatch` (`invite-context`) so [`.github/workflows/invite-context.yml`](../.github/workflows/invite-context.yml) commits the file under `docs/examples/resume/` and redeploys. Without those secrets, the mint response includes a downloadable artifact for manual placement.
+- **Token mode (`contextStorage: "token"`):** keeps the previous behaviour — gzip-compressed context embedded as `contextGzip` in the token; verification transparently expands it to `context`.
+
+Optional `features` (for example `["pdf_extract", "text_to_speech"]`) are stored on the signed claims; unknown feature ids are rejected. `INVITE_SIGNING_SECRET` requires a signed invite for `/v1/audio/speech` and `/v1/live-token` (Gemini TTS / Live). `/v1/chat/completions` stays origin-gated (and rate-limited) so résumé adaptation works without an invite; when an invite Bearer is sent, it is still verified. Use separate, long random values for the invite secrets. During migration, omitting `INVITE_SIGNING_SECRET` leaves the existing origin-based behavior in place.
+
+Configure file commits with:
+
+| Name | Kind | Purpose |
+| --- | --- | --- |
+| `CONTEXT_COMMIT_TOKEN` | secret | GitHub PAT that can create `repository_dispatch` events |
+| `CONTEXT_COMMIT_REPO` | var | `owner/repo` (default in wrangler: `exergy-connect/xFrame.ai`) |
+| `CONTEXT_COMMIT_REF` | optional secret/var | Branch for the workflow checkout |
+| `INVITE_CONTEXT_DIR` | var | Must stay `contexts` (path contract with the presentation runtime) |
 
 The proxy cryptographically enforces invite signature, activation/expiry window, and presentation origin for TTS/Live. The call allowance is intentionally loose: xFrame records each uncached invited AI request in that browser's `localStorage`. Clearing site data or switching browsers resets the local counter; use a Cloudflare rate-limit binding when a hard server-side quota is required.
 

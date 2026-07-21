@@ -3,3 +3,9 @@ INVITE_SIGNING_SECRET=replace-with-a-long-random-signing-secret
 INVITE_ADMIN_SECRET=replace-with-a-separate-admin-secret
 # Optional: when set, requests must include a valid X-Turnstile-Token header.
 # TURNSTILE_SECRET_KEY=replace-me
+# Optional: fine-grained PAT with Contents:write (and ability to create
+# repository_dispatch events) so minting can commit encrypted context files.
+# CONTEXT_COMMIT_TOKEN=ghp_replace-me
+# Optional override; defaults come from wrangler vars.
+# CONTEXT_COMMIT_REPO=exergy-connect/xFrame.ai
+# CONTEXT_COMMIT_REF=main

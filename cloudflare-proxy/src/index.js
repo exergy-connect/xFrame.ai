@@ -7,6 +7,10 @@ const DEFAULT_TTS_MODEL = "gemini-3.1-flash-tts-preview";
 const DEFAULT_TTS_FALLBACK_MODEL = "gemini-2.5-flash-preview-tts";
 const DEFAULT_LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
 const DEFAULT_INVITE_MAX_CONTEXT_CHARS = 1000;
+const DEFAULT_INVITE_CONTEXT_DIR = "contexts";
+/** Magic header for encrypted invite context files (gzip → AES-256-GCM). */
+const CONTEXT_FILE_MAGIC = new Uint8Array([0x58, 0x46, 0x43, 0x31]); // XFC1
+const CONTEXT_FILE_PATH_RE = /^contexts\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.ctx$/;
 /** Invite-granted runtime capabilities (aligned with xFrame.present invite-feature). */
 const INVITE_FEATURES = new Set(["pdf_extract", "text_to_speech"]);
 
@@ -111,6 +115,76 @@ async function decompressText(value) {
   }
 }
 
+function concatBytes(...parts) {
+  const total = parts.reduce((sum, part) => sum + part.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const part of parts) {
+    out.set(part, offset);
+    offset += part.length;
+  }
+  return out;
+}
+
+function standardBase64Encode(bytes) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+function inviteContextDir(env) {
+  const raw = String(env?.INVITE_CONTEXT_DIR || DEFAULT_INVITE_CONTEXT_DIR).trim().replace(/^\/+|\/+$/g, "");
+  return raw || DEFAULT_INVITE_CONTEXT_DIR;
+}
+
+/** Build a repo-relative context path for an invite id (must match CONTEXT_FILE_PATH_RE). */
+export function contextFilePathForInvite(inviteId, env = {}) {
+  const id = String(inviteId || "").toLowerCase();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) {
+    throw new ClientError(500, "Invite id is invalid");
+  }
+  const dir = inviteContextDir(env);
+  if (dir !== DEFAULT_INVITE_CONTEXT_DIR) {
+    throw new ClientError(500, `INVITE_CONTEXT_DIR must be "${DEFAULT_INVITE_CONTEXT_DIR}"`);
+  }
+  return `${dir}/${id}.ctx`;
+}
+
+export function validateContextFileClaims(contextFile, contextKey) {
+  if (typeof contextFile !== "string" || !CONTEXT_FILE_PATH_RE.test(contextFile)) {
+    throw new ClientError(401, "Invite context file is invalid");
+  }
+  if (typeof contextKey !== "string" || !contextKey) {
+    throw new ClientError(401, "Invite context key is invalid");
+  }
+  let keyBytes;
+  try { keyBytes = base64UrlDecode(contextKey); }
+  catch { throw new ClientError(401, "Invite context key is invalid"); }
+  if (keyBytes.length !== 32) throw new ClientError(401, "Invite context key is invalid");
+}
+
+/**
+ * Compress and encrypt invite context for static file storage.
+ * File layout: XFC1 magic (4) + IV (12) + AES-GCM ciphertext+tag.
+ * AAD binds invite id and relative path so swapped files fail decryption.
+ */
+export async function encryptContextFile(plaintext, inviteId, relativePath) {
+  const gzipped = await transformBytes(encoder.encode(plaintext), new CompressionStream("gzip"));
+  const keyBytes = crypto.getRandomValues(new Uint8Array(32));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await crypto.subtle.importKey("raw", keyBytes, { name: "AES-GCM" }, false, ["encrypt"]);
+  const aad = encoder.encode(`${inviteId}|${relativePath}`);
+  const ciphertext = new Uint8Array(await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv, additionalData: aad },
+    key,
+    gzipped,
+  ));
+  return {
+    bytes: concatBytes(CONTEXT_FILE_MAGIC, iv, ciphertext),
+    contextKey: base64UrlEncode(keyBytes),
+  };
+}
+
 async function hmac(secret, value) {
   const key = await crypto.subtle.importKey(
     "raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"],
@@ -138,10 +212,18 @@ export async function verifyInviteToken(token, secret, now = Date.now()) {
   try { claims = JSON.parse(decoder.decode(base64UrlDecode(payload))); }
   catch { throw new ClientError(401, "Invite token payload is invalid"); }
   if (claims.context !== undefined) throw new ClientError(401, "Invite context format is invalid");
-  if (claims.contextGzip !== undefined) {
+  const hasGzip = claims.contextGzip !== undefined;
+  const hasFile = claims.contextFile !== undefined || claims.contextKey !== undefined;
+  if (hasGzip && hasFile) throw new ClientError(401, "Invite context format is invalid");
+  if (hasGzip) {
     if (typeof claims.contextGzip !== "string") throw new ClientError(401, "Invite context is invalid");
     claims.context = await decompressText(claims.contextGzip);
     delete claims.contextGzip;
+  } else if (hasFile) {
+    if (claims.contextFile === undefined || claims.contextKey === undefined) {
+      throw new ClientError(401, "Invite context format is invalid");
+    }
+    validateContextFileClaims(claims.contextFile, claims.contextKey);
   }
   const nowSeconds = Math.floor(now / 1000);
   if (!Number.isInteger(claims.nbf) || nowSeconds < claims.nbf) throw new ClientError(401, "Invite is not active yet");
@@ -149,6 +231,55 @@ export async function verifyInviteToken(token, secret, now = Date.now()) {
   if (!Number.isInteger(claims.calls) || claims.calls < 1) throw new ClientError(401, "Invite call allowance is invalid");
   if (typeof claims.origin !== "string" || !claims.origin) throw new ClientError(401, "Invite origin is invalid");
   return claims;
+}
+
+/**
+ * Submit an encrypted context file into the presentation repo via GitHub repository_dispatch.
+ * When CONTEXT_COMMIT_TOKEN / CONTEXT_COMMIT_REPO are unset, skips dispatch (local/dev).
+ */
+export async function submitContextFile(env, { path, bytes, inviteId }) {
+  const token = env.CONTEXT_COMMIT_TOKEN?.trim();
+  const repo = env.CONTEXT_COMMIT_REPO?.trim();
+  if (!token || !repo) return { committed: false };
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) {
+    throw new ClientError(500, "CONTEXT_COMMIT_REPO must be owner/repo");
+  }
+  const payload = {
+    event_type: "invite-context",
+    client_payload: {
+      path,
+      contentBase64: standardBase64Encode(bytes),
+      inviteId,
+      ...(env.CONTEXT_COMMIT_REF ? { ref: String(env.CONTEXT_COMMIT_REF).trim() } : {}),
+    },
+  };
+  const response = await fetch(`https://api.github.com/repos/${repo}/dispatches`, {
+    method: "POST",
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "User-Agent": "xframe-ai-invite-context",
+      "X-GitHub-Api-Version": "2022-11-28",
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    console.error("Context file dispatch failed", response.status, detail.slice(0, 500));
+    throw new ClientError(502, "Could not submit context file to the repository");
+  }
+  return { committed: true };
+}
+
+function normalizeContextStorage(raw) {
+  if (raw === undefined || raw === null || raw === "") return "file";
+  if (typeof raw !== "string") throw new ClientError(400, "contextStorage must be \"file\" or \"token\"");
+  const value = raw.trim().toLowerCase();
+  if (value !== "file" && value !== "token") {
+    throw new ClientError(400, "contextStorage must be \"file\" or \"token\"");
+  }
+  return value;
 }
 
 /** TTS / Live mint require a signed invite; chat completions stay origin-gated. */
@@ -205,22 +336,55 @@ async function mintInvite(request, env, cors = {}) {
   if (context && context.length > maxContextChars) {
     throw new ClientError(400, `context must be at most ${maxContextChars} characters`);
   }
+  const contextStorage = normalizeContextStorage(body.contextStorage);
   const features = normalizeInviteFeatures(body.features);
+  const inviteId = crypto.randomUUID();
   const claims = {
-    v: 1,
-    id: crypto.randomUUID(),
+    v: context && contextStorage === "file" ? 2 : 1,
+    id: inviteId,
     origin: target.origin,
     nbf: Math.floor(notBefore / 1000),
     exp: Math.floor(expiresAt / 1000),
     calls,
-    ...(context ? { contextGzip: await compressText(context) } : {}),
     ...(features.length ? { features } : {}),
   };
+
+  let contextArtifact;
+  if (context) {
+    if (contextStorage === "token") {
+      claims.contextGzip = await compressText(context);
+    } else {
+      const contextFile = contextFilePathForInvite(inviteId, env);
+      const encrypted = await encryptContextFile(context, inviteId, contextFile);
+      claims.contextFile = contextFile;
+      claims.contextKey = encrypted.contextKey;
+      const submitted = await submitContextFile(env, {
+        path: contextFile,
+        bytes: encrypted.bytes,
+        inviteId,
+      });
+      contextArtifact = {
+        path: contextFile,
+        committed: submitted.committed,
+        contentBase64: submitted.committed ? undefined : standardBase64Encode(encrypted.bytes),
+      };
+    }
+  }
+
   const token = await signInvite(claims, env.INVITE_SIGNING_SECRET);
   target.searchParams.set("xframe_invite", token);
-  if (!context) return json({ url: target.toString(), token, claims }, 201, cors);
-  const { contextGzip: _, ...publicClaims } = claims;
-  return json({ url: target.toString(), token, claims: { ...publicClaims, context } }, 201, cors);
+  const {
+    contextGzip: _gzip,
+    contextKey: _key,
+    ...publicClaims
+  } = claims;
+  const responseBody = {
+    url: target.toString(),
+    token,
+    claims: context ? { ...publicClaims, context } : publicClaims,
+    ...(contextArtifact ? { contextArtifact } : {}),
+  };
+  return json(responseBody, 201, cors);
 }
 
 function invitePage(request, env) {
@@ -234,7 +398,7 @@ form{display:grid;grid-template-columns:minmax(0,1fr) minmax(24rem,1.15fr);gap:1
 label{display:grid;gap:.35rem;font-weight:650}
 label.check{display:flex;align-items:center;gap:.55rem;font-weight:650}
 label.check input{width:auto;margin:0;padding:0}
-input,textarea,button{font:inherit;padding:.7rem;border:1px solid #aab3c3;border-radius:.45rem}
+input,textarea,button,select{font:inherit;padding:.7rem;border:1px solid #aab3c3;border-radius:.45rem}
 textarea{box-sizing:border-box;width:100%;min-height:25rem;resize:vertical;line-height:1.45}
 .context-meta{text-align:right;font-weight:400}
 button{background:#2959c8;color:#fff;border:0;font-weight:700;cursor:pointer}
@@ -249,7 +413,7 @@ small{color:#596579}
 }
 </style></head><body>
 <h1>Mint an invited URL</h1>
-<p>Create a signed link that activates runtime AI only during its time window. Call usage is loosely enforced by the recipient's browser cache.</p>
+<p>Create a signed link that activates runtime AI only during its time window. Call usage is loosely enforced by the recipient's browser cache. Context is stored as an encrypted file by default so the invite token stays short.</p>
 <form id="mint">
   <div class="invite-fields">
     <label>Presentation URL<input name="url" type="url" required value="${presentationUrl}"></label>
@@ -257,6 +421,10 @@ small{color:#596579}
     <label>Expires at<input name="expiresAt" type="date" required></label>
     <label class="check"><input name="preciseTime" type="checkbox"> Set specific times of day</label>
     <label>Maximum AI calls<input name="calls" type="number" min="1" max="20" value="5" required></label>
+    <label>Context storage<select name="contextStorage">
+      <option value="file" selected>Encrypted file in repo (default)</option>
+      <option value="token">Embed gzip in token</option>
+    </select></label>
     <label class="check"><input name="pdfExtract" type="checkbox"> Allow PDF extract</label>
     <label class="check"><input name="textToSpeech" type="checkbox"> Allow text-to-speech</label>
     <label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label>
@@ -342,15 +510,34 @@ form.addEventListener('submit', async (event) => {
         expiresAt: expiresAt.toISOString(),
         calls: Number(data.get('calls')),
         context: String(data.get('context') || ''),
+        contextStorage: String(data.get('contextStorage') || 'file'),
         ...(features.length ? { features } : {}),
       }),
     });
     const body = await response.json();
     if (!response.ok) throw new Error(body.error?.message || 'Request failed');
-    out.innerHTML = '<strong>Invited URL</strong><br><a rel="noreferrer" href="'
-      + body.url.replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">'
-      + body.url.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    const safeUrl = String(body.url).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    let html = '<strong>Invited URL</strong><br><a rel="noreferrer" href="'
+      + safeUrl + '">' + safeUrl
       + '</a><br><small>Copy this link. The token is a credential.</small>';
+    const artifact = body.contextArtifact;
+    if (artifact?.path) {
+      const safePath = String(artifact.path).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      const safeName = String(artifact.path.split('/').pop() || 'context.ctx')
+        .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      if (artifact.committed) {
+        html += '<br><small>Context file submitted for commit: ' + safePath
+          + '. It becomes available after the deploy workflow finishes.</small>';
+      } else if (artifact.contentBase64) {
+        html += '<br><small>Context file was not auto-committed (CONTEXT_COMMIT_* unset). '
+          + 'Download and place it at docs/examples/resume/' + safePath
+          + ' before sharing the link.</small><br>'
+          + '<a id="ctx-download" download="' + safeName
+          + '" href="data:application/octet-stream;base64,' + artifact.contentBase64 + '">Download '
+          + safePath + '</a>';
+      }
+    }
+    out.innerHTML = html;
   } catch (error) {
     out.textContent = error.message;
   }

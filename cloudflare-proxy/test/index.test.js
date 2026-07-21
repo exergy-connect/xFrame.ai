@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import worker, { geminiGenerationConfigFromResponseFormat, signInvite, verifyInviteToken } from "../src/index.js";
+import worker, {
+  encryptContextFile,
+  geminiGenerationConfigFromResponseFormat,
+  signInvite,
+  submitContextFile,
+  validateContextFileClaims,
+  verifyInviteToken,
+} from "../src/index.js";
 
 const env = {
   ALLOWED_ORIGINS: "https://resume.example",
@@ -31,7 +38,7 @@ test("rejects invite tokens containing an uncompressed context claim", async () 
   await assert.rejects(() => verifyInviteToken(token, "signing-secret", now), /context format is invalid/);
 });
 
-test("mints an invited presentation URL from the admin web API", async () => {
+test("mints file-backed context by default and leaves decode key in the token", async () => {
   const active = new Date(Date.now() + 5 * 60_000);
   const expires = new Date(active.getTime() + 24 * 60 * 60_000);
   const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
@@ -53,10 +60,153 @@ test("mints an invited presentation URL from the admin web API", async () => {
   assert.equal(invited.searchParams.get("xframe_invite"), body.token);
   assert.equal(body.claims.calls, 7);
   assert.equal(body.claims.context, "Candidate interview for platform role");
+  assert.equal(body.claims.v, 2);
+  assert.match(body.claims.contextFile, /^contexts\/[0-9a-f-]{36}\.ctx$/);
+  assert.equal(body.contextArtifact.path, body.claims.contextFile);
+  assert.equal(body.contextArtifact.committed, false);
+  assert.equal(typeof body.contextArtifact.contentBase64, "string");
+  assert.equal(Object.hasOwn(body.claims, "contextKey"), false);
+
+  const verified = await verifyInviteToken(body.token, "signing-secret", active.getTime());
+  assert.equal(verified.contextFile, body.claims.contextFile);
+  assert.equal(typeof verified.contextKey, "string");
+  assert.equal(Object.hasOwn(verified, "context"), false);
+
+  const encodedClaims = JSON.parse(Buffer.from(body.token.split(".")[0], "base64url").toString());
+  assert.equal(typeof encodedClaims.contextFile, "string");
+  assert.equal(typeof encodedClaims.contextKey, "string");
+  assert.equal(Object.hasOwn(encodedClaims, "contextGzip"), false);
+  assert.equal(Object.hasOwn(encodedClaims, "context"), false);
+});
+
+test("mints gzip context into the token when contextStorage is token", async () => {
+  const active = new Date(Date.now() + 5 * 60_000);
+  const expires = new Date(active.getTime() + 24 * 60 * 60_000);
+  const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
+    body: JSON.stringify({
+      url: "https://resume.example/deck?theme=dark",
+      notBefore: active.toISOString(),
+      expiresAt: expires.toISOString(),
+      calls: 7,
+      context: "  Candidate interview for platform role  ",
+      contextStorage: "token",
+    }),
+  }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+  assert.equal(response.status, 201);
+  const body = await response.json();
+  assert.equal(body.claims.context, "Candidate interview for platform role");
   assert.equal((await verifyInviteToken(body.token, "signing-secret", active.getTime())).context, "Candidate interview for platform role");
   const encodedClaims = JSON.parse(Buffer.from(body.token.split(".")[0], "base64url").toString());
   assert.equal(typeof encodedClaims.contextGzip, "string");
-  assert.equal(Object.hasOwn(encodedClaims, "context"), false);
+  assert.equal(Object.hasOwn(encodedClaims, "contextFile"), false);
+  assert.equal(Object.hasOwn(body, "contextArtifact"), false);
+});
+
+test("dispatches encrypted context files to GitHub when commit secrets are set", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  const dispatches = [];
+  globalThis.fetch = async (url, init) => {
+    dispatches.push({ url: String(url), init });
+    assert.equal(String(url), "https://api.github.com/repos/exergy-connect/xFrame.ai/dispatches");
+    assert.equal(init.method, "POST");
+    assert.match(init.headers.Authorization, /^Bearer ghp_test$/);
+    const payload = JSON.parse(init.body);
+    assert.equal(payload.event_type, "invite-context");
+    assert.match(payload.client_payload.path, /^contexts\/.+\.ctx$/);
+    assert.equal(typeof payload.client_payload.contentBase64, "string");
+    assert.equal(typeof payload.client_payload.inviteId, "string");
+    return new Response(null, { status: 204 });
+  };
+
+  const active = new Date(Date.now() + 5 * 60_000);
+  const expires = new Date(active.getTime() + 24 * 60 * 60_000);
+  const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
+    body: JSON.stringify({
+      url: "https://resume.example/",
+      notBefore: active.toISOString(),
+      expiresAt: expires.toISOString(),
+      calls: 3,
+      context: "Dispatch me",
+    }),
+  }), {
+    ...env,
+    INVITE_ADMIN_SECRET: "admin-secret",
+    INVITE_SIGNING_SECRET: "signing-secret",
+    CONTEXT_COMMIT_TOKEN: "ghp_test",
+    CONTEXT_COMMIT_REPO: "exergy-connect/xFrame.ai",
+  });
+  assert.equal(response.status, 201);
+  const body = await response.json();
+  assert.equal(body.contextArtifact.committed, true);
+  assert.equal(body.contextArtifact.contentBase64, undefined);
+  assert.equal(dispatches.length, 1);
+});
+
+test("submitContextFile skips dispatch when secrets are absent", async () => {
+  const result = await submitContextFile({}, {
+    path: "contexts/00000000-0000-4000-8000-000000000001.ctx",
+    bytes: new Uint8Array([1, 2, 3]),
+    inviteId: "00000000-0000-4000-8000-000000000001",
+  });
+  assert.deepEqual(result, { committed: false });
+});
+
+test("validateContextFileClaims rejects malformed paths and keys", () => {
+  assert.throws(() => validateContextFileClaims("../secrets.ctx", "abcd"), /context file is invalid/);
+  assert.throws(() => validateContextFileClaims("contexts/not-a-uuid.ctx", "abcd"), /context file is invalid/);
+  const path = "contexts/00000000-0000-4000-8000-000000000001.ctx";
+  assert.throws(() => validateContextFileClaims(path, "short"), /context key is invalid/);
+  const key = Buffer.alloc(32, 7).toString("base64url");
+  validateContextFileClaims(path, key);
+});
+
+test("encryptContextFile produces XFC1 ciphertext and a 32-byte key", async () => {
+  const path = "contexts/00000000-0000-4000-8000-000000000002.ctx";
+  const { bytes, contextKey } = await encryptContextFile("hello context", "00000000-0000-4000-8000-000000000002", path);
+  assert.deepEqual([...bytes.slice(0, 4)], [0x58, 0x46, 0x43, 0x31]);
+  assert.equal(Buffer.from(contextKey, "base64url").length, 32);
+  assert.ok(bytes.length > 16);
+});
+
+test("verifyInviteToken accepts file claims without loading the file", async () => {
+  const now = Date.now();
+  const path = "contexts/11111111-1111-4111-8111-111111111111.ctx";
+  const key = Buffer.alloc(32, 9).toString("base64url");
+  const token = await signInvite({
+    v: 2,
+    id: "11111111-1111-4111-8111-111111111111",
+    origin: "https://resume.example",
+    nbf: Math.floor(now / 1000) - 1,
+    exp: Math.floor(now / 1000) + 60,
+    calls: 2,
+    contextFile: path,
+    contextKey: key,
+  }, "signing-secret");
+  const claims = await verifyInviteToken(token, "signing-secret", now);
+  assert.equal(claims.contextFile, path);
+  assert.equal(claims.contextKey, key);
+  assert.equal(Object.hasOwn(claims, "context"), false);
+});
+
+test("verifyInviteToken rejects mixed gzip and file context claims", async () => {
+  const now = Date.now();
+  const token = await signInvite({
+    v: 2,
+    id: "22222222-2222-4222-8222-222222222222",
+    origin: "https://resume.example",
+    nbf: Math.floor(now / 1000) - 1,
+    exp: Math.floor(now / 1000) + 60,
+    calls: 1,
+    contextGzip: "e30",
+    contextFile: "contexts/22222222-2222-4222-8222-222222222222.ctx",
+    contextKey: Buffer.alloc(32, 1).toString("base64url"),
+  }, "signing-secret");
+  await assert.rejects(() => verifyInviteToken(token, "signing-secret", now), /context format is invalid/);
 });
 
 test("invite page defaults to day selection through five business days", async () => {
@@ -71,6 +221,8 @@ test("invite page defaults to day selection through five business days", async (
   assert.match(html, /name="notBefore" type="date"/);
   assert.match(html, /name="expiresAt" type="date"/);
   assert.match(html, /name="preciseTime" type="checkbox"/);
+  assert.match(html, /name="contextStorage"/);
+  assert.match(html, /<option value="file" selected>/);
   assert.match(html, /addBusinessDays\(today, 5\)/);
   assert.match(html, /applyDayDefaults\(\)/);
   assert.doesNotMatch(html, /preciseTime[^>]*checked/);
