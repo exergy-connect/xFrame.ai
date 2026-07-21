@@ -6,7 +6,8 @@ const DEFAULT_MODEL = "gemini-2.5-flash";
 const DEFAULT_TTS_MODEL = "gemini-3.1-flash-tts-preview";
 const DEFAULT_TTS_FALLBACK_MODEL = "gemini-2.5-flash-preview-tts";
 const DEFAULT_LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
-const DEFAULT_INVITE_MAX_CONTEXT_CHARS = 1000;
+/** Max chars when embedding context in the invite URL/token (`contextStorage: "token"`). */
+const DEFAULT_INVITE_MAX_CONTEXT_CHARS = 500;
 const DEFAULT_INVITE_CONTEXT_DIR = "contexts";
 /** Magic header for encrypted invite context files (gzip → AES-256-GCM). */
 const CONTEXT_FILE_MAGIC = new Uint8Array([0x58, 0x46, 0x43, 0x31]); // XFC1
@@ -332,11 +333,11 @@ async function mintInvite(request, env, cors = {}) {
     throw new ClientError(400, "context must be a string");
   }
   const context = body.context?.trim();
-  const maxContextChars = positiveInt(env.INVITE_MAX_CONTEXT_CHARS, DEFAULT_INVITE_MAX_CONTEXT_CHARS);
-  if (context && context.length > maxContextChars) {
-    throw new ClientError(400, `context must be at most ${maxContextChars} characters`);
-  }
   const contextStorage = normalizeContextStorage(body.contextStorage);
+  const maxContextChars = positiveInt(env.INVITE_MAX_CONTEXT_CHARS, DEFAULT_INVITE_MAX_CONTEXT_CHARS);
+  if (context && contextStorage === "token" && context.length > maxContextChars) {
+    throw new ClientError(400, `context must be at most ${maxContextChars} characters when embedded in the token`);
+  }
   const features = normalizeInviteFeatures(body.features);
   const inviteId = crypto.randomUUID();
   const claims = {
@@ -430,8 +431,8 @@ small{color:#596579}
     <label>Admin secret<input name="secret" type="password" required autocomplete="current-password"></label>
   </div>
   <label class="context-field">Context description (optional)
-    <textarea name="context" maxlength="${maxContextChars}" rows="16" placeholder="Purpose or recipient of this invite" aria-describedby="context-count"></textarea>
-    <small class="context-meta" id="context-count"><span id="context-length">0</span> / ${maxContextChars} characters</small>
+    <textarea name="context" rows="16" placeholder="Purpose or recipient of this invite" aria-describedby="context-count"></textarea>
+    <small class="context-meta" id="context-count"><span id="context-length">0</span><span id="context-limit"></span></small>
   </label>
   <button>Mint URL</button>
 </form>
@@ -442,7 +443,10 @@ const fromInput = form.elements.notBefore;
 const untilInput = form.elements.expiresAt;
 const precise = form.elements.preciseTime;
 const contextInput = form.elements.context;
+const contextStorage = form.elements.contextStorage;
 const contextLength = document.querySelector('#context-length');
+const contextLimit = document.querySelector('#context-limit');
+const maxTokenContextChars = ${maxContextChars};
 const pad = (n) => String(n).padStart(2, '0');
 const dateValue = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 const dateTimeValue = (d) => dateValue(d) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
@@ -484,9 +488,20 @@ function syncMode() {
   if (precise.checked) applyTimeDefaults();
   else applyDayDefaults();
 }
+function syncContextLimit() {
+  const tokenMode = contextStorage.value === 'token';
+  if (tokenMode) contextInput.setAttribute('maxlength', String(maxTokenContextChars));
+  else contextInput.removeAttribute('maxlength');
+  contextLimit.textContent = tokenMode
+    ? (' / ' + maxTokenContextChars + ' characters (token limit)')
+    : ' characters (no token length limit)';
+  contextLength.textContent = contextInput.value.length;
+}
 precise.addEventListener('change', syncMode);
+contextStorage.addEventListener('change', syncContextLimit);
 contextInput.addEventListener('input', () => { contextLength.textContent = contextInput.value.length; });
 applyDayDefaults();
+syncContextLimit();
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   const data = new FormData(form);

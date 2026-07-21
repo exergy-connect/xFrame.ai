@@ -215,8 +215,11 @@ test("invite page defaults to day selection through five business days", async (
   const html = await response.text();
   assert.match(html, /name="url"[^>]*value="https:\/\/proxy\.example\/"/);
   assert.match(html, /name="calls"[^>]*max="20" value="5"/);
-  assert.match(html, /<textarea name="context"[^>]*maxlength="1000"[^>]*rows="16"/);
-  assert.match(html, /id="context-length">0<\/span> \/ 1000 characters/);
+  assert.match(html, /<textarea name="context"[^>]*rows="16"/);
+  assert.doesNotMatch(html, /<textarea name="context"[^>]*maxlength=/);
+  assert.match(html, /maxTokenContextChars = 500/);
+  assert.match(html, /syncContextLimit\(\)/);
+  assert.match(html, /no token length limit/);
   assert.match(html, /grid-template-columns:minmax\(0,1fr\) minmax\(24rem,1\.15fr\)/);
   assert.match(html, /name="notBefore" type="date"/);
   assert.match(html, /name="expiresAt" type="date"/);
@@ -228,14 +231,13 @@ test("invite page defaults to day selection through five business days", async (
   assert.doesNotMatch(html, /preciseTime[^>]*checked/);
 });
 
-test("invite context limit can be configured through the environment", async () => {
+test("invite token context limit can be configured through the environment", async () => {
   const customEnv = { ...env, INVITE_MAX_CONTEXT_CHARS: "1200" };
   const page = await worker.fetch(new Request("https://proxy.example/invite"), customEnv);
   const html = await page.text();
-  assert.match(html, /<textarea name="context"[^>]*maxlength="1200"/);
-  assert.match(html, /id="context-length">0<\/span> \/ 1200 characters/);
+  assert.match(html, /maxTokenContextChars = 1200/);
 
-  const request = (context) => worker.fetch(new Request("https://proxy.example/invite/mint", {
+  const request = (context, contextStorage = "token") => worker.fetch(new Request("https://proxy.example/invite/mint", {
     method: "POST",
     headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
     body: JSON.stringify({
@@ -244,6 +246,7 @@ test("invite context limit can be configured through the environment", async () 
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
       calls: 5,
       context,
+      contextStorage,
     }),
   }), { ...customEnv, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
 
@@ -251,6 +254,9 @@ test("invite context limit can be configured through the environment", async () 
   const tooLong = await request("x".repeat(1201));
   assert.equal(tooLong.status, 400);
   assert.match((await tooLong.json()).error.message, /at most 1200/);
+
+  // File mode is not limited by INVITE_MAX_CONTEXT_CHARS.
+  assert.equal((await request("x".repeat(1201), "file")).status, 201);
 });
 
 test("mints invite features and rejects unknown feature ids", async () => {
@@ -301,7 +307,7 @@ test("invite page exposes Allow PDF extract and text-to-speech checkboxes", asyn
 });
 
 test("omits blank invite context and rejects invalid context descriptions", async () => {
-  const request = (context) => worker.fetch(new Request("https://proxy.example/invite/mint", {
+  const request = (context, contextStorage) => worker.fetch(new Request("https://proxy.example/invite/mint", {
     method: "POST",
     headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
     body: JSON.stringify({
@@ -310,6 +316,7 @@ test("omits blank invite context and rejects invalid context descriptions", asyn
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
       calls: 5,
       context,
+      ...(contextStorage ? { contextStorage } : {}),
     }),
   }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
 
@@ -321,9 +328,15 @@ test("omits blank invite context and rejects invalid context descriptions", asyn
   assert.equal(nonString.status, 400);
   assert.match((await nonString.json()).error.message, /context must be a string/);
 
-  const tooLong = await request("x".repeat(1001));
-  assert.equal(tooLong.status, 400);
-  assert.match((await tooLong.json()).error.message, /at most 1000/);
+  // Default file mode ignores INVITE_MAX_CONTEXT_CHARS.
+  const longFile = await request("x".repeat(1001));
+  assert.equal(longFile.status, 201);
+
+  const tooLongToken = await request("x".repeat(501), "token");
+  assert.equal(tooLongToken.status, 400);
+  assert.match((await tooLongToken.json()).error.message, /at most 500/);
+
+  assert.equal((await request("x".repeat(500), "token")).status, 201);
 });
 
 test("rejects invite activation times that are too far in the past", async () => {
