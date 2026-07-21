@@ -5,6 +5,13 @@
   "main": "src/index.js",
   "compatibility_date": "2026-07-18",
   "workers_dev": true,
+  "kv_namespaces": [
+    {
+      "binding": "INVITE_CONTEXTS",
+      "id": "00000000000000000000000000000000",
+      "preview_id": "00000000000000000000000000000000"
+    }
+  ],
   "vars": {
     "ALLOWED_ORIGINS": "http://localhost:8000,http://localhost:3000,http://127.0.0.1:5500,https://resume.jvb127.workers.dev,https://xframe-ai.jvb127.workers.dev",
     "GEMINI_MODEL": "gemini-3.1-flash-lite",
@@ -15,8 +22,8 @@
     "MAX_OUTPUT_TOKENS": "2048",
     "INVITE_MAX_CALLS": "20",
     "INVITE_MAX_CONTEXT_CHARS": "500",
+    "INVITE_MAX_CONTEXT_BYTES": "26214400",
     "INVITE_CONTEXT_DIR": "contexts",
-    "CONTEXT_COMMIT_REPO": "exergy-connect/xFrame.ai",
     "LIVE_TOKEN_EXPIRE_MS": "1800000",
     "LIVE_TOKEN_NEW_SESSION_EXPIRE_MS": "60000"
   },

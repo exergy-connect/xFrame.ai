@@ -3,8 +3,9 @@ import test from "node:test";
 import worker, {
   encryptContextFile,
   geminiGenerationConfigFromResponseFormat,
+  serveInviteContext,
   signInvite,
-  submitContextFile,
+  storeContextFile,
   validateContextFileClaims,
   verifyInviteToken,
 } from "../src/index.js";
@@ -14,6 +15,40 @@ const env = {
   GEMINI_API_KEY: "secret-key",
   GEMINI_MODEL: "gemini-test",
 };
+
+/** Minimal Workers KV mock for invite context tests. */
+function mockInviteKv(seed = new Map()) {
+  const store = new Map(seed);
+  return {
+    store,
+    async put(key, value, options = {}) {
+      const bytes = value instanceof Uint8Array
+        ? value
+        : value instanceof ArrayBuffer
+          ? new Uint8Array(value)
+          : new TextEncoder().encode(String(value));
+      store.set(key, { bytes: new Uint8Array(bytes), options });
+    },
+    async get(key, typeOrOpts) {
+      const entry = store.get(key);
+      if (!entry) return null;
+      const type = typeof typeOrOpts === "string" ? typeOrOpts : typeOrOpts?.type;
+      if (type === "arrayBuffer") return entry.bytes.buffer.slice(entry.bytes.byteOffset, entry.bytes.byteOffset + entry.bytes.byteLength);
+      if (type === "text") return new TextDecoder().decode(entry.bytes);
+      return entry.bytes;
+    },
+  };
+}
+
+function mintEnv(overrides = {}) {
+  return {
+    ...env,
+    INVITE_ADMIN_SECRET: "admin-secret",
+    INVITE_SIGNING_SECRET: "signing-secret",
+    INVITE_CONTEXTS: mockInviteKv(),
+    ...overrides,
+  };
+}
 
 test("signs and verifies time-limited invite claims", async () => {
   const now = Date.now();
@@ -38,7 +73,8 @@ test("rejects invite tokens containing an uncompressed context claim", async () 
   await assert.rejects(() => verifyInviteToken(token, "signing-secret", now), /context format is invalid/);
 });
 
-test("mints file-backed context by default and leaves decode key in the token", async () => {
+test("mints file-backed context by default and stores ciphertext in Workers KV", async () => {
+  const kv = mockInviteKv();
   const active = new Date(Date.now() + 5 * 60_000);
   const expires = new Date(active.getTime() + 24 * 60 * 60_000);
   const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
@@ -51,7 +87,7 @@ test("mints file-backed context by default and leaves decode key in the token", 
       calls: 7,
       context: "  Candidate interview for platform role  ",
     }),
-  }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+  }), mintEnv({ INVITE_CONTEXTS: kv }));
   assert.equal(response.status, 201);
   const body = await response.json();
   const invited = new URL(body.url);
@@ -62,10 +98,14 @@ test("mints file-backed context by default and leaves decode key in the token", 
   assert.equal(body.claims.context, "Candidate interview for platform role");
   assert.equal(body.claims.v, 2);
   assert.match(body.claims.contextFile, /^contexts\/[0-9a-f-]{36}\.ctx$/);
-  assert.equal(body.contextArtifact.path, body.claims.contextFile);
-  assert.equal(body.contextArtifact.committed, false);
-  assert.equal(typeof body.contextArtifact.contentBase64, "string");
+  assert.equal(body.contextStored, true);
+  assert.equal(Object.hasOwn(body, "contextArtifact"), false);
   assert.equal(Object.hasOwn(body.claims, "contextKey"), false);
+
+  const stored = kv.store.get(body.claims.contextFile);
+  assert.ok(stored);
+  assert.deepEqual([...stored.bytes.slice(0, 4)], [0x58, 0x46, 0x43, 0x31]);
+  assert.equal(stored.options.expiration, Math.floor(expires.getTime() / 1000));
 
   const verified = await verifyInviteToken(body.token, "signing-secret", active.getTime());
   assert.equal(verified.contextFile, body.claims.contextFile);
@@ -77,6 +117,12 @@ test("mints file-backed context by default and leaves decode key in the token", 
   assert.equal(typeof encodedClaims.contextKey, "string");
   assert.equal(Object.hasOwn(encodedClaims, "contextGzip"), false);
   assert.equal(Object.hasOwn(encodedClaims, "context"), false);
+
+  const served = await serveInviteContext({ INVITE_CONTEXTS: kv }, body.claims.contextFile);
+  assert.equal(served.status, 200);
+  assert.equal(served.headers.get("Content-Type"), "application/octet-stream");
+  const servedBytes = new Uint8Array(await served.arrayBuffer());
+  assert.deepEqual([...servedBytes], [...stored.bytes]);
 });
 
 test("mints gzip context into the token when contextStorage is token", async () => {
@@ -93,7 +139,7 @@ test("mints gzip context into the token when contextStorage is token", async () 
       context: "  Candidate interview for platform role  ",
       contextStorage: "token",
     }),
-  }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+  }), mintEnv());
   assert.equal(response.status, 201);
   const body = await response.json();
   assert.equal(body.claims.context, "Candidate interview for platform role");
@@ -101,26 +147,10 @@ test("mints gzip context into the token when contextStorage is token", async () 
   const encodedClaims = JSON.parse(Buffer.from(body.token.split(".")[0], "base64url").toString());
   assert.equal(typeof encodedClaims.contextGzip, "string");
   assert.equal(Object.hasOwn(encodedClaims, "contextFile"), false);
-  assert.equal(Object.hasOwn(body, "contextArtifact"), false);
+  assert.equal(Object.hasOwn(body, "contextStored"), false);
 });
 
-test("dispatches encrypted context files to GitHub when commit secrets are set", async (t) => {
-  const originalFetch = globalThis.fetch;
-  t.after(() => { globalThis.fetch = originalFetch; });
-  const dispatches = [];
-  globalThis.fetch = async (url, init) => {
-    dispatches.push({ url: String(url), init });
-    assert.equal(String(url), "https://api.github.com/repos/exergy-connect/xFrame.ai/dispatches");
-    assert.equal(init.method, "POST");
-    assert.match(init.headers.Authorization, /^Bearer ghp_test$/);
-    const payload = JSON.parse(init.body);
-    assert.equal(payload.event_type, "invite-context");
-    assert.match(payload.client_payload.path, /^contexts\/.+\.ctx$/);
-    assert.equal(typeof payload.client_payload.contentBase64, "string");
-    assert.equal(typeof payload.client_payload.inviteId, "string");
-    return new Response(null, { status: 204 });
-  };
-
+test("file-mode mint fails when INVITE_CONTEXTS is missing", async () => {
   const active = new Date(Date.now() + 5 * 60_000);
   const expires = new Date(active.getTime() + 24 * 60 * 60_000);
   const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
@@ -131,29 +161,39 @@ test("dispatches encrypted context files to GitHub when commit secrets are set",
       notBefore: active.toISOString(),
       expiresAt: expires.toISOString(),
       calls: 3,
-      context: "Dispatch me",
+      context: "Needs KV",
     }),
   }), {
     ...env,
     INVITE_ADMIN_SECRET: "admin-secret",
     INVITE_SIGNING_SECRET: "signing-secret",
-    CONTEXT_COMMIT_TOKEN: "ghp_test",
-    CONTEXT_COMMIT_REPO: "exergy-connect/xFrame.ai",
   });
-  assert.equal(response.status, 201);
-  const body = await response.json();
-  assert.equal(body.contextArtifact.committed, true);
-  assert.equal(body.contextArtifact.contentBase64, undefined);
-  assert.equal(dispatches.length, 1);
+  assert.equal(response.status, 500);
+  assert.match((await response.json()).error.message, /INVITE_CONTEXTS/);
 });
 
-test("submitContextFile skips dispatch when secrets are absent", async () => {
-  const result = await submitContextFile({}, {
-    path: "contexts/00000000-0000-4000-8000-000000000001.ctx",
-    bytes: new Uint8Array([1, 2, 3]),
-    inviteId: "00000000-0000-4000-8000-000000000001",
-  });
-  assert.deepEqual(result, { committed: false });
+test("storeContextFile rejects oversize values", async () => {
+  const kv = mockInviteKv();
+  const path = "contexts/00000000-0000-4000-8000-000000000099.ctx";
+  await assert.rejects(
+    () => storeContextFile(
+      { INVITE_CONTEXTS: kv, INVITE_MAX_CONTEXT_BYTES: "8" },
+      { path, bytes: new Uint8Array(9), expiration: Math.floor(Date.now() / 1000) + 3600 },
+    ),
+    /8-byte Workers KV value limit/,
+  );
+  assert.equal(kv.store.size, 0);
+});
+
+test("storeContextFile requires the KV binding", async () => {
+  await assert.rejects(
+    () => storeContextFile({}, {
+      path: "contexts/00000000-0000-4000-8000-000000000001.ctx",
+      bytes: new Uint8Array([1, 2, 3]),
+      expiration: Math.floor(Date.now() / 1000) + 3600,
+    }),
+    /INVITE_CONTEXTS/,
+  );
 });
 
 test("validateContextFileClaims rejects malformed paths and keys", () => {
@@ -218,14 +258,16 @@ test("invite page defaults to day selection through five business days", async (
   assert.match(html, /<textarea name="context"[^>]*rows="16"/);
   assert.doesNotMatch(html, /<textarea name="context"[^>]*maxlength=/);
   assert.match(html, /maxTokenContextChars = 500/);
+  assert.match(html, /maxKvContextBytes = 26214400/);
   assert.match(html, /syncContextLimit\(\)/);
-  assert.match(html, /no token length limit/);
+  assert.match(html, /KV limit /);
   assert.match(html, /grid-template-columns:minmax\(0,1fr\) minmax\(24rem,1\.15fr\)/);
   assert.match(html, /name="notBefore" type="date"/);
   assert.match(html, /name="expiresAt" type="date"/);
   assert.match(html, /name="preciseTime" type="checkbox"/);
   assert.match(html, /name="contextStorage"/);
   assert.match(html, /<option value="file" selected>/);
+  assert.match(html, /Workers KV/);
   assert.match(html, /addBusinessDays\(today, 5\)/);
   assert.match(html, /applyDayDefaults\(\)/);
   assert.doesNotMatch(html, /preciseTime[^>]*checked/);
@@ -248,7 +290,7 @@ test("invite token context limit can be configured through the environment", asy
       context,
       contextStorage,
     }),
-  }), { ...customEnv, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+  }), mintEnv({ ...customEnv }));
 
   assert.equal((await request("x".repeat(1200))).status, 201);
   const tooLong = await request("x".repeat(1201));
@@ -318,7 +360,7 @@ test("omits blank invite context and rejects invalid context descriptions", asyn
       context,
       ...(contextStorage ? { contextStorage } : {}),
     }),
-  }), { ...env, INVITE_ADMIN_SECRET: "admin-secret", INVITE_SIGNING_SECRET: "signing-secret" });
+  }), mintEnv());
 
   const blank = await request("   ");
   assert.equal(blank.status, 201);

@@ -50,27 +50,25 @@ npx wrangler login
 npx wrangler secret put GEMINI_API_KEY
 npx wrangler secret put INVITE_SIGNING_SECRET
 npx wrangler secret put INVITE_ADMIN_SECRET
-# Optional: commit encrypted invite context files into the presentation repo
-npx wrangler secret put CONTEXT_COMMIT_TOKEN
+# Create the invite-context KV namespace, then put the ids into root wrangler.jsonc
+npx wrangler kv namespace create INVITE_CONTEXTS
+npx wrangler kv namespace create INVITE_CONTEXTS --preview
 npx wrangler deploy
 ```
 
 Open `/invite`, enter the target presentation URL, allowed time window, AI-call allowance, optional context description, context storage mode, optional **Allow PDF extract** / **Allow text-to-speech** features, and `INVITE_ADMIN_SECRET`, then share the resulting URL.
 
-**Context storage (default: encrypted file):**
+**Context storage (default: encrypted Workers KV file):**
 - Context is trimmed. For **token** mode (`contextStorage: "token"`), length is limited by `INVITE_MAX_CONTEXT_CHARS` (500 characters when unset or invalid) so the invite URL stays usable.
-- **File mode (default):** gzip → AES-256-GCM into `contexts/<invite-id>.ctx`. The signed token carries only `contextFile` (relative path) and `contextKey` (decode key). File mode is not limited by `INVITE_MAX_CONTEXT_CHARS`. When `CONTEXT_COMMIT_TOKEN` and `CONTEXT_COMMIT_REPO` are set, minting fires a GitHub `repository_dispatch` (`invite-context`) so [`.github/workflows/invite-context.yml`](../.github/workflows/invite-context.yml) commits the file under `docs/examples/resume/` and redeploys. Without those secrets, the mint response includes a downloadable artifact for manual placement.
-- **Token mode (`contextStorage: "token"`):** keeps the previous behaviour — gzip-compressed context embedded as `contextGzip` in the token; verification transparently expands it to `context`.
+- **File mode (default):** gzip → AES-256-GCM into Workers KV at key `contexts/<invite-id>.ctx`. The signed token carries only `contextFile` (relative path) and `contextKey` (decode key). File mode is not limited by `INVITE_MAX_CONTEXT_CHARS`, but the encrypted blob must fit within `INVITE_MAX_CONTEXT_BYTES` (default 25 MiB, the Cloudflare KV per-value limit). Requires the `INVITE_CONTEXTS` KV binding. The combined Worker serves `GET /contexts/<uuid>.ctx` from KV before falling through to static assets.
+- **Token mode (`contextStorage: "token"`):** gzip-compressed context embedded as `contextGzip` in the token; verification transparently expands it to `context`.
 
 Optional `features` (for example `["pdf_extract", "text_to_speech"]`) are stored on the signed claims; unknown feature ids are rejected. `INVITE_SIGNING_SECRET` requires a signed invite for `/v1/audio/speech` and `/v1/live-token` (Gemini TTS / Live). `/v1/chat/completions` stays origin-gated (and rate-limited) so résumé adaptation works without an invite; when an invite Bearer is sent, it is still verified. Use separate, long random values for the invite secrets. During migration, omitting `INVITE_SIGNING_SECRET` leaves the existing origin-based behavior in place.
 
-Configure file commits with:
-
 | Name | Kind | Purpose |
 | --- | --- | --- |
-| `CONTEXT_COMMIT_TOKEN` | secret | GitHub PAT that can create `repository_dispatch` events |
-| `CONTEXT_COMMIT_REPO` | var | `owner/repo` (default in wrangler: `exergy-connect/xFrame.ai`) |
-| `CONTEXT_COMMIT_REF` | optional secret/var | Branch for the workflow checkout |
+| `INVITE_CONTEXTS` | KV binding | Stores encrypted invite context blobs |
+| `INVITE_MAX_CONTEXT_BYTES` | var | Max encrypted context size (default `26214400`) |
 | `INVITE_CONTEXT_DIR` | var | Must stay `contexts` (path contract with the presentation runtime) |
 
 The proxy cryptographically enforces invite signature, activation/expiry window, and presentation origin for TTS/Live. The call allowance is intentionally loose: xFrame records each uncached invited AI request in that browser's `localStorage`. Clearing site data or switching browsers resets the local counter; use a Cloudflare rate-limit binding when a hard server-side quota is required.

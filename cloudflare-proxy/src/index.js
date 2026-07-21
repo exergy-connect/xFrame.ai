@@ -8,6 +8,8 @@ const DEFAULT_TTS_FALLBACK_MODEL = "gemini-2.5-flash-preview-tts";
 const DEFAULT_LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
 /** Max chars when embedding context in the invite URL/token (`contextStorage: "token"`). */
 const DEFAULT_INVITE_MAX_CONTEXT_CHARS = 500;
+/** Cloudflare Workers KV per-value size limit (bytes). */
+const DEFAULT_INVITE_MAX_CONTEXT_BYTES = 25 * 1024 * 1024;
 const DEFAULT_INVITE_CONTEXT_DIR = "contexts";
 /** Magic header for encrypted invite context files (gzip → AES-256-GCM). */
 const CONTEXT_FILE_MAGIC = new Uint8Array([0x58, 0x46, 0x43, 0x31]); // XFC1
@@ -127,12 +129,6 @@ function concatBytes(...parts) {
   return out;
 }
 
-function standardBase64Encode(bytes) {
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary);
-}
-
 function inviteContextDir(env) {
   const raw = String(env?.INVITE_CONTEXT_DIR || DEFAULT_INVITE_CONTEXT_DIR).trim().replace(/^\/+|\/+$/g, "");
   return raw || DEFAULT_INVITE_CONTEXT_DIR;
@@ -235,42 +231,63 @@ export async function verifyInviteToken(token, secret, now = Date.now()) {
 }
 
 /**
- * Submit an encrypted context file into the presentation repo via GitHub repository_dispatch.
- * When CONTEXT_COMMIT_TOKEN / CONTEXT_COMMIT_REPO are unset, skips dispatch (local/dev).
+ * Store an encrypted invite context blob in Workers KV (`INVITE_CONTEXTS`).
+ * Rejects values above the configured / Cloudflare per-value size limit.
+ *
+ * @param {object} env
+ * @param {{ path: string, bytes: Uint8Array, expiration?: number }} opts
+ * @returns {Promise<{ stored: true }>}
  */
-export async function submitContextFile(env, { path, bytes, inviteId }) {
-  const token = env.CONTEXT_COMMIT_TOKEN?.trim();
-  const repo = env.CONTEXT_COMMIT_REPO?.trim();
-  if (!token || !repo) return { committed: false };
-  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) {
-    throw new ClientError(500, "CONTEXT_COMMIT_REPO must be owner/repo");
+export async function storeContextFile(env, { path, bytes, expiration }) {
+  const kv = env.INVITE_CONTEXTS;
+  if (!kv || typeof kv.put !== "function") {
+    throw new ClientError(500, "INVITE_CONTEXTS KV binding is not configured");
   }
-  const payload = {
-    event_type: "invite-context",
-    client_payload: {
-      path,
-      contentBase64: standardBase64Encode(bytes),
-      inviteId,
-      ...(env.CONTEXT_COMMIT_REF ? { ref: String(env.CONTEXT_COMMIT_REF).trim() } : {}),
-    },
-  };
-  const response = await fetch(`https://api.github.com/repos/${repo}/dispatches`, {
-    method: "POST",
+  if (typeof path !== "string" || !CONTEXT_FILE_PATH_RE.test(path)) {
+    throw new ClientError(500, "Invite context path is invalid");
+  }
+  if (!(bytes instanceof Uint8Array) || bytes.length === 0) {
+    throw new ClientError(500, "Invite context bytes are invalid");
+  }
+  const maxBytes = positiveInt(env.INVITE_MAX_CONTEXT_BYTES, DEFAULT_INVITE_MAX_CONTEXT_BYTES);
+  if (bytes.length > maxBytes) {
+    throw new ClientError(400, `Encrypted context exceeds the ${maxBytes}-byte Workers KV value limit`);
+  }
+  const options = {};
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (Number.isInteger(expiration)) {
+    // KV absolute expiration must be at least 60s in the future.
+    if (expiration >= nowSeconds + 60) options.expiration = expiration;
+    else options.expirationTtl = 60;
+  }
+  await kv.put(path, bytes, options);
+  return { stored: true };
+}
+
+/**
+ * Serve a stored invite context from Workers KV (same path contract as static assets).
+ *
+ * @param {object} env
+ * @param {string} path Relative path such as `contexts/<uuid>.ctx`
+ * @returns {Promise<Response>}
+ */
+export async function serveInviteContext(env, path) {
+  if (typeof path !== "string" || !CONTEXT_FILE_PATH_RE.test(path)) {
+    return new Response("Not found", { status: 404 });
+  }
+  const kv = env.INVITE_CONTEXTS;
+  if (!kv || typeof kv.get !== "function") {
+    return new Response("Not found", { status: 404 });
+  }
+  const value = await kv.get(path, { type: "arrayBuffer" });
+  if (value == null) return new Response("Not found", { status: 404 });
+  return new Response(value, {
+    status: 200,
     headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      "User-Agent": "xframe-ai-invite-context",
-      "X-GitHub-Api-Version": "2022-11-28",
+      "Content-Type": "application/octet-stream",
+      "Cache-Control": "no-store",
     },
-    body: JSON.stringify(payload),
   });
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    console.error("Context file dispatch failed", response.status, detail.slice(0, 500));
-    throw new ClientError(502, "Could not submit context file to the repository");
-  }
-  return { committed: true };
 }
 
 function normalizeContextStorage(raw) {
@@ -350,7 +367,7 @@ async function mintInvite(request, env, cors = {}) {
     ...(features.length ? { features } : {}),
   };
 
-  let contextArtifact;
+  let contextStored = false;
   if (context) {
     if (contextStorage === "token") {
       claims.contextGzip = await compressText(context);
@@ -359,16 +376,12 @@ async function mintInvite(request, env, cors = {}) {
       const encrypted = await encryptContextFile(context, inviteId, contextFile);
       claims.contextFile = contextFile;
       claims.contextKey = encrypted.contextKey;
-      const submitted = await submitContextFile(env, {
+      await storeContextFile(env, {
         path: contextFile,
         bytes: encrypted.bytes,
-        inviteId,
+        expiration: claims.exp,
       });
-      contextArtifact = {
-        path: contextFile,
-        committed: submitted.committed,
-        contentBase64: submitted.committed ? undefined : standardBase64Encode(encrypted.bytes),
-      };
+      contextStored = true;
     }
   }
 
@@ -383,7 +396,7 @@ async function mintInvite(request, env, cors = {}) {
     url: target.toString(),
     token,
     claims: context ? { ...publicClaims, context } : publicClaims,
-    ...(contextArtifact ? { contextArtifact } : {}),
+    ...(contextStored ? { contextStored: true } : {}),
   };
   return json(responseBody, 201, cors);
 }
@@ -391,6 +404,7 @@ async function mintInvite(request, env, cors = {}) {
 function invitePage(request, env) {
   const presentationUrl = `${new URL(request.url).origin}/`;
   const maxContextChars = positiveInt(env.INVITE_MAX_CONTEXT_CHARS, DEFAULT_INVITE_MAX_CONTEXT_CHARS);
+  const maxContextBytes = positiveInt(env.INVITE_MAX_CONTEXT_BYTES, DEFAULT_INVITE_MAX_CONTEXT_BYTES);
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mint xFrame invite</title><style>
 body{font:16px system-ui,sans-serif;max-width:72rem;margin:3rem auto;padding:0 1rem;color:#172033}
 form{display:grid;grid-template-columns:minmax(0,1fr) minmax(24rem,1.15fr);gap:1rem 2rem;align-items:start}
@@ -414,7 +428,7 @@ small{color:#596579}
 }
 </style></head><body>
 <h1>Mint an invited URL</h1>
-<p>Create a signed link that activates runtime AI only during its time window. Call usage is loosely enforced by the recipient's browser cache. Context is stored as an encrypted file by default so the invite token stays short.</p>
+<p>Create a signed link that activates runtime AI only during its time window. Call usage is loosely enforced by the recipient's browser cache. Context is stored as an encrypted Workers KV object by default so the invite token stays short.</p>
 <form id="mint">
   <div class="invite-fields">
     <label>Presentation URL<input name="url" type="url" required value="${presentationUrl}"></label>
@@ -423,7 +437,7 @@ small{color:#596579}
     <label class="check"><input name="preciseTime" type="checkbox"> Set specific times of day</label>
     <label>Maximum AI calls<input name="calls" type="number" min="1" max="20" value="5" required></label>
     <label>Context storage<select name="contextStorage">
-      <option value="file" selected>Encrypted file in repo (default)</option>
+      <option value="file" selected>Encrypted file in Workers KV (default)</option>
       <option value="token">Embed gzip in token</option>
     </select></label>
     <label class="check"><input name="pdfExtract" type="checkbox"> Allow PDF extract</label>
@@ -447,6 +461,7 @@ const contextStorage = form.elements.contextStorage;
 const contextLength = document.querySelector('#context-length');
 const contextLimit = document.querySelector('#context-limit');
 const maxTokenContextChars = ${maxContextChars};
+const maxKvContextBytes = ${maxContextBytes};
 const pad = (n) => String(n).padStart(2, '0');
 const dateValue = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 const dateTimeValue = (d) => dateValue(d) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
@@ -494,7 +509,7 @@ function syncContextLimit() {
   else contextInput.removeAttribute('maxlength');
   contextLimit.textContent = tokenMode
     ? (' / ' + maxTokenContextChars + ' characters (token limit)')
-    : ' characters (no token length limit)';
+    : (' characters (KV limit ' + maxKvContextBytes + ' encrypted bytes)');
   contextLength.textContent = contextInput.value.length;
 }
 precise.addEventListener('change', syncMode);
@@ -535,22 +550,9 @@ form.addEventListener('submit', async (event) => {
     let html = '<strong>Invited URL</strong><br><a rel="noreferrer" href="'
       + safeUrl + '">' + safeUrl
       + '</a><br><small>Copy this link. The token is a credential.</small>';
-    const artifact = body.contextArtifact;
-    if (artifact?.path) {
-      const safePath = String(artifact.path).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-      const safeName = String(artifact.path.split('/').pop() || 'context.ctx')
-        .replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-      if (artifact.committed) {
-        html += '<br><small>Context file submitted for commit: ' + safePath
-          + '. It becomes available after the deploy workflow finishes.</small>';
-      } else if (artifact.contentBase64) {
-        html += '<br><small>Context file was not auto-committed (CONTEXT_COMMIT_* unset). '
-          + 'Download and place it at docs/examples/resume/' + safePath
-          + ' before sharing the link.</small><br>'
-          + '<a id="ctx-download" download="' + safeName
-          + '" href="data:application/octet-stream;base64,' + artifact.contentBase64 + '">Download '
-          + safePath + '</a>';
-      }
+    if (body.contextStored && body.claims?.contextFile) {
+      const safePath = String(body.claims.contextFile).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      html += '<br><small>Context stored in Workers KV at ' + safePath + '.</small>';
     }
     out.innerHTML = html;
   } catch (error) {
