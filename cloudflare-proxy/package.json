@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "check-config": "node scripts/check-config.js",
+    "deploy": "node scripts/check-config.js && wrangler deploy",
     "test": "node --test"
   },
   "devDependencies": {

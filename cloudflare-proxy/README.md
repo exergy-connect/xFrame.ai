@@ -53,14 +53,16 @@ npx wrangler secret put INVITE_ADMIN_SECRET
 # Create the invite-context KV namespace, then put the ids into root wrangler.jsonc
 npx wrangler kv namespace create INVITE_CONTEXTS
 npx wrangler kv namespace create INVITE_CONTEXTS --preview
-npx wrangler deploy
+npm run deploy
 ```
+
+From the repo root, use `npm run deploy` (checks root `wrangler.jsonc`, then deploys `xframe-ai`). From this folder, `npm run deploy` checks this package's `wrangler.jsonc` for the optional standalone Worker. Both require `INVITE_MAX_KV_CONTEXT_CHARS` to be at least 25000 less than `MAX_INPUT_CHARS`.
 
 Open `/invite`, enter the target presentation URL, allowed time window, AI-call allowance, optional context description, context storage mode, optional **Allow PDF extract** / **Allow text-to-speech** features, and `INVITE_ADMIN_SECRET`, then share the resulting URL.
 
 **Context storage (default: encrypted Workers KV file):**
 - Context is trimmed. For **token** mode (`contextStorage: "token"`), length is limited by `INVITE_MAX_CONTEXT_CHARS` (500 characters when unset or invalid) so the invite URL stays usable.
-- **File mode (default):** gzip → AES-256-GCM into Workers KV at key `contexts/<invite-id>.ctx`. The signed token carries only `contextFile` (relative path) and `contextKey` (decode key). File mode is not limited by `INVITE_MAX_CONTEXT_CHARS`, but the encrypted blob must fit within `INVITE_MAX_CONTEXT_BYTES` (default 25 MiB, the Cloudflare KV per-value limit). Requires the `INVITE_CONTEXTS` KV binding. The combined Worker serves `GET /contexts/<uuid>.ctx` from KV before falling through to static assets.
+- **File mode (default):** gzip → AES-256-GCM into Workers KV at key `contexts/<invite-id>.ctx`. The signed token carries only `contextFile` (relative path) and `contextKey` (decode key). Plaintext length is limited by `INVITE_MAX_KV_CONTEXT_CHARS` (5000 when unset or invalid). The encrypted blob must fit within Cloudflare's 25 MiB KV per-value limit. Requires the `INVITE_CONTEXTS` KV binding. The combined Worker serves `GET /contexts/<uuid>.ctx` from KV before falling through to static assets.
 - **Token mode (`contextStorage: "token"`):** gzip-compressed context embedded as `contextGzip` in the token; verification transparently expands it to `context`.
 
 Optional `features` (for example `["pdf_extract", "text_to_speech"]`) are stored on the signed claims; unknown feature ids are rejected. `INVITE_SIGNING_SECRET` requires a signed invite for `/v1/audio/speech` and `/v1/live-token` (Gemini TTS / Live). `/v1/chat/completions` stays origin-gated (and rate-limited) so résumé adaptation works without an invite; when an invite Bearer is sent, it is still verified. Use separate, long random values for the invite secrets. During migration, omitting `INVITE_SIGNING_SECRET` leaves the existing origin-based behavior in place.
@@ -68,7 +70,8 @@ Optional `features` (for example `["pdf_extract", "text_to_speech"]`) are stored
 | Name | Kind | Purpose |
 | --- | --- | --- |
 | `INVITE_CONTEXTS` | KV binding | Stores encrypted invite context blobs |
-| `INVITE_MAX_CONTEXT_BYTES` | var | Max encrypted context size (default `26214400`) |
+| `MAX_INPUT_CHARS` | var | Max chat/TTS prompt chars (default `40000`) |
+| `INVITE_MAX_KV_CONTEXT_CHARS` | var | Max plaintext context chars for KV/file storage (default `5000`; must leave ≥25000 under `MAX_INPUT_CHARS`) |
 | `INVITE_CONTEXT_DIR` | var | Must stay `contexts` (path contract with the presentation runtime) |
 
 The proxy cryptographically enforces invite signature, activation/expiry window, and presentation origin for TTS/Live. The call allowance is intentionally loose: xFrame records each uncached invited AI request in that browser's `localStorage`. Clearing site data or switching browsers resets the local counter; use a Cloudflare rate-limit binding when a hard server-side quota is required.

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import worker, {
+  assertInviteKvContextHeadroom,
   encryptContextFile,
   geminiGenerationConfigFromResponseFormat,
   serveInviteContext,
@@ -175,12 +176,13 @@ test("file-mode mint fails when INVITE_CONTEXTS is missing", async () => {
 test("storeContextFile rejects oversize values", async () => {
   const kv = mockInviteKv();
   const path = "contexts/00000000-0000-4000-8000-000000000099.ctx";
+  const oversize = new Uint8Array(25 * 1024 * 1024 + 1);
   await assert.rejects(
     () => storeContextFile(
-      { INVITE_CONTEXTS: kv, INVITE_MAX_CONTEXT_BYTES: "8" },
-      { path, bytes: new Uint8Array(9), expiration: Math.floor(Date.now() / 1000) + 3600 },
+      { INVITE_CONTEXTS: kv },
+      { path, bytes: oversize, expiration: Math.floor(Date.now() / 1000) + 3600 },
     ),
-    /8-byte Workers KV value limit/,
+    /26214400-byte Workers KV value limit/,
   );
   assert.equal(kv.store.size, 0);
 });
@@ -258,9 +260,11 @@ test("invite page defaults to day selection through five business days", async (
   assert.match(html, /<textarea name="context"[^>]*rows="16"/);
   assert.doesNotMatch(html, /<textarea name="context"[^>]*maxlength=/);
   assert.match(html, /maxTokenContextChars = 500/);
-  assert.match(html, /maxKvContextBytes = 26214400/);
+  assert.match(html, /maxKvContextChars = 5000/);
   assert.match(html, /syncContextLimit\(\)/);
-  assert.match(html, /KV limit /);
+  assert.match(html, /KV limit/);
+  assert.doesNotMatch(html, /maxKvContextBytes/);
+  assert.doesNotMatch(html, /encrypted bytes/);
   assert.match(html, /grid-template-columns:minmax\(0,1fr\) minmax\(24rem,1\.15fr\)/);
   assert.match(html, /name="notBefore" type="date"/);
   assert.match(html, /name="expiresAt" type="date"/);
@@ -297,8 +301,36 @@ test("invite token context limit can be configured through the environment", asy
   assert.equal(tooLong.status, 400);
   assert.match((await tooLong.json()).error.message, /at most 1200/);
 
-  // File mode is not limited by INVITE_MAX_CONTEXT_CHARS.
+  // File mode uses INVITE_MAX_KV_CONTEXT_CHARS, not the token char limit.
   assert.equal((await request("x".repeat(1201), "file")).status, 201);
+});
+
+test("invite KV context limit can be configured through the environment", async () => {
+  const customEnv = { ...env, INVITE_MAX_KV_CONTEXT_CHARS: "800" };
+  const page = await worker.fetch(new Request("https://proxy.example/invite"), customEnv);
+  const html = await page.text();
+  assert.match(html, /maxKvContextChars = 800/);
+
+  const request = (context, contextStorage = "file") => worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json", Authorization: "Bearer admin-secret" },
+    body: JSON.stringify({
+      url: "https://resume.example/",
+      notBefore: new Date(Date.now() + 1_000).toISOString(),
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+      calls: 5,
+      context,
+      contextStorage,
+    }),
+  }), mintEnv({ ...customEnv }));
+
+  assert.equal((await request("x".repeat(800))).status, 201);
+  const tooLong = await request("x".repeat(801));
+  assert.equal(tooLong.status, 400);
+  assert.match((await tooLong.json()).error.message, /at most 800/);
+
+  // Token mode is unaffected by the KV char limit.
+  assert.equal((await request("x".repeat(500), "token")).status, 201);
 });
 
 test("mints invite features and rejects unknown feature ids", async () => {
@@ -370,15 +402,19 @@ test("omits blank invite context and rejects invalid context descriptions", asyn
   assert.equal(nonString.status, 400);
   assert.match((await nonString.json()).error.message, /context must be a string/);
 
-  // Default file mode ignores INVITE_MAX_CONTEXT_CHARS.
+  // Default file mode uses INVITE_MAX_KV_CONTEXT_CHARS (5000), not the token limit.
   const longFile = await request("x".repeat(1001));
   assert.equal(longFile.status, 201);
+  const tooLongFile = await request("x".repeat(5001));
+  assert.equal(tooLongFile.status, 400);
+  assert.match((await tooLongFile.json()).error.message, /at most 5000/);
 
   const tooLongToken = await request("x".repeat(501), "token");
   assert.equal(tooLongToken.status, 400);
   assert.match((await tooLongToken.json()).error.message, /at most 500/);
 
   assert.equal((await request("x".repeat(500), "token")).status, 201);
+  assert.equal((await request("x".repeat(5000))).status, 201);
 });
 
 test("rejects invite activation times that are too far in the past", async () => {
@@ -483,6 +519,43 @@ test("serves health checks to approved browser origins", async () => {
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), "https://resume.example");
   assert.deepEqual(await response.json(), { ok: true });
+});
+
+test("assertInviteKvContextHeadroom requires 25000 chars under MAX_INPUT_CHARS", () => {
+  assert.doesNotThrow(() => assertInviteKvContextHeadroom({
+    MAX_INPUT_CHARS: "40000",
+    INVITE_MAX_KV_CONTEXT_CHARS: "5000",
+  }));
+  assert.doesNotThrow(() => assertInviteKvContextHeadroom({
+    MAX_INPUT_CHARS: "40000",
+    INVITE_MAX_KV_CONTEXT_CHARS: "15000",
+  }));
+  assert.throws(
+    () => assertInviteKvContextHeadroom({
+      MAX_INPUT_CHARS: "40000",
+      INVITE_MAX_KV_CONTEXT_CHARS: "15001",
+    }),
+    /at least 25000 less/,
+  );
+  assert.throws(
+    () => assertInviteKvContextHeadroom({
+      MAX_INPUT_CHARS: "30000",
+      INVITE_MAX_KV_CONTEXT_CHARS: "5001",
+    }),
+    /got headroom 24999/,
+  );
+});
+
+test("health rejects configs where KV context leaves too little prompt headroom", async () => {
+  const response = await worker.fetch(new Request("https://proxy.example/health", {
+    headers: { Origin: "https://resume.example" },
+  }), {
+    ...env,
+    MAX_INPUT_CHARS: "40000",
+    INVITE_MAX_KV_CONTEXT_CHARS: "20000",
+  });
+  assert.equal(response.status, 503);
+  assert.match((await response.json()).error.message, /INVITE_MAX_KV_CONTEXT_CHARS/);
 });
 
 test("answers CORS preflight for chat completions with Authorization", async () => {

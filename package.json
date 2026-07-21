@@ -1,0 +1,9 @@
+{
+  "name": "xframe-ai",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-config": "node cloudflare-proxy/scripts/check-config.js wrangler.jsonc",
+    "deploy": "npm run check-config && npx wrangler deploy"
+  }
+}

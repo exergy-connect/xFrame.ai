@@ -74,9 +74,11 @@ The live site ([exergy-connect.github.io/xFrame.ai](https://exergy-connect.githu
 Root [`wrangler.jsonc`](wrangler.jsonc) deploys the `xframe-ai` Worker: static résumé assets under `docs/examples/resume` plus the Gemini proxy API (`/v1/*`, `/health`) from [`cloudflare-proxy/`](cloudflare-proxy/).
 
 ```bash
-npx wrangler deploy
+npm run deploy
 npx wrangler secret put GEMINI_API_KEY
 ```
+
+`npm run deploy` runs `cloudflare-proxy/scripts/check-config.js` first so deploy fails if `INVITE_MAX_KV_CONTEXT_CHARS` is not at least 25000 below `MAX_INPUT_CHARS`.
 
 ## Cloudflare Gemini proxy
 

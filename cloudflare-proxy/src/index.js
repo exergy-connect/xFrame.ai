@@ -6,10 +6,19 @@ const DEFAULT_MODEL = "gemini-2.5-flash";
 const DEFAULT_TTS_MODEL = "gemini-3.1-flash-tts-preview";
 const DEFAULT_TTS_FALLBACK_MODEL = "gemini-2.5-flash-preview-tts";
 const DEFAULT_LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
+/** Default max chars for chat/TTS prompt input (`MAX_INPUT_CHARS`). */
+const DEFAULT_MAX_INPUT_CHARS = 40_000;
 /** Max chars when embedding context in the invite URL/token (`contextStorage: "token"`). */
 const DEFAULT_INVITE_MAX_CONTEXT_CHARS = 500;
-/** Cloudflare Workers KV per-value size limit (bytes). */
-const DEFAULT_INVITE_MAX_CONTEXT_BYTES = 25 * 1024 * 1024;
+/** Max chars for plaintext context stored in Workers KV (`contextStorage: "file"`). */
+const DEFAULT_INVITE_MAX_KV_CONTEXT_CHARS = 5000;
+/**
+ * Minimum gap between MAX_INPUT_CHARS and INVITE_MAX_KV_CONTEXT_CHARS so invite
+ * context leaves room for the rest of the model prompt.
+ */
+const MIN_INPUT_KV_CONTEXT_HEADROOM = 25_000;
+/** Cloudflare Workers KV per-value size limit (bytes); not configurable. */
+const CLOUDFLARE_KV_MAX_VALUE_BYTES = 25 * 1024 * 1024;
 const DEFAULT_INVITE_CONTEXT_DIR = "contexts";
 /** Magic header for encrypted invite context files (gzip → AES-256-GCM). */
 const CONTEXT_FILE_MAGIC = new Uint8Array([0x58, 0x46, 0x43, 0x31]); // XFC1
@@ -25,6 +34,15 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/invite") {
+      try {
+        assertInviteKvContextHeadroom(env);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return new Response(message, {
+          status: error instanceof ClientError ? error.status : 503,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
+        });
+      }
       return invitePage(request, env);
     }
     const origin = request.headers.get("Origin");
@@ -41,6 +59,7 @@ export default {
 
     if (request.method === "POST" && url.pathname === "/invite/mint") {
       try {
+        assertInviteKvContextHeadroom(env);
         return await mintInvite(request, env, cors);
       } catch (error) {
         if (error instanceof ClientError) return jsonError(error.status, error.message, cors);
@@ -49,6 +68,11 @@ export default {
       }
     }
     if (request.method === "GET" && url.pathname === "/health") {
+      try {
+        assertInviteKvContextHeadroom(env);
+      } catch (error) {
+        return jsonError(503, error instanceof Error ? error.message : String(error), cors);
+      }
       return json({ ok: true }, 200, cors);
     }
     if (request.method !== "POST") {
@@ -232,7 +256,7 @@ export async function verifyInviteToken(token, secret, now = Date.now()) {
 
 /**
  * Store an encrypted invite context blob in Workers KV (`INVITE_CONTEXTS`).
- * Rejects values above the configured / Cloudflare per-value size limit.
+ * Rejects values above the Cloudflare per-value size limit.
  *
  * @param {object} env
  * @param {{ path: string, bytes: Uint8Array, expiration?: number }} opts
@@ -249,9 +273,11 @@ export async function storeContextFile(env, { path, bytes, expiration }) {
   if (!(bytes instanceof Uint8Array) || bytes.length === 0) {
     throw new ClientError(500, "Invite context bytes are invalid");
   }
-  const maxBytes = positiveInt(env.INVITE_MAX_CONTEXT_BYTES, DEFAULT_INVITE_MAX_CONTEXT_BYTES);
-  if (bytes.length > maxBytes) {
-    throw new ClientError(400, `Encrypted context exceeds the ${maxBytes}-byte Workers KV value limit`);
+  if (bytes.length > CLOUDFLARE_KV_MAX_VALUE_BYTES) {
+    throw new ClientError(
+      400,
+      `Encrypted context exceeds the ${CLOUDFLARE_KV_MAX_VALUE_BYTES}-byte Workers KV value limit`,
+    );
   }
   const options = {};
   const nowSeconds = Math.floor(Date.now() / 1000);
@@ -351,9 +377,13 @@ async function mintInvite(request, env, cors = {}) {
   }
   const context = body.context?.trim();
   const contextStorage = normalizeContextStorage(body.contextStorage);
-  const maxContextChars = positiveInt(env.INVITE_MAX_CONTEXT_CHARS, DEFAULT_INVITE_MAX_CONTEXT_CHARS);
-  if (context && contextStorage === "token" && context.length > maxContextChars) {
-    throw new ClientError(400, `context must be at most ${maxContextChars} characters when embedded in the token`);
+  const maxTokenContextChars = positiveInt(env.INVITE_MAX_CONTEXT_CHARS, DEFAULT_INVITE_MAX_CONTEXT_CHARS);
+  const maxKvContextChars = positiveInt(env.INVITE_MAX_KV_CONTEXT_CHARS, DEFAULT_INVITE_MAX_KV_CONTEXT_CHARS);
+  if (context && contextStorage === "token" && context.length > maxTokenContextChars) {
+    throw new ClientError(400, `context must be at most ${maxTokenContextChars} characters when embedded in the token`);
+  }
+  if (context && contextStorage === "file" && context.length > maxKvContextChars) {
+    throw new ClientError(400, `context must be at most ${maxKvContextChars} characters when stored in KV`);
   }
   const features = normalizeInviteFeatures(body.features);
   const inviteId = crypto.randomUUID();
@@ -403,8 +433,8 @@ async function mintInvite(request, env, cors = {}) {
 
 function invitePage(request, env) {
   const presentationUrl = `${new URL(request.url).origin}/`;
-  const maxContextChars = positiveInt(env.INVITE_MAX_CONTEXT_CHARS, DEFAULT_INVITE_MAX_CONTEXT_CHARS);
-  const maxContextBytes = positiveInt(env.INVITE_MAX_CONTEXT_BYTES, DEFAULT_INVITE_MAX_CONTEXT_BYTES);
+  const maxTokenContextChars = positiveInt(env.INVITE_MAX_CONTEXT_CHARS, DEFAULT_INVITE_MAX_CONTEXT_CHARS);
+  const maxKvContextChars = positiveInt(env.INVITE_MAX_KV_CONTEXT_CHARS, DEFAULT_INVITE_MAX_KV_CONTEXT_CHARS);
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mint xFrame invite</title><style>
 body{font:16px system-ui,sans-serif;max-width:72rem;margin:3rem auto;padding:0 1rem;color:#172033}
 form{display:grid;grid-template-columns:minmax(0,1fr) minmax(24rem,1.15fr);gap:1rem 2rem;align-items:start}
@@ -460,8 +490,8 @@ const contextInput = form.elements.context;
 const contextStorage = form.elements.contextStorage;
 const contextLength = document.querySelector('#context-length');
 const contextLimit = document.querySelector('#context-limit');
-const maxTokenContextChars = ${maxContextChars};
-const maxKvContextBytes = ${maxContextBytes};
+const maxTokenContextChars = ${maxTokenContextChars};
+const maxKvContextChars = ${maxKvContextChars};
 const pad = (n) => String(n).padStart(2, '0');
 const dateValue = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
 const dateTimeValue = (d) => dateValue(d) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
@@ -505,11 +535,11 @@ function syncMode() {
 }
 function syncContextLimit() {
   const tokenMode = contextStorage.value === 'token';
-  if (tokenMode) contextInput.setAttribute('maxlength', String(maxTokenContextChars));
-  else contextInput.removeAttribute('maxlength');
+  const limit = tokenMode ? maxTokenContextChars : maxKvContextChars;
+  contextInput.setAttribute('maxlength', String(limit));
   contextLimit.textContent = tokenMode
     ? (' / ' + maxTokenContextChars + ' characters (token limit)')
-    : (' characters (KV limit ' + maxKvContextBytes + ' encrypted bytes)');
+    : (' / ' + maxKvContextChars + ' characters (KV limit)');
   contextLength.textContent = contextInput.value.length;
 }
 precise.addEventListener('change', syncMode);
@@ -597,7 +627,7 @@ export async function chatCompletions(request, env, cors = {}) {
     throw new ClientError(400, `Only model ${configuredModel} is allowed`);
   }
 
-  const maxChars = positiveInt(env.MAX_INPUT_CHARS, 30_000);
+  const maxChars = positiveInt(env.MAX_INPUT_CHARS, DEFAULT_MAX_INPUT_CHARS);
   const messages = normalizeMessages(body.messages, maxChars);
   const systemText = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
   const contents = messages.filter((m) => m.role !== "system").map((message) => ({
@@ -697,7 +727,7 @@ export async function audioSpeech(request, env, cors = {}) {
   const input = typeof body.input === "string" ? body.input.trim() : "";
   if (!input) throw new ClientError(400, "input must be a non-empty string");
 
-  const maxChars = positiveInt(env.MAX_INPUT_CHARS, 30_000);
+  const maxChars = positiveInt(env.MAX_INPUT_CHARS, DEFAULT_MAX_INPUT_CHARS);
   const style = typeof body.style === "string" ? body.style.trim() : "";
   const prompt = style ? `${style}\n\n${input}` : input;
   if (prompt.length > maxChars) {
@@ -1078,6 +1108,30 @@ function finishReason(payload) {
 function positiveInt(value, fallback) {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+/**
+ * Ensure invite KV context leaves at least MIN_INPUT_KV_CONTEXT_HEADROOM chars
+ * under MAX_INPUT_CHARS for the rest of the prompt. Used at deploy check and runtime.
+ *
+ * @param {Record<string, unknown>} env
+ * @throws {ClientError} when the configured gap is too small
+ */
+export function assertInviteKvContextHeadroom(env) {
+  const maxInputChars = positiveInt(env?.MAX_INPUT_CHARS, DEFAULT_MAX_INPUT_CHARS);
+  const maxKvContextChars = positiveInt(
+    env?.INVITE_MAX_KV_CONTEXT_CHARS,
+    DEFAULT_INVITE_MAX_KV_CONTEXT_CHARS,
+  );
+  const headroom = maxInputChars - maxKvContextChars;
+  if (headroom < MIN_INPUT_KV_CONTEXT_HEADROOM) {
+    throw new ClientError(
+      503,
+      `INVITE_MAX_KV_CONTEXT_CHARS (${maxKvContextChars}) must be at least `
+      + `${MIN_INPUT_KV_CONTEXT_HEADROOM} less than MAX_INPUT_CHARS (${maxInputChars}); `
+      + `got headroom ${headroom}`,
+    );
+  }
 }
 
 function requireSecret(value, name) {

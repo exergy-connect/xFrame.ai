@@ -18,11 +18,11 @@
     "GEMINI_TTS_MODEL": "gemini-3.1-flash-tts-preview",
     "GEMINI_TTS_FALLBACK_MODEL": "gemini-2.5-flash-preview-tts",
     "GEMINI_LIVE_MODEL": "gemini-2.5-flash-native-audio-preview-12-2025",
-    "MAX_INPUT_CHARS": "30000",
+    "MAX_INPUT_CHARS": "40000",
     "MAX_OUTPUT_TOKENS": "2048",
     "INVITE_MAX_CALLS": "20",
     "INVITE_MAX_CONTEXT_CHARS": "500",
-    "INVITE_MAX_CONTEXT_BYTES": "26214400",
+    "INVITE_MAX_KV_CONTEXT_CHARS": "5000",
     "INVITE_CONTEXT_DIR": "contexts",
     "LIVE_TOKEN_EXPIRE_MS": "1800000",
     "LIVE_TOKEN_NEW_SESSION_EXPIRE_MS": "60000"
