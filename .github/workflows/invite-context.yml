@@ -38,7 +38,7 @@ jobs:
           echo "rel_path=${PATH_REL}" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.client_payload.ref || github.event.repository.default_branch }}
 
@@ -70,9 +70,9 @@ jobs:
           fi
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "24"
 
       - name: Deploy Worker
         env:
