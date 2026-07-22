@@ -1017,6 +1017,24 @@ a.xframe-snapshot:hover img { filter: brightness(1.03); }
   overflow: hidden;
 }
 
+/* Stacked Nuage mark — taller band than shared career chrome */
+#nuage-npi .horizontal-split-image {
+  flex: 0 0 7.5rem;
+  height: 7.5rem;
+  justify-content: center;
+  align-items: flex-end;
+  padding-right: 0.5rem;
+  box-sizing: border-box;
+}
+
+#nuage-npi .horizontal-split-image > img {
+  width: 100%;
+  max-width: 12rem;
+  height: 7rem;
+  object-fit: contain;
+  object-position: right center;
+}
+
 #nuage-npi .horizontal-split-left,
 #nuage-npi .horizontal-split-right {
   gap: 0.75rem;
