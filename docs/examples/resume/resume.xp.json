@@ -12,7 +12,84 @@
       "url": "",
       "short_url": "",
       "features": []
-    }
+    },
+    "segments": [
+      {
+        "slide": 1,
+        "index": 0,
+        "id": "title"
+      },
+      {
+        "slide": 2,
+        "index": 1,
+        "id": "intake"
+      },
+      {
+        "slide": 3,
+        "index": 2,
+        "id": "tailored"
+      },
+      {
+        "slide": 4,
+        "index": 3,
+        "id": "bell-labs"
+      },
+      {
+        "slide": 5,
+        "index": 4,
+        "id": "hpjss-plusplus"
+      },
+      {
+        "slide": 6,
+        "index": 5,
+        "id": "myos"
+      },
+      {
+        "slide": 7,
+        "index": 6,
+        "id": "alu-customer"
+      },
+      {
+        "slide": 8,
+        "index": 7,
+        "id": "nuage-npi"
+      },
+      {
+        "slide": 9,
+        "index": 8,
+        "id": "nokia-srlinux"
+      },
+      {
+        "slide": 10,
+        "index": 9,
+        "id": "ocp-heat-appliances"
+      },
+      {
+        "slide": 11,
+        "index": 10,
+        "id": "civo-navigate"
+      },
+      {
+        "slide": 12,
+        "index": 11,
+        "id": "eog-infra"
+      },
+      {
+        "slide": 13,
+        "index": 12,
+        "id": "xframe-exergy"
+      },
+      {
+        "slide": 14,
+        "index": 13,
+        "id": "common-thread"
+      },
+      {
+        "slide": 15,
+        "index": 14,
+        "id": "next-steps"
+      }
+    ]
   },
   "document": {
     "meta": {
@@ -54,6 +131,9 @@
           "static": "edge",
           "dynamic": "gemini"
         }
+      },
+      "video": {
+        "ai_context": "prompts/ai-video.md"
       },
       "styles": {
         "horizontal-split": {},
@@ -138,7 +218,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 105
+                      "line": 107
                     },
                     "structural": {
                       "region": {
@@ -172,7 +252,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 110
+                      "line": 112
                     },
                     "options": {
                       "left": "1.618",
@@ -207,7 +287,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 110
+                      "line": 112
                     },
                     "options": {
                       "left": "1.618",
@@ -242,7 +322,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 110
+                      "line": 112
                     },
                     "options": {
                       "left": "1.618",
@@ -344,7 +424,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 121
+                      "line": 123
                     },
                     "structural": {
                       "region": {
@@ -356,7 +436,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 0
+        }
       },
       {
         "index": 1,
@@ -402,7 +485,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 133
+                          "line": 135
                         },
                         "options": {
                           "left": "1.618",
@@ -437,7 +520,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 133
+                          "line": 135
                         },
                         "options": {
                           "left": "1.618",
@@ -471,7 +554,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 133
+                          "line": 135
                         },
                         "options": {
                           "left": "1.618",
@@ -514,7 +597,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 139
+                          "line": 141
                         },
                         "structural": {
                           "region": {
@@ -545,7 +628,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 152
+                          "line": 154
                         },
                         "options": {
                           "left": "1.618",
@@ -587,7 +670,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 154
+                          "line": 156
                         },
                         "structural": {
                           "region": {
@@ -633,7 +716,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 157
+                              "line": 159
                             },
                             "options": {
                               "left": "1.618",
@@ -689,7 +772,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 157
+                              "line": 159
                             },
                             "options": {
                               "left": "1.618",
@@ -723,7 +806,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 157
+                              "line": 159
                             },
                             "options": {
                               "left": "1.618",
@@ -763,12 +846,12 @@
                               "region": "right",
                               "type": "input",
                               "name": "general_interest",
-                              "value": "I want to understand how Jeroen approaches complex technical problems and what kind of systems architect he is today. Please guide me through the experience most relevant to evaluating him for senior technical architecture, systems engineering, infrastructure, networking, or AI systems roles. I am particularly interested in how he has helped organizations adopt new technologies and move them from experimental or manually operated systems toward structured, repeatable, and sustainable operation. Look for evidence of architectural judgment, hands-on engineering depth, customer and organizational adoption, automation, model-driven systems, and the ability to make complex technology operational in the real world. Do not simply present his career chronologically. Instead, identify the strongest evidence for these capabilities and show me the most relevant path through the presentation. I want to explore the presentation based on what I am trying to understand, rather than simply follow a chronological career history.",
+                              "value": "{{- runtime.invite.context | default(\"I want to understand how Jeroen approaches complex technical problems and what kind of systems architect he is today. Please guide me through the experience most relevant to evaluating him for senior technical architecture, systems engineering, infrastructure, networking, or AI systems roles. I am particularly interested in how he has helped organizations adopt new technologies and move them from experimental or manually operated systems toward structured, repeatable, and sustainable operation. Look for evidence of architectural judgment, hands-on engineering depth, customer and organizational adoption, automation, model-driven systems, and the ability to make complex technology operational in the real world. Do not simply present his career chronologically. Instead, identify the strongest evidence for these capabilities and show me the most relevant path through the presentation. I want to explore the presentation based on what I am trying to understand, rather than simply follow a chronological career history.\") if not runtime.invite.opportunity else \"I want to understand how Jeroen approaches complex technical problems and what kind of systems architect he is today. Please guide me through the experience most relevant to evaluating him for senior technical architecture, systems engineering, infrastructure, networking, or AI systems roles. I am particularly interested in how he has helped organizations adopt new technologies and move them from experimental or manually operated systems toward structured, repeatable, and sustainable operation. Look for evidence of architectural judgment, hands-on engineering depth, customer and organizational adoption, automation, model-driven systems, and the ability to make complex technology operational in the real world. Do not simply present his career chronologically. Instead, identify the strongest evidence for these capabilities and show me the most relevant path through the presentation. I want to explore the presentation based on what I am trying to understand, rather than simply follow a chronological career history.\" -}}",
                               "label": "General interest"
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 163
+                              "line": 165
                             },
                             "expressions": {
                               "value": {
@@ -881,7 +964,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 168
+                              "line": 170
                             },
                             "options": {
                               "left": "1.618",
@@ -926,68 +1009,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 170
-                            },
-                            "expressions": {
-                              "value": {
-                                "source": "{{- runtime.invite.context if runtime.invite.opportunity else \"\" -}}",
-                                "dependencies": [
-                                  "runtime.invite.opportunity",
-                                  "runtime.invite.context"
-                                ],
-                                "tree": {
-                                  "type": "Program",
-                                  "body": [
-                                    {
-                                      "type": "Ternary",
-                                      "condition": {
-                                        "type": "MemberExpression",
-                                        "object": {
-                                          "type": "MemberExpression",
-                                          "object": {
-                                            "type": "Identifier",
-                                            "value": "runtime"
-                                          },
-                                          "property": {
-                                            "type": "Identifier",
-                                            "value": "invite"
-                                          },
-                                          "computed": false
-                                        },
-                                        "property": {
-                                          "type": "Identifier",
-                                          "value": "opportunity"
-                                        },
-                                        "computed": false
-                                      },
-                                      "trueExpr": {
-                                        "type": "MemberExpression",
-                                        "object": {
-                                          "type": "MemberExpression",
-                                          "object": {
-                                            "type": "Identifier",
-                                            "value": "runtime"
-                                          },
-                                          "property": {
-                                            "type": "Identifier",
-                                            "value": "invite"
-                                          },
-                                          "computed": false
-                                        },
-                                        "property": {
-                                          "type": "Identifier",
-                                          "value": "context"
-                                        },
-                                        "computed": false
-                                      },
-                                      "falseExpr": {
-                                        "type": "StringLiteral",
-                                        "value": ""
-                                      }
-                                    }
-                                  ]
-                                }
-                              }
+                              "line": 172
                             },
                             "structural": {
                               "region": {
@@ -1015,7 +1037,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 175
+                              "line": 177
                             },
                             "options": {
                               "left": "1.618",
@@ -1044,7 +1066,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 175
+                              "line": 177
                             },
                             "options": {
                               "left": "1.618",
@@ -1089,7 +1111,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 207
+                              "line": 209
                             },
                             "structural": {
                               "region": {
@@ -1124,12 +1146,12 @@
                               "type": "ai-index",
                               "target": "tailored",
                               "action": "generate-journey",
-                              "input": "",
+                              "input": "{{- specific_opportunity | default(general_interest) -}}",
                               "name": "journey"
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 212
+                              "line": 214
                             },
                             "expressions": {
                               "input": {
@@ -1207,7 +1229,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 218
+                              "line": 220
                             },
                             "structural": {
                               "region": {
@@ -1262,7 +1284,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "2 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -1270,7 +1301,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 1
+        }
       },
       {
         "index": 2,
@@ -1314,7 +1348,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 233
+                      "line": 235
                     },
                     "structural": {
                       "region": {
@@ -1348,7 +1382,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 238
+                      "line": 240
                     },
                     "options": {
                       "left": "1.618",
@@ -1383,7 +1417,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 238
+                      "line": 240
                     },
                     "options": {
                       "left": "1.618",
@@ -1418,7 +1452,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 238
+                      "line": 240
                     },
                     "options": {
                       "left": "1.618",
@@ -1461,7 +1495,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 244
+                      "line": 246
                     },
                     "structural": {
                       "region": {
@@ -1472,7 +1506,7 @@
                         "depends": "journey"
                       }
                     },
-                    "template": "{{ depends[0].output | default(baseline_narrative) | llm(\"prompts/adapt-title-narrative.md\", mime_type=\"application/json\", cache=true, evaluation=\"dynamic\", manual=true, refresh_control=true, fallback=baseline_narrative) }}"
+                    "template": "{{- depends[0].output | default(\"I'm Jeroen van Bemmel. I design and build systems that make complex technology practical to adopt and sustainable to operate. My work spans carrier networks, cloud infrastructure, automation, and AI-powered applications. The common thread is simple: make complexity manageable through architecture, models, and automation.\") | llm(\"prompts/adapt-title-narrative.md\", mime_type=\"application/json\", cache=true, evaluation=\"dynamic\", manual=true, refresh_control=true, fallback=\"I'm Jeroen van Bemmel. I design and build systems that make complex technology practical to adopt and sustainable to operate. My work spans carrier networks, cloud infrastructure, automation, and AI-powered applications. The common thread is simple: make complexity manageable through architecture, models, and automation.\") -}}"
                   },
                   {
                     "index": 4,
@@ -1482,7 +1516,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 248
+                      "line": 250
                     },
                     "options": {
                       "left": "1.618",
@@ -1526,7 +1560,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 250
+                      "line": 252
                     },
                     "structural": {
                       "region": {
@@ -1537,7 +1571,7 @@
                         "depends": "journey"
                       }
                     },
-                    "template": "{{ depends[0].output | default(baseline_narrative) | llm(\"prompts/pdf-extract.md\", mime_type=\"application/json\", cache=true, evaluation=\"dynamic\", manual=true, refresh_control=true, fallback=default_pdf_extract_sections) }}"
+                    "template": "{{- depends[0].output | default(\"I'm Jeroen van Bemmel. I design and build systems that make complex technology practical to adopt and sustainable to operate. My work spans carrier networks, cloud infrastructure, automation, and AI-powered applications. The common thread is simple: make complexity manageable through architecture, models, and automation.\") | llm(\"prompts/pdf-extract.md\", mime_type=\"application/json\", cache=true, evaluation=\"dynamic\", manual=true, refresh_control=true, fallback=default_pdf_extract_sections) -}}"
                   },
                   {
                     "index": 6,
@@ -1566,7 +1600,7 @@
                     ],
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 254
+                      "line": 256
                     },
                     "structural": {
                       "region": {
@@ -1578,7 +1612,7 @@
                         "template": "prompts/pdf-extract.xpt"
                       }
                     },
-                    "template": "{%- set s = pdf_extract_sections | default({}) -%}\n{%- set summary_text = s.summary | default(s.text) | default(\"\") -%}\n{%- set person = namespace(name=\"Jeroen van Bemmel\") -%}\n{%- for profile in data.profile -%}\n{%- if loop.first and profile.full_name %}{% set person.name = profile.full_name %}{% endif -%}\n{%- endfor -%}\n{%- set tagline = s.headline | default(\"Systems Architect\") -%}\n<!doctype html>\n<html lang=\"{{ target_locale | default('en-US') | e }}\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>{{ person.name | e }} — {{ tagline | e }}</title>\n  <style>\n    :root {\n      color-scheme: light;\n      --ink: #142033;\n      --muted: #5a6f86;\n      --body: #31445c;\n      --accent: #1f6feb;\n      --rule: rgba(20, 32, 51, .14);\n      --paper: #f7f4ef;\n      --sans: \"Segoe UI\", system-ui, sans-serif;\n      --serif: \"Source Serif 4\", \"Iowan Old Style\", \"Palatino Linotype\", Palatino, serif;\n    }\n    * { box-sizing: border-box; }\n    body {\n      margin: 0;\n      padding: 2.25rem 1.5rem 2.5rem;\n      font: 15px/1.5 var(--serif);\n      color: var(--ink);\n      background: var(--paper);\n    }\n    main { max-width: 42rem; margin: 0 auto; }\n    .doc-header {\n      margin: 0 0 1.35rem;\n      padding-bottom: .9rem;\n      border-bottom: 2px solid var(--ink);\n    }\n    .doc-kicker {\n      margin: 0 0 .45rem;\n      font: 650 .72rem/1.2 var(--sans);\n      letter-spacing: .12em;\n      text-transform: uppercase;\n      color: var(--accent);\n    }\n    h1 {\n      margin: 0;\n      font: 700 1.85rem/1.15 var(--sans);\n      letter-spacing: -.02em;\n    }\n    .doc-tagline {\n      margin: .4rem 0 0;\n      font: 600 1.05rem/1.3 var(--sans);\n      color: var(--body);\n      text-wrap: balance;\n    }\n    .extracted-on {\n      margin: .55rem 0 0;\n      font: 500 .88rem/1.35 var(--sans);\n      color: var(--muted);\n    }\n    .extracted-on time { color: var(--ink); font-weight: 650; }\n    .summary {\n      margin: 0 0 .85rem;\n      color: var(--body);\n      text-wrap: pretty;\n    }\n    .summary:last-of-type { margin-bottom: 1.35rem; }\n    h2 {\n      margin: 1.55rem 0 .4rem;\n      font: 700 .92rem/1.25 var(--sans);\n      text-transform: uppercase;\n      letter-spacing: .07em;\n      color: var(--accent);\n    }\n    .section-note {\n      margin: 0 0 .75rem;\n      color: var(--muted);\n      font: 400 .88rem/1.4 var(--sans);\n    }\n    .role {\n      margin: 0 0 .95rem;\n      padding-bottom: .85rem;\n      border-bottom: 1px solid var(--rule);\n      break-inside: avoid;\n    }\n    .role:last-child { margin-bottom: 0; border-bottom: 0; padding-bottom: 0; }\n    .role-heading {\n      display: flex;\n      flex-wrap: wrap;\n      align-items: baseline;\n      justify-content: space-between;\n      gap: .25rem .85rem;\n    }\n    .role-title {\n      font: 700 1.02rem/1.3 var(--sans);\n      color: var(--ink);\n    }\n    .role-period {\n      font: 600 .88rem/1.35 var(--sans);\n      color: var(--muted);\n      white-space: nowrap;\n    }\n    ul {\n      margin: .4rem 0 0;\n      padding-left: 1.15rem;\n    }\n    li {\n      margin: .28rem 0;\n      color: var(--body);\n      text-wrap: pretty;\n    }\n    .timeline {\n      margin: 0;\n      padding: 0;\n      list-style: none;\n    }\n    .timeline-item {\n      display: grid;\n      grid-template-columns: 7.75rem 1fr;\n      gap: .35rem .85rem;\n      margin: 0 0 1.05rem;\n      padding: 0 0 .95rem;\n      border-bottom: 1px solid var(--rule);\n      break-inside: avoid;\n    }\n    .timeline-item:last-child {\n      margin-bottom: 0;\n      padding-bottom: 0;\n      border-bottom: 0;\n    }\n    .timeline-period {\n      color: var(--muted);\n      font: 650 .86rem/1.4 var(--sans);\n      white-space: nowrap;\n    }\n    .timeline-body { min-width: 0; }\n    .timeline-org {\n      font: 700 .98rem/1.3 var(--sans);\n      color: var(--ink);\n    }\n    .timeline-title {\n      color: var(--body);\n      font: 600 .95rem/1.35 var(--sans);\n    }\n    .timeline-detail {\n      margin-top: .1rem;\n      color: var(--muted);\n      font-size: .88em;\n    }\n    .timeline-description {\n      margin: .4rem 0 0;\n      color: var(--body);\n      font-size: .95em;\n      text-wrap: pretty;\n    }\n    .timeline-achievements {\n      margin: .4rem 0 0;\n      padding-left: 1.1rem;\n    }\n    .timeline-achievements li {\n      margin: .22rem 0;\n      color: var(--body);\n      font-size: .93em;\n    }\n    .closing {\n      margin: 1.5rem 0 0;\n      color: var(--body);\n      font-style: italic;\n      text-wrap: pretty;\n    }\n    .footer {\n      display: flex;\n      flex-wrap: wrap;\n      align-items: baseline;\n      justify-content: space-between;\n      gap: .5rem 1rem;\n      margin-top: 1.75rem;\n      padding-top: .95rem;\n      border-top: 1px solid var(--rule);\n      font: 600 .92rem/1.35 var(--sans);\n    }\n    .footer a { color: var(--accent); text-decoration: none; }\n    .footer a:hover { text-decoration: underline; }\n    .footer-date {\n      color: var(--muted);\n      font-weight: 500;\n    }\n    .about-aside {\n      margin: 1.75rem 0 0;\n      padding-top: .95rem;\n      border-top: 1px solid var(--rule);\n      break-inside: avoid;\n    }\n    .about-aside h2 {\n      margin: 0 0 .45rem;\n      font: 650 .72rem/1.2 var(--sans);\n      letter-spacing: .12em;\n      text-transform: uppercase;\n      color: var(--muted);\n    }\n    .about-aside p {\n      margin: 0 0 .55rem;\n      color: var(--muted);\n      font: 400 .88rem/1.45 var(--sans);\n      text-wrap: pretty;\n    }\n    .about-aside .generated-with {\n      margin: 0;\n      font: 600 .82rem/1.35 var(--sans);\n      color: var(--body);\n    }\n    @media print {\n      body { padding: .7in .75in; background: #fff; }\n      .role, .timeline-item, .footer, .about-aside { break-inside: avoid; }\n      /* Keep link styling so Save-as-PDF annotations stay visually discoverable. */\n      a { color: var(--accent); text-decoration: underline; }\n    }\n  </style>\n</head>\n<body>\n  <main>\n    <header class=\"doc-header\">\n      <p class=\"doc-kicker\">Résumé extract</p>\n      <h1>{{ person.name | e }}</h1>\n      {% if tagline %}<p class=\"doc-tagline\">{{ tagline | e }}</p>{% endif %}\n      <p class=\"extracted-on\">Extracted <time data-extracted-on datetime=\"\">—</time></p>\n    </header>\n\n    {% if summary_text %}\n    {% for para in summary_text.split(\"\\n\\n\") %}\n    {% if para | trim %}\n    <p class=\"summary\">{{ para | trim | e }}</p>\n    {% endif %}\n    {% endfor %}\n    {% endif %}\n\n    {% if s.roles %}\n    <h2>Selected relevant experience</h2>\n    <p class=\"section-note\">Emphasized for this conversation from the presentation evidence.</p>\n    {% for role in s.roles %}\n    <section class=\"role\">\n      <div class=\"role-heading\">\n        <div class=\"role-title\">{{ role.title | e }}</div>\n        {% if role.period %}<div class=\"role-period\">{{ role.period | e }}</div>{% endif %}\n      </div>\n      {% if role.bullets %}\n      <ul>\n        {% for bullet in role.bullets %}\n        <li>{{ bullet | e }}</li>\n        {% endfor %}\n      </ul>\n      {% endif %}\n    </section>\n    {% endfor %}\n    {% endif %}\n\n    {% for profile in data.profile %}\n    {% set omit = profile.resume_omit_ids | default([]) %}\n    {% set start_id = profile.resume_start_id | default(\"\") %}\n    {% set ns = namespace(done=false) %}\n    <h2>Career at a glance</h2>\n    <p class=\"section-note\">Complete employment chronology with role descriptions and key achievements — not filtered by this request.</p>\n    <ul class=\"timeline\">\n      {% for we in profile.work_experiences %}\n      {% if not ns.done and we.work_experience_id not in omit %}\n      <li class=\"timeline-item\">\n        <div class=\"timeline-period\">{{ we.start_date[:4] | e }}–{% if we.end_date %}{{ we.end_date[:4] | e }}{% else %}present{% endif %}</div>\n        <div class=\"timeline-body\">\n          <div class=\"timeline-org\">{{ we.company_name | e }}</div>\n          {% if we.job_title %}<div class=\"timeline-title\">{{ we.job_title | e }}</div>{% endif %}\n          {% if we.location %}<div class=\"timeline-detail\">{{ we.location | e }}</div>{% endif %}\n          {% if we.description %}<p class=\"timeline-description\">{{ we.description | e }}</p>{% endif %}\n          {% if we.achievements %}\n          <ul class=\"timeline-achievements\">\n            {% for achievement in we.achievements %}\n            {% if achievement.text %}<li>{{ achievement.text | e }}</li>{% endif %}\n            {% endfor %}\n          </ul>\n          {% endif %}\n        </div>\n      </li>\n      {% if start_id and we.work_experience_id == start_id %}{% set ns.done = true %}{% endif %}\n      {% endif %}\n      {% endfor %}\n    </ul>\n    {% endfor %}\n\n    {% if s.closing %}\n    <p class=\"closing\">{{ s.closing | e }}</p>\n    {% endif %}\n\n    <footer class=\"footer\">\n      <a href=\"{{ runtime.invite.short_url | e }}\">View the interactive résumé</a>\n      <span class=\"footer-date\">Extracted <time data-extracted-on datetime=\"\">—</time></span>\n    </footer>\n\n    <aside class=\"about-aside\">\n      <h2>About this résumé</h2>\n      <p>\n        This document is a context-specific projection of a structured career model.\n        The underlying career timeline and source information are canonical; AI is used\n        to select and emphasize the experience most relevant to this reader's context.\n      </p>\n      <p class=\"generated-with\">Generated with xFrame.</p>\n    </aside>\n  </main>\n  <script>\n    (function () {\n      var locale = {{ (target_locale | default(\"en-US\")) | tojson }};\n      var when = new Date();\n      var iso = when.toISOString().slice(0, 10);\n      var label = when.toLocaleDateString(locale, {\n        year: \"numeric\",\n        month: \"long\",\n        day: \"numeric\"\n      });\n      document.querySelectorAll(\"[data-extracted-on]\").forEach(function (el) {\n        el.setAttribute(\"datetime\", iso);\n        el.textContent = label;\n      });\n    })();\n  </script>\n</body>\n</html>\n"
+                    "template": "{%- set s = pdf_extract_sections | default({}) -%}\n{%- set summary_text = s.summary | default(s.text) | default(\"\") -%}\n{%- set person = namespace(name=\"Jeroen van Bemmel\") -%}\n{%- for profile in \"../../JAM/xframe/output/consolidated_data.json\".profile -%}\n\t{%- if loop.first and profile.full_name -%}\n\t\t{%- set person.name = profile.full_name -%}\n\t{%- endif -%}\n{%- endfor -%}\n{%- set tagline = s.headline | default(\"Systems Architect\") -%}\n{{- \"<!doctype html>\\n<html lang=\\\"\" -}}\n{{- target_locale | default(\"en-US\") | e -}}\n{{- \"\\\">\\n<head>\\n  <meta charset=\\\"utf-8\\\">\\n  <meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\\n  <title>\" -}}\n{{- person.name | e -}}\n{{- \" — \" -}}\n{{- tagline | e -}}\n{{- \"</title>\\n  <style>\\n    :root {\\n      color-scheme: light;\\n      --ink: #142033;\\n      --muted: #5a6f86;\\n      --body: #31445c;\\n      --accent: #1f6feb;\\n      --rule: rgba(20, 32, 51, .14);\\n      --paper: #f7f4ef;\\n      --sans: \\\"Segoe UI\\\", system-ui, sans-serif;\\n      --serif: \\\"Source Serif 4\\\", \\\"Iowan Old Style\\\", \\\"Palatino Linotype\\\", Palatino, serif;\\n    }\\n    * { box-sizing: border-box; }\\n    body {\\n      margin: 0;\\n      padding: 2.25rem 1.5rem 2.5rem;\\n      font: 15px/1.5 var(--serif);\\n      color: var(--ink);\\n      background: var(--paper);\\n    }\\n    main { max-width: 42rem; margin: 0 auto; }\\n    .doc-header {\\n      margin: 0 0 1.35rem;\\n      padding-bottom: .9rem;\\n      border-bottom: 2px solid var(--ink);\\n    }\\n    .doc-kicker {\\n      margin: 0 0 .45rem;\\n      font: 650 .72rem/1.2 var(--sans);\\n      letter-spacing: .12em;\\n      text-transform: uppercase;\\n      color: var(--accent);\\n    }\\n    h1 {\\n      margin: 0;\\n      font: 700 1.85rem/1.15 var(--sans);\\n      letter-spacing: -.02em;\\n    }\\n    .doc-tagline {\\n      margin: .4rem 0 0;\\n      font: 600 1.05rem/1.3 var(--sans);\\n      color: var(--body);\\n      text-wrap: balance;\\n    }\\n    .extracted-on {\\n      margin: .55rem 0 0;\\n      font: 500 .88rem/1.35 var(--sans);\\n      color: var(--muted);\\n    }\\n    .extracted-on time { color: var(--ink); font-weight: 650; }\\n    .summary {\\n      margin: 0 0 .85rem;\\n      color: var(--body);\\n      text-wrap: pretty;\\n    }\\n    .summary:last-of-type { margin-bottom: 1.35rem; }\\n    h2 {\\n      margin: 1.55rem 0 .4rem;\\n      font: 700 .92rem/1.25 var(--sans);\\n      text-transform: uppercase;\\n      letter-spacing: .07em;\\n      color: var(--accent);\\n    }\\n    .section-note {\\n      margin: 0 0 .75rem;\\n      color: var(--muted);\\n      font: 400 .88rem/1.4 var(--sans);\\n    }\\n    .role {\\n      margin: 0 0 .95rem;\\n      padding-bottom: .85rem;\\n      border-bottom: 1px solid var(--rule);\\n      break-inside: avoid;\\n    }\\n    .role:last-child { margin-bottom: 0; border-bottom: 0; padding-bottom: 0; }\\n    .role-heading {\\n      display: flex;\\n      flex-wrap: wrap;\\n      align-items: baseline;\\n      justify-content: space-between;\\n      gap: .25rem .85rem;\\n    }\\n    .role-title {\\n      font: 700 1.02rem/1.3 var(--sans);\\n      color: var(--ink);\\n    }\\n    .role-period {\\n      font: 600 .88rem/1.35 var(--sans);\\n      color: var(--muted);\\n      white-space: nowrap;\\n    }\\n    ul {\\n      margin: .4rem 0 0;\\n      padding-left: 1.15rem;\\n    }\\n    li {\\n      margin: .28rem 0;\\n      color: var(--body);\\n      text-wrap: pretty;\\n    }\\n    .timeline {\\n      margin: 0;\\n      padding: 0;\\n      list-style: none;\\n    }\\n    .timeline-item {\\n      display: grid;\\n      grid-template-columns: 7.75rem 1fr;\\n      gap: .35rem .85rem;\\n      margin: 0 0 1.05rem;\\n      padding: 0 0 .95rem;\\n      border-bottom: 1px solid var(--rule);\\n      break-inside: avoid;\\n    }\\n    .timeline-item:last-child {\\n      margin-bottom: 0;\\n      padding-bottom: 0;\\n      border-bottom: 0;\\n    }\\n    .timeline-period {\\n      color: var(--muted);\\n      font: 650 .86rem/1.4 var(--sans);\\n      white-space: nowrap;\\n    }\\n    .timeline-body { min-width: 0; }\\n    .timeline-org {\\n      font: 700 .98rem/1.3 var(--sans);\\n      color: var(--ink);\\n    }\\n    .timeline-title {\\n      color: var(--body);\\n      font: 600 .95rem/1.35 var(--sans);\\n    }\\n    .timeline-detail {\\n      margin-top: .1rem;\\n      color: var(--muted);\\n      font-size: .88em;\\n    }\\n    .timeline-description {\\n      margin: .4rem 0 0;\\n      color: var(--body);\\n      font-size: .95em;\\n      text-wrap: pretty;\\n    }\\n    .timeline-achievements {\\n      margin: .4rem 0 0;\\n      padding-left: 1.1rem;\\n    }\\n    .timeline-achievements li {\\n      margin: .22rem 0;\\n      color: var(--body);\\n      font-size: .93em;\\n    }\\n    .closing {\\n      margin: 1.5rem 0 0;\\n      color: var(--body);\\n      font-style: italic;\\n      text-wrap: pretty;\\n    }\\n    .footer {\\n      display: flex;\\n      flex-wrap: wrap;\\n      align-items: baseline;\\n      justify-content: space-between;\\n      gap: .5rem 1rem;\\n      margin-top: 1.75rem;\\n      padding-top: .95rem;\\n      border-top: 1px solid var(--rule);\\n      font: 600 .92rem/1.35 var(--sans);\\n    }\\n    .footer a { color: var(--accent); text-decoration: none; }\\n    .footer a:hover { text-decoration: underline; }\\n    .footer-date {\\n      color: var(--muted);\\n      font-weight: 500;\\n    }\\n    .about-aside {\\n      margin: 1.75rem 0 0;\\n      padding-top: .95rem;\\n      border-top: 1px solid var(--rule);\\n      break-inside: avoid;\\n    }\\n    .about-aside h2 {\\n      margin: 0 0 .45rem;\\n      font: 650 .72rem/1.2 var(--sans);\\n      letter-spacing: .12em;\\n      text-transform: uppercase;\\n      color: var(--muted);\\n    }\\n    .about-aside p {\\n      margin: 0 0 .55rem;\\n      color: var(--muted);\\n      font: 400 .88rem/1.45 var(--sans);\\n      text-wrap: pretty;\\n    }\\n    .about-aside .generated-with {\\n      margin: 0;\\n      font: 600 .82rem/1.35 var(--sans);\\n      color: var(--body);\\n    }\\n    @media print {\\n      body { padding: .7in .75in; background: #fff; }\\n      .role, .timeline-item, .footer, .about-aside { break-inside: avoid; }\\n      /* Keep link styling so Save-as-PDF annotations stay visually discoverable. */\\n      a { color: var(--accent); text-decoration: underline; }\\n    }\\n  </style>\\n</head>\\n<body>\\n  <main>\\n    <header class=\\\"doc-header\\\">\\n      <p class=\\\"doc-kicker\\\">Résumé extract</p>\\n      <h1>\" -}}\n{{- person.name | e -}}\n{{- \"</h1>\\n      \" -}}\n{%- if tagline -%}\n\t{{- \"<p class=\\\"doc-tagline\\\">\" -}}\n\t{{- tagline | e -}}\n\t{{- \"</p>\" -}}\n{%- endif -%}\n{{- \"\\n      <p class=\\\"extracted-on\\\">Extracted <time data-extracted-on datetime=\\\"\\\">—</time></p>\\n    </header>\\n\\n    \" -}}\n{%- if summary_text -%}\n\t{{- \"\\n    \" -}}\n\t{%- for para in summary_text.split(\"\\n\\n\") -%}\n\t\t{{- \"\\n    \" -}}\n\t\t{%- if para | trim -%}\n\t\t\t{{- \"\\n    <p class=\\\"summary\\\">\" -}}\n\t\t\t{{- para | trim | e -}}\n\t\t\t{{- \"</p>\\n    \" -}}\n\t\t{%- endif -%}\n\t\t{{- \"\\n    \" -}}\n\t{%- endfor -%}\n\t{{- \"\\n    \" -}}\n{%- endif -%}\n{{- \"\\n\\n    \" -}}\n{%- if s.roles -%}\n\t{{- \"\\n    <h2>Selected relevant experience</h2>\\n    <p class=\\\"section-note\\\">Emphasized for this conversation from the presentation evidence.</p>\\n    \" -}}\n\t{%- for role in s.roles -%}\n\t\t{{- \"\\n    <section class=\\\"role\\\">\\n      <div class=\\\"role-heading\\\">\\n        <div class=\\\"role-title\\\">\" -}}\n\t\t{{- role.title | e -}}\n\t\t{{- \"</div>\\n        \" -}}\n\t\t{%- if role.period -%}\n\t\t\t{{- \"<div class=\\\"role-period\\\">\" -}}\n\t\t\t{{- role.period | e -}}\n\t\t\t{{- \"</div>\" -}}\n\t\t{%- endif -%}\n\t\t{{- \"\\n      </div>\\n      \" -}}\n\t\t{%- if role.bullets -%}\n\t\t\t{{- \"\\n      <ul>\\n        \" -}}\n\t\t\t{%- for bullet in role.bullets -%}\n\t\t\t\t{{- \"\\n        <li>\" -}}\n\t\t\t\t{{- bullet | e -}}\n\t\t\t\t{{- \"</li>\\n        \" -}}\n\t\t\t{%- endfor -%}\n\t\t\t{{- \"\\n      </ul>\\n      \" -}}\n\t\t{%- endif -%}\n\t\t{{- \"\\n    </section>\\n    \" -}}\n\t{%- endfor -%}\n\t{{- \"\\n    \" -}}\n{%- endif -%}\n{{- \"\\n\\n    \" -}}\n{%- for profile in \"../../JAM/xframe/output/consolidated_data.json\".profile -%}\n\t{{- \"\\n    \" -}}\n\t{%- set omit = profile.resume_omit_ids | default([]) -%}\n\t{{- \"\\n    \" -}}\n\t{%- set start_id = profile.resume_start_id | default(\"\") -%}\n\t{{- \"\\n    \" -}}\n\t{%- set ns = namespace(done=false) -%}\n\t{{- \"\\n    <h2>Career at a glance</h2>\\n    <p class=\\\"section-note\\\">Complete employment chronology with role descriptions and key achievements — not filtered by this request.</p>\\n    <ul class=\\\"timeline\\\">\\n      \" -}}\n\t{%- for we in profile.work_experiences -%}\n\t\t{{- \"\\n      \" -}}\n\t\t{%- if not ns.done and we.work_experience_id not in omit -%}\n\t\t\t{{- \"\\n      <li class=\\\"timeline-item\\\">\\n        <div class=\\\"timeline-period\\\">\" -}}\n\t\t\t{{- we.start_date[:4] | e -}}\n\t\t\t{{- \"–\" -}}\n\t\t\t{%- if we.end_date -%}\n\t\t\t\t{{- we.end_date[:4] | e -}}\n\t\t\t{%- else -%}\n\t\t\t\t{{- \"present\" -}}\n\t\t\t{%- endif -%}\n\t\t\t{{- \"</div>\\n        <div class=\\\"timeline-body\\\">\\n          <div class=\\\"timeline-org\\\">\" -}}\n\t\t\t{{- we.company_name | e -}}\n\t\t\t{{- \"</div>\\n          \" -}}\n\t\t\t{%- if we.job_title -%}\n\t\t\t\t{{- \"<div class=\\\"timeline-title\\\">\" -}}\n\t\t\t\t{{- we.job_title | e -}}\n\t\t\t\t{{- \"</div>\" -}}\n\t\t\t{%- endif -%}\n\t\t\t{{- \"\\n          \" -}}\n\t\t\t{%- if we.location -%}\n\t\t\t\t{{- \"<div class=\\\"timeline-detail\\\">\" -}}\n\t\t\t\t{{- we.location | e -}}\n\t\t\t\t{{- \"</div>\" -}}\n\t\t\t{%- endif -%}\n\t\t\t{{- \"\\n          \" -}}\n\t\t\t{%- if we.description -%}\n\t\t\t\t{{- \"<p class=\\\"timeline-description\\\">\" -}}\n\t\t\t\t{{- we.description | e -}}\n\t\t\t\t{{- \"</p>\" -}}\n\t\t\t{%- endif -%}\n\t\t\t{{- \"\\n          \" -}}\n\t\t\t{%- if we.achievements -%}\n\t\t\t\t{{- \"\\n          <ul class=\\\"timeline-achievements\\\">\\n            \" -}}\n\t\t\t\t{%- for achievement in we.achievements -%}\n\t\t\t\t\t{{- \"\\n            \" -}}\n\t\t\t\t\t{%- if achievement.text -%}\n\t\t\t\t\t\t{{- \"<li>\" -}}\n\t\t\t\t\t\t{{- achievement.text | e -}}\n\t\t\t\t\t\t{{- \"</li>\" -}}\n\t\t\t\t\t{%- endif -%}\n\t\t\t\t\t{{- \"\\n            \" -}}\n\t\t\t\t{%- endfor -%}\n\t\t\t\t{{- \"\\n          </ul>\\n          \" -}}\n\t\t\t{%- endif -%}\n\t\t\t{{- \"\\n        </div>\\n      </li>\\n      \" -}}\n\t\t\t{%- if start_id and we.work_experience_id == start_id -%}\n\t\t\t\t{%- set ns.done = true -%}\n\t\t\t{%- endif -%}\n\t\t\t{{- \"\\n      \" -}}\n\t\t{%- endif -%}\n\t\t{{- \"\\n      \" -}}\n\t{%- endfor -%}\n\t{{- \"\\n    </ul>\\n    \" -}}\n{%- endfor -%}\n{{- \"\\n\\n    \" -}}\n{%- if s.closing -%}\n\t{{- \"\\n    <p class=\\\"closing\\\">\" -}}\n\t{{- s.closing | e -}}\n\t{{- \"</p>\\n    \" -}}\n{%- endif -%}\n{{- \"\\n\\n    <footer class=\\\"footer\\\">\\n      <a href=\\\"\" -}}\n{{- runtime.invite.short_url | e -}}\n{{- \"\\\">View the interactive résumé</a>\\n      <span class=\\\"footer-date\\\">Extracted <time data-extracted-on datetime=\\\"\\\">—</time></span>\\n    </footer>\\n\\n    <aside class=\\\"about-aside\\\">\\n      <h2>About this résumé</h2>\\n      <p>\\n        This document is a context-specific projection of a structured career model.\\n        The underlying career timeline and source information are canonical; AI is used\\n        to select and emphasize the experience most relevant to this reader's context.\\n      </p>\\n      <p class=\\\"generated-with\\\">Generated with xFrame.</p>\\n    </aside>\\n  </main>\\n  <script>\\n    (function () {\\n      var locale = \" -}}\n{{- target_locale | default(\"en-US\") | tojson -}}\n{{- \";\\n      var when = new Date();\\n      var iso = when.toISOString().slice(0, 10);\\n      var label = when.toLocaleDateString(locale, {\\n        year: \\\"numeric\\\",\\n        month: \\\"long\\\",\\n        day: \\\"numeric\\\"\\n      });\\n      document.querySelectorAll(\\\"[data-extracted-on]\\\").forEach(function (el) {\\n        el.setAttribute(\\\"datetime\\\", iso);\\n        el.textContent = label;\\n      });\\n    })();\\n  </script>\\n</body>\\n</html>\" -}}"
                   },
                   {
                     "index": 7,
@@ -1601,11 +1635,11 @@
                       "type": "pdf-extract",
                       "label": "Generate PDF extract",
                       "input": "pdf_extract_doc",
-                      "show": "false"
+                      "show": "{{- \"pdf_extract\" in runtime.invite.features -}}"
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 258
+                      "line": 260
                     },
                     "expressions": {
                       "show": {
@@ -1730,7 +1764,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 266
+                      "line": 268
                     },
                     "structural": {
                       "region": {
@@ -1742,7 +1776,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 2
+        }
       },
       {
         "index": 3,
@@ -1788,7 +1825,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 279
+                          "line": 281
                         },
                         "options": {
                           "left": "1.618",
@@ -1823,7 +1860,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 279
+                          "line": 281
                         },
                         "options": {
                           "left": "1.618",
@@ -1862,7 +1899,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 279
+                          "line": 281
                         },
                         "options": {
                           "left": "1.618",
@@ -1896,7 +1933,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 279
+                          "line": 281
                         },
                         "options": {
                           "left": "1.618",
@@ -1956,7 +1993,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 279
+                          "line": 281
                         },
                         "options": {
                           "left": "1.618",
@@ -2014,7 +2051,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 274
+                              "line": 276
                             },
                             "structural": {
                               "region": {
@@ -2058,7 +2095,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 293
+                              "line": 295
                             },
                             "structural": {
                               "region": {
@@ -2090,7 +2127,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 299
+                              "line": 301
                             },
                             "options": {
                               "left": "1.618",
@@ -2129,7 +2166,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 299
+                              "line": 301
                             },
                             "options": {
                               "left": "1.618",
@@ -2177,7 +2214,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 299
+                              "line": 301
                             },
                             "options": {
                               "left": "1.618",
@@ -2225,7 +2262,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 305
+                              "line": 307
                             },
                             "structural": {
                               "region": {
@@ -2280,7 +2317,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "4 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -2288,7 +2334,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 3
+        }
       },
       {
         "index": 4,
@@ -2334,7 +2383,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 321
+                          "line": 323
                         },
                         "options": {
                           "left": "1.618",
@@ -2369,7 +2418,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 321
+                          "line": 323
                         },
                         "options": {
                           "left": "1.618",
@@ -2408,7 +2457,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 321
+                          "line": 323
                         },
                         "options": {
                           "left": "1.618",
@@ -2442,7 +2491,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 321
+                          "line": 323
                         },
                         "options": {
                           "left": "1.618",
@@ -2538,7 +2587,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 321
+                          "line": 323
                         },
                         "options": {
                           "left": "1.618",
@@ -2593,7 +2642,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 335
+                              "line": 337
                             },
                             "options": {
                               "left": "1.618",
@@ -2664,7 +2713,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 335
+                              "line": 337
                             },
                             "options": {
                               "left": "1.618",
@@ -2703,7 +2752,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 335
+                              "line": 337
                             },
                             "options": {
                               "left": "1.618",
@@ -2770,7 +2819,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 335
+                              "line": 337
                             },
                             "options": {
                               "left": "1.618",
@@ -2810,7 +2859,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 335
+                              "line": 337
                             },
                             "options": {
                               "left": "1.618",
@@ -2858,7 +2907,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 361
+                              "line": 363
                             },
                             "structural": {
                               "region": {
@@ -2913,7 +2962,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "5 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -2921,7 +2979,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 4
+        }
       },
       {
         "index": 5,
@@ -2967,7 +3028,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 375
+                          "line": 377
                         },
                         "options": {
                           "left": "1.618",
@@ -3002,7 +3063,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 375
+                          "line": 377
                         },
                         "options": {
                           "left": "1.618",
@@ -3041,7 +3102,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 375
+                          "line": 377
                         },
                         "options": {
                           "left": "1.618",
@@ -3075,7 +3136,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 375
+                          "line": 377
                         },
                         "options": {
                           "left": "1.618",
@@ -3109,7 +3170,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 375
+                          "line": 377
                         },
                         "options": {
                           "left": "1.618",
@@ -3143,7 +3204,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 375
+                          "line": 377
                         },
                         "options": {
                           "left": "1.618",
@@ -3177,7 +3238,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 375
+                          "line": 377
                         },
                         "options": {
                           "left": "1.618",
@@ -3217,7 +3278,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 375
+                          "line": 377
                         },
                         "options": {
                           "left": "1.618",
@@ -3280,7 +3341,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 392
+                              "line": 394
                             },
                             "structural": {
                               "region": {
@@ -3307,7 +3368,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 396
+                              "line": 398
                             },
                             "options": {
                               "left": "1.618",
@@ -3346,7 +3407,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 396
+                              "line": 398
                             },
                             "options": {
                               "left": "1.618",
@@ -3375,7 +3436,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 396
+                              "line": 398
                             },
                             "options": {
                               "left": "1.618",
@@ -3409,7 +3470,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 396
+                              "line": 398
                             },
                             "options": {
                               "left": "1.618",
@@ -3457,7 +3518,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 411
+                              "line": 413
                             },
                             "structural": {
                               "region": {
@@ -3512,7 +3573,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "6 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -3520,7 +3590,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 5
+        }
       },
       {
         "index": 6,
@@ -3566,7 +3639,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 431
+                          "line": 433
                         },
                         "options": {
                           "left": "1.618",
@@ -3601,7 +3674,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 431
+                          "line": 433
                         },
                         "options": {
                           "left": "1.618",
@@ -3640,7 +3713,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 431
+                          "line": 433
                         },
                         "options": {
                           "left": "1.618",
@@ -3674,7 +3747,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 431
+                          "line": 433
                         },
                         "options": {
                           "left": "1.618",
@@ -3754,7 +3827,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 431
+                          "line": 433
                         },
                         "options": {
                           "left": "1.618",
@@ -3812,7 +3885,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 426
+                              "line": 428
                             },
                             "structural": {
                               "region": {
@@ -3840,7 +3913,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 444
+                              "line": 446
                             },
                             "options": {
                               "left": "1.618",
@@ -3888,7 +3961,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 454
+                              "line": 456
                             },
                             "structural": {
                               "region": {
@@ -3943,7 +4016,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "7 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -3951,7 +4033,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 6
+        }
       },
       {
         "index": 7,
@@ -3997,7 +4082,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 473
+                          "line": 475
                         },
                         "options": {
                           "left": "1.618",
@@ -4032,7 +4117,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 473
+                          "line": 475
                         },
                         "options": {
                           "left": "1.618",
@@ -4071,7 +4156,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 473
+                          "line": 475
                         },
                         "options": {
                           "left": "1.618",
@@ -4105,7 +4190,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 473
+                          "line": 475
                         },
                         "options": {
                           "left": "1.618",
@@ -4139,7 +4224,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 473
+                          "line": 475
                         },
                         "options": {
                           "left": "1.618",
@@ -4199,7 +4284,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 473
+                          "line": 475
                         },
                         "options": {
                           "left": "1.618",
@@ -4257,7 +4342,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 468
+                              "line": 470
                             },
                             "structural": {
                               "region": {
@@ -4301,7 +4386,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 489
+                              "line": 491
                             },
                             "structural": {
                               "region": {
@@ -4339,7 +4424,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 495
+                              "line": 497
                             },
                             "structural": {
                               "region": {
@@ -4380,7 +4465,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 501
+                              "line": 503
                             },
                             "structural": {
                               "region": {
@@ -4435,7 +4520,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "8 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -4443,7 +4537,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 7
+        }
       },
       {
         "index": 8,
@@ -4489,7 +4586,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 519
+                          "line": 521
                         },
                         "options": {
                           "left": "1.618",
@@ -4524,7 +4621,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 519
+                          "line": 521
                         },
                         "options": {
                           "left": "1.618",
@@ -4563,7 +4660,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 519
+                          "line": 521
                         },
                         "options": {
                           "left": "1.618",
@@ -4597,7 +4694,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 519
+                          "line": 521
                         },
                         "options": {
                           "left": "1.618",
@@ -4657,7 +4754,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 519
+                          "line": 521
                         },
                         "options": {
                           "left": "1.618",
@@ -4715,7 +4812,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 514
+                              "line": 516
                             },
                             "structural": {
                               "region": {
@@ -4743,7 +4840,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 533
+                              "line": 535
                             },
                             "options": {
                               "left": "1.618",
@@ -4788,7 +4885,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 541
+                              "line": 543
                             },
                             "structural": {
                               "region": {
@@ -4829,7 +4926,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 546
+                              "line": 548
                             },
                             "structural": {
                               "region": {
@@ -4884,7 +4981,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "9 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -4892,7 +4998,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 8
+        }
       },
       {
         "index": 9,
@@ -4938,7 +5047,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 564
+                          "line": 566
                         },
                         "options": {
                           "left": "1.618",
@@ -4973,7 +5082,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 564
+                          "line": 566
                         },
                         "options": {
                           "left": "1.618",
@@ -5012,7 +5121,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 564
+                          "line": 566
                         },
                         "options": {
                           "left": "1.618",
@@ -5046,7 +5155,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 564
+                          "line": 566
                         },
                         "options": {
                           "left": "1.618",
@@ -5080,7 +5189,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 564
+                          "line": 566
                         },
                         "options": {
                           "left": "1.618",
@@ -5119,7 +5228,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 564
+                          "line": 566
                         },
                         "options": {
                           "left": "1.618",
@@ -5153,7 +5262,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 564
+                          "line": 566
                         },
                         "options": {
                           "left": "1.618",
@@ -5206,7 +5315,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 564
+                          "line": 566
                         },
                         "options": {
                           "left": "1.618",
@@ -5264,7 +5373,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 559
+                              "line": 561
                             },
                             "structural": {
                               "region": {
@@ -5308,7 +5417,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 583
+                              "line": 585
                             },
                             "structural": {
                               "region": {
@@ -5355,7 +5464,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 588
+                              "line": 590
                             },
                             "options": {
                               "left": "1.618",
@@ -5403,7 +5512,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 590
+                              "line": 592
                             },
                             "structural": {
                               "region": {
@@ -5458,7 +5567,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "10 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -5466,7 +5584,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 9
+        }
       },
       {
         "index": 10,
@@ -5512,7 +5633,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 608
+                          "line": 610
                         },
                         "options": {
                           "left": "1.618",
@@ -5547,7 +5668,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 608
+                          "line": 610
                         },
                         "options": {
                           "left": "1.618",
@@ -5586,7 +5707,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 608
+                          "line": 610
                         },
                         "options": {
                           "left": "1.618",
@@ -5620,7 +5741,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 608
+                          "line": 610
                         },
                         "options": {
                           "left": "1.618",
@@ -5654,7 +5775,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 608
+                          "line": 610
                         },
                         "options": {
                           "left": "1.618",
@@ -5688,7 +5809,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 608
+                          "line": 610
                         },
                         "options": {
                           "left": "1.618",
@@ -5727,7 +5848,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 608
+                          "line": 610
                         },
                         "options": {
                           "left": "1.618",
@@ -5761,7 +5882,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 608
+                          "line": 610
                         },
                         "options": {
                           "left": "1.618",
@@ -5800,7 +5921,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 608
+                          "line": 610
                         },
                         "options": {
                           "left": "1.618",
@@ -5853,7 +5974,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 608
+                          "line": 610
                         },
                         "options": {
                           "left": "1.618",
@@ -5911,7 +6032,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 603
+                              "line": 605
                             },
                             "structural": {
                               "region": {
@@ -5955,7 +6076,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 631
+                              "line": 633
                             },
                             "structural": {
                               "region": {
@@ -5996,7 +6117,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 636
+                              "line": 638
                             },
                             "structural": {
                               "region": {
@@ -6051,7 +6172,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "11 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -6059,7 +6189,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 10
+        }
       },
       {
         "index": 11,
@@ -6105,7 +6238,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 655
+                          "line": 657
                         },
                         "options": {
                           "left": "1.618",
@@ -6140,7 +6273,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 655
+                          "line": 657
                         },
                         "options": {
                           "left": "1.618",
@@ -6179,7 +6312,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 655
+                          "line": 657
                         },
                         "options": {
                           "left": "1.618",
@@ -6213,7 +6346,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 655
+                          "line": 657
                         },
                         "options": {
                           "left": "1.618",
@@ -6280,7 +6413,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 655
+                          "line": 657
                         },
                         "options": {
                           "left": "1.618",
@@ -6338,7 +6471,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 650
+                              "line": 652
                             },
                             "structural": {
                               "region": {
@@ -6376,7 +6509,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 670
+                              "line": 672
                             },
                             "options": {
                               "left": "1.618",
@@ -6419,7 +6552,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 670
+                              "line": 672
                             },
                             "options": {
                               "left": "1.618",
@@ -6462,7 +6595,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 670
+                              "line": 672
                             },
                             "options": {
                               "left": "1.618",
@@ -6505,7 +6638,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 670
+                              "line": 672
                             },
                             "options": {
                               "left": "1.618",
@@ -6553,7 +6686,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 678
+                              "line": 680
                             },
                             "structural": {
                               "region": {
@@ -6608,7 +6741,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "12 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -6616,7 +6758,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 11
+        }
       },
       {
         "index": 12,
@@ -6662,7 +6807,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 695
+                          "line": 697
                         },
                         "options": {
                           "left": "1.618",
@@ -6697,7 +6842,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 695
+                          "line": 697
                         },
                         "options": {
                           "left": "1.618",
@@ -6731,7 +6876,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 695
+                          "line": 697
                         },
                         "options": {
                           "left": "1.618",
@@ -6765,7 +6910,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 695
+                          "line": 697
                         },
                         "options": {
                           "left": "1.618",
@@ -6825,7 +6970,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 695
+                          "line": 697
                         },
                         "options": {
                           "left": "1.618",
@@ -6883,7 +7028,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 690
+                              "line": 692
                             },
                             "structural": {
                               "region": {
@@ -6904,24 +7049,14 @@
                         "content": [
                           {
                             "index": 0,
-                            "kind": "paragraph",
-                            "paragraph": {
-                              "text": "Open source · xYang",
-                              "inlines": [
-                                {
-                                  "kind": "strong",
-                                  "children": [
-                                    {
-                                      "kind": "text",
-                                      "text": "Open source · xYang"
-                                    }
-                                  ]
-                                }
-                              ]
+                            "kind": "widget",
+                            "widget": {
+                              "type": "html",
+                              "body": "<div class=\"exergy-card\">\n  <b>Open source · xYang</b>\n  <p>Practical YANG subset for runtime semantic validation, cross-references, and structural rules — foundational to model-driven correctness.</p>\n  <a href=\"https://github.com/exergy-connect/xYang\">github.com/exergy-connect/xYang</a>\n</div>\n\n"
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 709
+                              "line": 711
                             },
                             "options": {
                               "left": "1.618",
@@ -6943,19 +7078,14 @@
                           },
                           {
                             "index": 1,
-                            "kind": "paragraph",
-                            "paragraph": {
-                              "text": "Practical YANG subset for runtime semantic validation, cross-references, and structural rules — foundational to model-driven correctness.",
-                              "inlines": [
-                                {
-                                  "kind": "text",
-                                  "text": "Practical YANG subset for runtime semantic validation, cross-references, and structural rules — foundational to model-driven correctness."
-                                }
-                              ]
+                            "kind": "widget",
+                            "widget": {
+                              "type": "html",
+                              "body": "<div class=\"exergy-card\">\n  <b>Tools &amp; skills · xFrame.ai</b>\n  <p>Published agent skills and tooling for model authoring, consolidation, and presentation workflows around the xFrame specification.</p>\n  <a href=\"https://github.com/exergy-connect/xFrame.ai\">github.com/exergy-connect/xFrame.ai</a>\n</div>\n"
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 709
+                              "line": 711
                             },
                             "options": {
                               "left": "1.618",
@@ -6977,159 +7107,6 @@
                           },
                           {
                             "index": 2,
-                            "kind": "paragraph",
-                            "paragraph": {
-                              "text": "github.com/exergy-connect/xYang",
-                              "inlines": [
-                                {
-                                  "kind": "link",
-                                  "href": "https://github.com/exergy-connect/xYang",
-                                  "children": [
-                                    {
-                                      "kind": "text",
-                                      "text": "github.com/exergy-connect/xYang"
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            "provenance": {
-                              "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 709
-                            },
-                            "options": {
-                              "left": "1.618",
-                              "right": "1",
-                              "heading": "A conversation worth continuing",
-                              "message": "If your work calls for systems thinking, hands-on engineering, and a practical path from emerging technology to reliable operations, I would be glad to explore where my experience could help.",
-                              "text": "I'm Jeroen van Bemmel. I design and build systems that make complex technology practical to adopt and sustainable to operate.",
-                              "locale": "en-US",
-                              "headline": "Systems Architect",
-                              "summary": "I design and build systems that make complex technology practical to adopt and sustainable to operate. My work spans carrier networks, cloud infrastructure, automation, and AI-powered applications.",
-                              "closing": "If your work calls for systems thinking and a practical path from emerging technology to reliable operations, I would be glad to continue the conversation.",
-                              "region": "right"
-                            },
-                            "structural": {
-                              "region": {
-                                "region": "right"
-                              }
-                            }
-                          },
-                          {
-                            "index": 3,
-                            "kind": "paragraph",
-                            "paragraph": {
-                              "text": "Tools & skills · xFrame.ai",
-                              "inlines": [
-                                {
-                                  "kind": "strong",
-                                  "children": [
-                                    {
-                                      "kind": "text",
-                                      "text": "Tools & skills · xFrame.ai"
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            "provenance": {
-                              "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 709
-                            },
-                            "options": {
-                              "left": "1.618",
-                              "right": "1",
-                              "heading": "A conversation worth continuing",
-                              "message": "If your work calls for systems thinking, hands-on engineering, and a practical path from emerging technology to reliable operations, I would be glad to explore where my experience could help.",
-                              "text": "I'm Jeroen van Bemmel. I design and build systems that make complex technology practical to adopt and sustainable to operate.",
-                              "locale": "en-US",
-                              "headline": "Systems Architect",
-                              "summary": "I design and build systems that make complex technology practical to adopt and sustainable to operate. My work spans carrier networks, cloud infrastructure, automation, and AI-powered applications.",
-                              "closing": "If your work calls for systems thinking and a practical path from emerging technology to reliable operations, I would be glad to continue the conversation.",
-                              "region": "right"
-                            },
-                            "structural": {
-                              "region": {
-                                "region": "right"
-                              }
-                            }
-                          },
-                          {
-                            "index": 4,
-                            "kind": "paragraph",
-                            "paragraph": {
-                              "text": "Published agent skills and tooling for model authoring, consolidation, and presentation workflows around the xFrame specification.",
-                              "inlines": [
-                                {
-                                  "kind": "text",
-                                  "text": "Published agent skills and tooling for model authoring, consolidation, and presentation workflows around the xFrame specification."
-                                }
-                              ]
-                            },
-                            "provenance": {
-                              "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 709
-                            },
-                            "options": {
-                              "left": "1.618",
-                              "right": "1",
-                              "heading": "A conversation worth continuing",
-                              "message": "If your work calls for systems thinking, hands-on engineering, and a practical path from emerging technology to reliable operations, I would be glad to explore where my experience could help.",
-                              "text": "I'm Jeroen van Bemmel. I design and build systems that make complex technology practical to adopt and sustainable to operate.",
-                              "locale": "en-US",
-                              "headline": "Systems Architect",
-                              "summary": "I design and build systems that make complex technology practical to adopt and sustainable to operate. My work spans carrier networks, cloud infrastructure, automation, and AI-powered applications.",
-                              "closing": "If your work calls for systems thinking and a practical path from emerging technology to reliable operations, I would be glad to continue the conversation.",
-                              "region": "right"
-                            },
-                            "structural": {
-                              "region": {
-                                "region": "right"
-                              }
-                            }
-                          },
-                          {
-                            "index": 5,
-                            "kind": "paragraph",
-                            "paragraph": {
-                              "text": "github.com/exergy-connect/xFrame.ai",
-                              "inlines": [
-                                {
-                                  "kind": "link",
-                                  "href": "https://github.com/exergy-connect/xFrame.ai",
-                                  "children": [
-                                    {
-                                      "kind": "text",
-                                      "text": "github.com/exergy-connect/xFrame.ai"
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            "provenance": {
-                              "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 709
-                            },
-                            "options": {
-                              "left": "1.618",
-                              "right": "1",
-                              "heading": "A conversation worth continuing",
-                              "message": "If your work calls for systems thinking, hands-on engineering, and a practical path from emerging technology to reliable operations, I would be glad to explore where my experience could help.",
-                              "text": "I'm Jeroen van Bemmel. I design and build systems that make complex technology practical to adopt and sustainable to operate.",
-                              "locale": "en-US",
-                              "headline": "Systems Architect",
-                              "summary": "I design and build systems that make complex technology practical to adopt and sustainable to operate. My work spans carrier networks, cloud infrastructure, automation, and AI-powered applications.",
-                              "closing": "If your work calls for systems thinking and a practical path from emerging technology to reliable operations, I would be glad to continue the conversation.",
-                              "region": "right"
-                            },
-                            "structural": {
-                              "region": {
-                                "region": "right"
-                              }
-                            }
-                          },
-                          {
-                            "index": 6,
                             "kind": "narrative",
                             "narrative": {
                               "entries": [
@@ -7156,7 +7133,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 721
+                              "line": 723
                             },
                             "structural": {
                               "region": {
@@ -7211,7 +7188,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "13 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -7219,7 +7205,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 12
+        }
       },
       {
         "index": 13,
@@ -7259,7 +7248,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 736
+                      "line": 738
                     },
                     "options": {
                       "left": "1.618",
@@ -7288,7 +7277,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 736
+                      "line": 738
                     },
                     "options": {
                       "left": "1.618",
@@ -7311,7 +7300,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 736
+                      "line": 738
                     },
                     "options": {
                       "left": "1.618",
@@ -7334,7 +7323,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 736
+                      "line": 738
                     },
                     "options": {
                       "left": "1.618",
@@ -7357,7 +7346,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 736
+                      "line": 738
                     },
                     "options": {
                       "left": "1.618",
@@ -7380,7 +7369,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 736
+                      "line": 738
                     },
                     "options": {
                       "left": "1.618",
@@ -7421,7 +7410,7 @@
                     },
                     "provenance": {
                       "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                      "line": 753
+                      "line": 755
                     }
                   }
                 ]
@@ -7467,7 +7456,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "14 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -7475,7 +7473,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 13
+        }
       },
       {
         "index": 14,
@@ -7525,7 +7526,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 762
+                          "line": 764
                         },
                         "structural": {
                           "local": {
@@ -7533,7 +7534,7 @@
                             "depends": "journey"
                           }
                         },
-                        "template": "{{ depends[0].output | default(global_guidance) | llm(\"prompts/adapt-exit-narrative.md\", mime_type=\"application/json\", cache=true, evaluation=\"dynamic\", manual=true, refresh_control=true, fallback=baseline_exit) }}"
+                        "template": "{{- depends[0].output | default(\"I want to understand how Jeroen approaches complex technical problems and what kind of systems architect he is today. Please guide me through the experience most relevant to evaluating him for senior technical architecture, systems engineering, infrastructure, networking, or AI systems roles. I am particularly interested in how he has helped organizations adopt new technologies and move them from experimental or manually operated systems toward structured, repeatable, and sustainable operation. Look for evidence of architectural judgment, hands-on engineering depth, customer and organizational adoption, automation, model-driven systems, and the ability to make complex technology operational in the real world. Do not simply present his career chronologically. Instead, identify the strongest evidence for these capabilities and show me the most relevant path through the presentation. I want to explore the presentation based on what I am trying to understand, rather than simply follow a chronological career history.\") | llm(\"prompts/adapt-exit-narrative.md\", mime_type=\"application/json\", cache=true, evaluation=\"dynamic\", manual=true, refresh_control=true, fallback=baseline_exit) -}}"
                       },
                       {
                         "index": 1,
@@ -7550,7 +7551,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 767
+                          "line": 769
                         },
                         "options": {
                           "left": "1.618",
@@ -7585,7 +7586,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 767
+                          "line": 769
                         },
                         "options": {
                           "left": "1.618",
@@ -7613,7 +7614,7 @@
                         },
                         "provenance": {
                           "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                          "line": 767
+                          "line": 769
                         },
                         "options": {
                           "left": "1.618",
@@ -7714,7 +7715,7 @@
                             },
                             "provenance": {
                               "source": "/home/jbemmel/Projects/resume/presentation/resume.xp",
-                              "line": 776
+                              "line": 778
                             },
                             "structural": {
                               "region": {
@@ -7769,7 +7770,16 @@
                       {
                         "kind": "region",
                         "name": "footer-right",
-                        "weight": 1
+                        "weight": 1,
+                        "content": [
+                          {
+                            "index": 0,
+                            "kind": "paragraph",
+                            "paragraph": {
+                              "text": "15 / 15"
+                            }
+                          }
+                        ]
                       }
                     ]
                   }
@@ -7777,7 +7787,10 @@
               }
             ]
           }
-        ]
+        ],
+        "runtime": {
+          "index": 14
+        }
       }
     ],
     "structure": [
@@ -7899,7 +7912,7 @@
     {
       "kind": "style",
       "name": "resume-deck",
-      "body": "```css\n/* Deck chrome — distilled from JAM résumé look */\n#xframe {\n  --ink: var(--fg);\n  --line: var(--border);\n  --card: var(--surface-bg, #ffffff);\n  background:\n    radial-gradient(circle at 92% 6%, color-mix(in srgb, var(--cyan, #2bb8c8) 14%, transparent), transparent 24%),\n    radial-gradient(circle at 4% 96%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 28%),\n    var(--bg);\n  color: var(--ink);\n  font-family: \"IBM Plex Sans\", \"Segoe UI\", ui-sans-serif, system-ui, sans-serif;\n}\n\n#xframe .segment {\n  background: transparent;\n}\n\n/* Career highlights — shared structure; colors from per-slide tokens */\n.career_highlight.segment {\n  color: var(--ink, var(--fg));\n}\n\n.career_highlight .horizontal-split-left > h2::after {\n  content: \"\";\n  display: block;\n  width: 3.4rem;\n  height: 0.2rem;\n  margin-top: 0.55rem;\n  border-radius: 1rem;\n  background: linear-gradient(90deg, var(--accent), var(--cyan, #2bb8c8));\n}\n\n.career_highlight .horizontal-split-left > p > strong:first-child,\n.career_highlight .horizontal-split-left > p:has(> strong:only-child) strong {\n  color: var(--accent);\n}\n\n.career_highlight .horizontal-split-left ul {\n  display: grid;\n  gap: 0.6rem;\n  margin: 0.35rem 0 0;\n  padding: 0;\n  list-style: none;\n}\n\n.career_highlight .horizontal-split-left li {\n  position: relative;\n  margin: 0;\n  padding: 0.85rem 1.05rem 0.85rem 2.15rem;\n  font-size: 1.02rem;\n  line-height: 1.4;\n  border: 1px solid var(--line, var(--border));\n  border-radius: 0.75rem;\n  background: var(--card, var(--surface-bg));\n  box-shadow: 0 0.4rem 1rem color-mix(in srgb, var(--accent) 8%, transparent);\n  color: var(--muted);\n}\n\n.career_highlight .horizontal-split-left li::before {\n  content: \"\";\n  position: absolute;\n  left: 0.95rem;\n  top: 1.15rem;\n  display: block;\n  width: 0.55rem;\n  height: 0.55rem;\n  border-radius: 50%;\n  background: var(--accent);\n}\n\n/* Frame the bitmap, not the flex-stretched figure box — otherwise\n   object-fit:contain letterboxing leaves empty card chrome around the image. */\n.career_highlight .horizontal-split-right > figure,\n.career_highlight .horizontal-split-right > img,\n.career_highlight .horizontal-split-right > a.xframe-snapshot {\n  flex: 0 1 auto;\n  border: 0;\n  border-radius: 0;\n  background: transparent;\n  box-shadow: none;\n}\n\n.career_highlight .horizontal-split-right > figure > img,\n.career_highlight .horizontal-split-right > img,\n.career_highlight .horizontal-split-right > a.xframe-snapshot > img {\n  flex: 0 1 auto;\n  width: 100%;\n  height: auto;\n  max-height: min(28rem, 55vh);\n  object-fit: contain;\n  object-position: top center;\n  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line, var(--border)));\n  border-radius: 0.85rem;\n  background: var(--card, var(--surface-bg));\n  box-shadow: 0 0.7rem 1.6rem color-mix(in srgb, var(--accent) 10%, transparent);\n}\n\n.career_highlight .horizontal-split-right figcaption {\n  color: var(--muted);\n  font-weight: 650;\n  letter-spacing: 0.02em;\n}\n\n/* Company palettes — token + wash only (structure stays shared) */\n#bell-labs.segment,\n#hpjss-plusplus.segment {\n  --accent: #d54343;\n  --ink: #1a1614;\n  --fg: #1a1614;\n  --muted: #6a5f58;\n  --line: rgba(180, 60, 50, 0.18);\n  --border: rgba(180, 60, 50, 0.18);\n  --card: #fffdfb;\n  --surface-bg: #fffdfb;\n  --code: #2a1816;\n  --code-bg: #f3e8e4;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(227, 24, 55, 0.08), transparent 26%),\n    radial-gradient(circle at 6% 94%, rgba(227, 24, 55, 0.05), transparent 30%),\n    #f4efec;\n  color: var(--ink);\n}\n\n#hpjss-plusplus .horizontal-split-right > pre {\n  padding: 0.55rem 0.75rem;\n  font-size: 0.8rem;\n  letter-spacing: -0.01em;\n  white-space: nowrap;\n  overflow-x: auto;\n}\n\n#alu-customer.segment {\n  --accent: #5b2d8e;\n  --ink: #1a1524;\n  --fg: #1a1524;\n  --muted: #5f566c;\n  --line: rgba(91, 45, 142, 0.16);\n  --border: rgba(91, 45, 142, 0.16);\n  --card: #fffcfe;\n  --surface-bg: #fffcfe;\n  --award: #6b2fa0;\n  background:\n    radial-gradient(circle at 90% 10%, rgba(107, 47, 160, 0.1), transparent 28%),\n    radial-gradient(circle at 8% 92%, rgba(107, 47, 160, 0.06), transparent 30%),\n    #f3eef7;\n  color: var(--ink);\n}\n\n#alu-customer .horizontal-split-right {\n  align-content: center;\n  justify-content: center;\n}\n\n#alu-customer .horizontal-split-right > .award {\n  flex: 0 1 auto;\n  align-self: center;\n  display: grid;\n  gap: 0.75rem;\n  align-content: start;\n  justify-items: center;\n  margin: 0;\n  padding: 1.35rem 1.25rem 1.2rem;\n  border: 1px solid rgba(107, 47, 160, 0.22);\n  border-radius: 1rem;\n  background: linear-gradient(165deg, #fff, #f4ebfb);\n  box-shadow: 0 0.8rem 1.8rem rgba(70, 30, 110, 0.08);\n  text-align: center;\n}\n\n#alu-customer .award-mark {\n  display: grid;\n  place-items: center;\n  width: 4.6rem;\n  height: 4.6rem;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #9b5fd4, #6b2fa0 58%, #4a1f78);\n  color: #fff;\n  box-shadow: 0 0.55rem 1.4rem rgba(107, 47, 160, 0.35);\n}\n\n#alu-customer .award-mark svg {\n  width: 2.3rem;\n  height: 2.3rem;\n}\n\n#alu-customer .award > b {\n  display: block;\n  color: var(--award);\n  font-size: 0.72rem;\n  font-weight: 820;\n  letter-spacing: 0.16em;\n  text-transform: uppercase;\n}\n\n#alu-customer .award > strong {\n  display: block;\n  margin-top: 0.3rem;\n  color: var(--ink);\n  font-size: 1.25rem;\n  line-height: 1.2;\n}\n\n#alu-customer .award > p {\n  margin: 0.4rem 0 0;\n  color: var(--muted);\n  font-size: 0.92rem;\n  line-height: 1.4;\n  max-width: 28ch;\n}\n\n#alu-customer .award > figcaption {\n  margin: 0;\n  color: var(--muted);\n  font-size: 0.78rem;\n  font-weight: 650;\n  letter-spacing: 0.02em;\n}\n\n#nuage-npi.segment {\n  --accent: #e83848;\n  --maroon: #981830;\n  --gold: #f8b028;\n  --amber: #b07828;\n  --ink: #000000;\n  --fg: #000000;\n  --muted: #3a3a3a;\n  --line: rgba(0, 0, 0, 0.14);\n  --border: rgba(0, 0, 0, 0.14);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(232, 56, 72, 0.12), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(248, 176, 40, 0.14), transparent 30%),\n    radial-gradient(circle at 50% 100%, rgba(152, 24, 48, 0.06), transparent 40%),\n    #f7f2eb;\n  color: var(--ink);\n}\n\n#nokia-srlinux.segment {\n  --accent: #1c4598;\n  --ink: #0b1220;\n  --fg: #0b1220;\n  --muted: #445066;\n  --line: rgba(28, 69, 152, 0.16);\n  --border: rgba(28, 69, 152, 0.16);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(28, 69, 152, 0.12), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(0, 90, 255, 0.08), transparent 30%),\n    #eef3fb;\n  color: var(--ink);\n}\n\n#nokia-srlinux .horizontal-split-right {\n  gap: 0.75rem;\n  justify-content: space-between;\n}\n\n#nokia-srlinux .horizontal-split-right > .win {\n  flex: 0 1 auto;\n  align-self: stretch;\n  display: grid;\n  gap: 0.55rem;\n  align-content: start;\n  justify-items: center;\n  margin: 0;\n  padding: 1.1rem 1.15rem 1rem;\n  border: 1px solid rgba(0, 118, 129, 0.2);\n  border-radius: 1rem;\n  background: linear-gradient(165deg, #fff, #f2f8f8);\n  box-shadow: 0 0.8rem 1.8rem rgba(0, 80, 90, 0.07);\n  text-align: center;\n}\n\n#nokia-srlinux .win > .win-logo {\n  display: block;\n  width: clamp(6.5rem, 12vw, 8rem);\n  max-width: 8rem;\n  height: auto;\n  max-height: 2.75rem;\n  margin: 0 auto;\n  padding: 0;\n  border: 0;\n  border-radius: 0;\n  background: transparent;\n  box-shadow: none;\n  object-fit: contain;\n}\n\n#nokia-srlinux .win > b {\n  display: block;\n  color: #007681;\n  font-size: 0.72rem;\n  font-weight: 820;\n  letter-spacing: 0.16em;\n  text-transform: uppercase;\n}\n\n#nokia-srlinux .win > p {\n  margin: 0.25rem 0 0;\n  color: var(--muted);\n  font-size: 0.9rem;\n  line-height: 1.4;\n  max-width: none;\n  width: 100%;\n}\n\n#nokia-srlinux .win > figcaption {\n  margin: 0.15rem 0 0;\n  color: var(--muted);\n  font-size: 0.78rem;\n  font-weight: 650;\n  letter-spacing: 0.02em;\n}\n\n#nokia-srlinux .win a {\n  color: #007681;\n  font-weight: 700;\n  text-decoration: none;\n  border-bottom: 1px solid rgba(0, 118, 129, 0.35);\n}\n\n#nokia-srlinux .win a:hover {\n  border-bottom-color: #007681;\n}\n\n#nokia-srlinux .horizontal-split-right > figure:not(.win) > img {\n  max-height: min(11rem, 28vh);\n}\n\n#civo-navigate.segment {\n  --accent: #239d60;\n  --ink: #0f1a14;\n  --fg: #0f1a14;\n  --muted: #4a5c52;\n  --line: rgba(35, 157, 96, 0.18);\n  --border: rgba(35, 157, 96, 0.18);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(35, 157, 96, 0.12), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(15, 40, 28, 0.05), transparent 30%),\n    #eef6f1;\n  color: var(--ink);\n}\n\n#eog-infra.segment {\n  --accent: #f02e15;\n  --ink: #121212;\n  --fg: #121212;\n  --muted: #4a4a4a;\n  --line: rgba(240, 46, 21, 0.16);\n  --border: rgba(240, 46, 21, 0.16);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(240, 46, 21, 0.11), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(0, 0, 0, 0.05), transparent 30%),\n    #f3f1ef;\n  color: var(--ink);\n}\n\n#xframe-exergy.segment,\n#ocp-heat-appliances.segment {\n  --accent: #1d3074;\n  --cyan: #2bb8c8;\n  --ink: #0c1b2e;\n  --fg: #0c1b2e;\n  --muted: #5a6f86;\n  --line: rgba(29, 48, 116, 0.16);\n  --border: rgba(29, 48, 116, 0.16);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(43, 184, 200, 0.12), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(29, 48, 116, 0.08), transparent 30%),\n    #eef2f8;\n  color: var(--ink);\n}\n\n#myos.segment {\n  --accent: #1a7a7a;\n  --cyan: #2bb8c8;\n  --ink: #0b1620;\n  --fg: #0b1620;\n  --muted: #4a5c66;\n  --line: rgba(26, 122, 122, 0.18);\n  --border: rgba(26, 122, 122, 0.18);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(43, 184, 200, 0.12), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(26, 122, 122, 0.08), transparent 30%),\n    #eef4f5;\n  color: var(--ink);\n}\n\n/* Common thread — centered conclusion composition */\n#common-thread.segment {\n  overflow: hidden;\n}\n\n#common-thread .slide-frame-main {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  gap: 0.7rem;\n  text-align: center;\n}\n\n#common-thread .slide-frame-main > h1 {\n  max-width: none;\n  margin: 0 auto;\n  color: var(--accent);\n  font-size: clamp(0.78rem, 1.4vw, 0.9rem);\n  font-weight: 820;\n  letter-spacing: 0.16em;\n  line-height: 1.2;\n  text-align: center;\n  text-transform: uppercase;\n}\n\n#common-thread .slide-frame-main > h1::after {\n  display: none;\n}\n\n#common-thread .slide-frame-main > h2 {\n  max-width: min(42rem, 100%);\n  margin: 0.15rem auto 0;\n  color: var(--ink, var(--fg));\n  font-size: clamp(1.75rem, 3vw, 2.35rem);\n  font-weight: 780;\n  letter-spacing: -0.03em;\n  line-height: 1.15;\n  text-align: center;\n}\n\n#common-thread .lede {\n  max-width: 42ch;\n  margin: 0.35rem auto 0;\n  color: var(--muted);\n  font-size: 1.1rem;\n  text-align: center;\n}\n\n#common-thread .thread-grid {\n  display: grid;\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n  gap: 0.7rem;\n  width: min(40rem, 100%);\n  margin: 1rem auto 0;\n}\n\n#common-thread .thread-grid > p {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 0.55rem;\n  margin: 0;\n  padding: 0.95rem 1.05rem;\n  border: 1px solid var(--line, var(--border));\n  border-radius: 0.85rem;\n  background: var(--card, var(--surface-bg));\n  box-shadow: 0 0.45rem 1.2rem rgba(24, 62, 108, 0.05);\n  font-size: 1.02rem;\n}\n\n#common-thread .thread-grid span {\n  color: var(--muted);\n  font-weight: 550;\n}\n\n#common-thread .thread-grid i {\n  color: var(--accent);\n  font-style: normal;\n  font-weight: 800;\n}\n\n#common-thread .thread-grid strong {\n  color: var(--ink, var(--fg));\n  font-weight: 750;\n}\n\n#common-thread .thread-scope {\n  max-width: 46ch;\n  margin: 1.1rem auto 0;\n  color: var(--muted);\n  font-size: 1.02rem;\n  line-height: 1.4;\n}\n\n#common-thread .thread-principle {\n  max-width: 38ch;\n  margin: 0.55rem auto 0;\n  padding: 0.95rem 1.2rem;\n  border-left: 0.28rem solid var(--accent);\n  border-radius: 0 0.85rem 0.85rem 0;\n  background: linear-gradient(90deg, rgba(31, 111, 235, 0.1), rgba(43, 184, 200, 0.06));\n  color: var(--ink, var(--fg));\n  font-size: 1.12rem;\n  font-weight: 650;\n  line-height: 1.35;\n  text-align: left;\n}\n```"
+      "body": "```css\n/* Deck chrome — distilled from JAM résumé look */\n#xframe {\n  --ink: var(--fg);\n  --line: var(--border);\n  --card: var(--surface-bg, #ffffff);\n  background:\n    radial-gradient(circle at 92% 6%, color-mix(in srgb, var(--cyan, #2bb8c8) 14%, transparent), transparent 24%),\n    radial-gradient(circle at 4% 96%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 28%),\n    var(--bg);\n  color: var(--ink);\n  font-family: \"IBM Plex Sans\", \"Segoe UI\", ui-sans-serif, system-ui, sans-serif;\n}\n\n#xframe .segment {\n  background: transparent;\n}\n\n/* Career highlights — shared structure; colors from per-slide tokens */\n.career_highlight.segment {\n  color: var(--ink, var(--fg));\n}\n\n.career_highlight .horizontal-split-left > h2::after {\n  content: \"\";\n  display: block;\n  width: 3.4rem;\n  height: 0.2rem;\n  margin-top: 0.55rem;\n  border-radius: 1rem;\n  background: linear-gradient(90deg, var(--accent), var(--cyan, #2bb8c8));\n}\n\n.career_highlight .horizontal-split-left > p > strong:first-child,\n.career_highlight .horizontal-split-left > p:has(> strong:only-child) strong {\n  color: var(--accent);\n}\n\n.career_highlight .horizontal-split-left ul {\n  display: grid;\n  gap: 0.6rem;\n  margin: 0.35rem 0 0;\n  padding: 0;\n  list-style: none;\n}\n\n.career_highlight .horizontal-split-left li {\n  position: relative;\n  margin: 0;\n  padding: 0.85rem 1.05rem 0.85rem 2.15rem;\n  font-size: 1.02rem;\n  line-height: 1.4;\n  border: 1px solid var(--line, var(--border));\n  border-radius: 0.75rem;\n  background: var(--card, var(--surface-bg));\n  box-shadow: 0 0.4rem 1rem color-mix(in srgb, var(--accent) 8%, transparent);\n  color: var(--muted);\n}\n\n.career_highlight .horizontal-split-left li::before {\n  content: \"\";\n  position: absolute;\n  left: 0.95rem;\n  top: 1.15rem;\n  display: block;\n  width: 0.55rem;\n  height: 0.55rem;\n  border-radius: 50%;\n  background: var(--accent);\n}\n\n/* Frame the bitmap, not the flex-stretched figure box — otherwise\n   object-fit:contain letterboxing leaves empty card chrome around the image. */\n.career_highlight .horizontal-split-right > figure,\n.career_highlight .horizontal-split-right > img,\n.career_highlight .horizontal-split-right > a.xframe-snapshot {\n  flex: 0 1 auto;\n  border: 0;\n  border-radius: 0;\n  background: transparent;\n  box-shadow: none;\n}\n\n.career_highlight .horizontal-split-right > figure > img,\n.career_highlight .horizontal-split-right > img,\n.career_highlight .horizontal-split-right > a.xframe-snapshot > img {\n  flex: 0 1 auto;\n  width: 100%;\n  height: auto;\n  max-height: min(28rem, 55vh);\n  object-fit: contain;\n  object-position: top center;\n  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line, var(--border)));\n  border-radius: 0.85rem;\n  background: var(--card, var(--surface-bg));\n  box-shadow: 0 0.7rem 1.6rem color-mix(in srgb, var(--accent) 10%, transparent);\n}\n\n.career_highlight .horizontal-split-right figcaption {\n  color: var(--muted);\n  font-weight: 650;\n  letter-spacing: 0.02em;\n}\n\n/* Company palettes — token + wash only (structure stays shared) */\n#bell-labs.segment,\n#hpjss-plusplus.segment {\n  --accent: #d54343;\n  --ink: #1a1614;\n  --fg: #1a1614;\n  --muted: #6a5f58;\n  --line: rgba(180, 60, 50, 0.18);\n  --border: rgba(180, 60, 50, 0.18);\n  --card: #fffdfb;\n  --surface-bg: #fffdfb;\n  --code: #2a1816;\n  --code-bg: #f3e8e4;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(227, 24, 55, 0.08), transparent 26%),\n    radial-gradient(circle at 6% 94%, rgba(227, 24, 55, 0.05), transparent 30%),\n    #f4efec;\n  color: var(--ink);\n}\n\n#hpjss-plusplus .horizontal-split-right > pre {\n  padding: 0.55rem 0.75rem;\n  font-size: 0.8rem;\n  letter-spacing: -0.01em;\n  white-space: nowrap;\n  overflow-x: auto;\n}\n\n#alu-customer.segment {\n  --accent: #5b2d8e;\n  --ink: #1a1524;\n  --fg: #1a1524;\n  --muted: #5f566c;\n  --line: rgba(91, 45, 142, 0.16);\n  --border: rgba(91, 45, 142, 0.16);\n  --card: #fffcfe;\n  --surface-bg: #fffcfe;\n  --award: #6b2fa0;\n  background:\n    radial-gradient(circle at 90% 10%, rgba(107, 47, 160, 0.1), transparent 28%),\n    radial-gradient(circle at 8% 92%, rgba(107, 47, 160, 0.06), transparent 30%),\n    #f3eef7;\n  color: var(--ink);\n}\n\n#alu-customer .horizontal-split-right {\n  align-content: center;\n  justify-content: center;\n}\n\n#alu-customer .horizontal-split-right > .award {\n  flex: 0 1 auto;\n  align-self: center;\n  display: grid;\n  gap: 0.75rem;\n  align-content: start;\n  justify-items: center;\n  margin: 0;\n  padding: 1.35rem 1.25rem 1.2rem;\n  border: 1px solid rgba(107, 47, 160, 0.22);\n  border-radius: 1rem;\n  background: linear-gradient(165deg, #fff, #f4ebfb);\n  box-shadow: 0 0.8rem 1.8rem rgba(70, 30, 110, 0.08);\n  text-align: center;\n}\n\n#alu-customer .award-mark {\n  display: grid;\n  place-items: center;\n  width: 4.6rem;\n  height: 4.6rem;\n  border-radius: 50%;\n  background: radial-gradient(circle at 35% 30%, #9b5fd4, #6b2fa0 58%, #4a1f78);\n  color: #fff;\n  box-shadow: 0 0.55rem 1.4rem rgba(107, 47, 160, 0.35);\n}\n\n#alu-customer .award-mark svg {\n  width: 2.3rem;\n  height: 2.3rem;\n}\n\n#alu-customer .award > b {\n  display: block;\n  color: var(--award);\n  font-size: 0.72rem;\n  font-weight: 820;\n  letter-spacing: 0.16em;\n  text-transform: uppercase;\n}\n\n#alu-customer .award > strong {\n  display: block;\n  margin-top: 0.3rem;\n  color: var(--ink);\n  font-size: 1.25rem;\n  line-height: 1.2;\n}\n\n#alu-customer .award > p {\n  margin: 0.4rem 0 0;\n  color: var(--muted);\n  font-size: 0.92rem;\n  line-height: 1.4;\n  max-width: 28ch;\n}\n\n#alu-customer .award > figcaption {\n  margin: 0;\n  color: var(--muted);\n  font-size: 0.78rem;\n  font-weight: 650;\n  letter-spacing: 0.02em;\n}\n\n#nuage-npi.segment {\n  --accent: #e83848;\n  --maroon: #981830;\n  --gold: #f8b028;\n  --amber: #b07828;\n  --ink: #000000;\n  --fg: #000000;\n  --muted: #3a3a3a;\n  --line: rgba(0, 0, 0, 0.14);\n  --border: rgba(0, 0, 0, 0.14);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(232, 56, 72, 0.12), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(248, 176, 40, 0.14), transparent 30%),\n    radial-gradient(circle at 50% 100%, rgba(152, 24, 48, 0.06), transparent 40%),\n    #f7f2eb;\n  color: var(--ink);\n}\n\n#nokia-srlinux.segment {\n  --accent: #1c4598;\n  --ink: #0b1220;\n  --fg: #0b1220;\n  --muted: #445066;\n  --line: rgba(28, 69, 152, 0.16);\n  --border: rgba(28, 69, 152, 0.16);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(28, 69, 152, 0.12), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(0, 90, 255, 0.08), transparent 30%),\n    #eef3fb;\n  color: var(--ink);\n}\n\n#nokia-srlinux .horizontal-split-right {\n  gap: 0.75rem;\n  justify-content: space-between;\n}\n\n#nokia-srlinux .horizontal-split-right > .win {\n  flex: 0 1 auto;\n  align-self: stretch;\n  display: grid;\n  gap: 0.55rem;\n  align-content: start;\n  justify-items: center;\n  margin: 0;\n  padding: 1.1rem 1.15rem 1rem;\n  border: 1px solid rgba(0, 118, 129, 0.2);\n  border-radius: 1rem;\n  background: linear-gradient(165deg, #fff, #f2f8f8);\n  box-shadow: 0 0.8rem 1.8rem rgba(0, 80, 90, 0.07);\n  text-align: center;\n}\n\n#nokia-srlinux .win > .win-logo {\n  display: block;\n  width: clamp(6.5rem, 12vw, 8rem);\n  max-width: 8rem;\n  height: auto;\n  max-height: 2.75rem;\n  margin: 0 auto;\n  padding: 0;\n  border: 0;\n  border-radius: 0;\n  background: transparent;\n  box-shadow: none;\n  object-fit: contain;\n}\n\n#nokia-srlinux .win > b {\n  display: block;\n  color: #007681;\n  font-size: 0.72rem;\n  font-weight: 820;\n  letter-spacing: 0.16em;\n  text-transform: uppercase;\n}\n\n#nokia-srlinux .win > p {\n  margin: 0.25rem 0 0;\n  color: var(--muted);\n  font-size: 0.9rem;\n  line-height: 1.4;\n  max-width: none;\n  width: 100%;\n}\n\n#nokia-srlinux .win > figcaption {\n  margin: 0.15rem 0 0;\n  color: var(--muted);\n  font-size: 0.78rem;\n  font-weight: 650;\n  letter-spacing: 0.02em;\n}\n\n#nokia-srlinux .win a {\n  color: #007681;\n  font-weight: 700;\n  text-decoration: none;\n  border-bottom: 1px solid rgba(0, 118, 129, 0.35);\n}\n\n#nokia-srlinux .win a:hover {\n  border-bottom-color: #007681;\n}\n\n#nokia-srlinux .horizontal-split-right > figure:not(.win) > img {\n  max-height: min(11rem, 28vh);\n}\n\n#civo-navigate.segment {\n  --accent: #239d60;\n  --ink: #0f1a14;\n  --fg: #0f1a14;\n  --muted: #4a5c52;\n  --line: rgba(35, 157, 96, 0.18);\n  --border: rgba(35, 157, 96, 0.18);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(35, 157, 96, 0.12), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(15, 40, 28, 0.05), transparent 30%),\n    #eef6f1;\n  color: var(--ink);\n}\n\n#eog-infra.segment {\n  --accent: #f02e15;\n  --ink: #121212;\n  --fg: #121212;\n  --muted: #4a4a4a;\n  --line: rgba(240, 46, 21, 0.16);\n  --border: rgba(240, 46, 21, 0.16);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(240, 46, 21, 0.11), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(0, 0, 0, 0.05), transparent 30%),\n    #f3f1ef;\n  color: var(--ink);\n}\n\n#xframe-exergy.segment,\n#ocp-heat-appliances.segment {\n  --accent: #1d3074;\n  --cyan: #2bb8c8;\n  --ink: #0c1b2e;\n  --fg: #0c1b2e;\n  --muted: #5a6f86;\n  --line: rgba(29, 48, 116, 0.16);\n  --border: rgba(29, 48, 116, 0.16);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(43, 184, 200, 0.12), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(29, 48, 116, 0.08), transparent 30%),\n    #eef2f8;\n  color: var(--ink);\n}\n\n#xframe-exergy .horizontal-split-right {\n  display: flex;\n  flex-direction: column;\n  gap: 0.85rem;\n  justify-content: center;\n}\n\n#xframe-exergy .exergy-card {\n  display: grid;\n  gap: 0.45rem;\n  margin: 0;\n  padding: 1rem 1.1rem 0.95rem;\n  border: 1px solid var(--line, var(--border));\n  border-radius: 1rem;\n  background: linear-gradient(165deg, #fff, #f4f8fb);\n  box-shadow: 0 0.7rem 1.6rem color-mix(in srgb, var(--accent) 10%, transparent);\n}\n\n#xframe-exergy .exergy-card > b {\n  color: var(--accent);\n  font-size: 0.78rem;\n  font-weight: 820;\n  letter-spacing: 0.08em;\n  text-transform: uppercase;\n}\n\n#xframe-exergy .exergy-card > p {\n  margin: 0;\n  color: var(--muted);\n  font-size: 0.95rem;\n  line-height: 1.4;\n}\n\n#xframe-exergy .exergy-card > a {\n  color: var(--accent);\n  font-size: 0.88rem;\n  font-weight: 650;\n  text-decoration: none;\n}\n\n#xframe-exergy .exergy-card > a:hover {\n  text-decoration: underline;\n}\n\n#myos.segment {\n  --accent: #1a7a7a;\n  --cyan: #2bb8c8;\n  --ink: #0b1620;\n  --fg: #0b1620;\n  --muted: #4a5c66;\n  --line: rgba(26, 122, 122, 0.18);\n  --border: rgba(26, 122, 122, 0.18);\n  --card: #ffffff;\n  --surface-bg: #ffffff;\n  background:\n    radial-gradient(circle at 92% 8%, rgba(43, 184, 200, 0.12), transparent 26%),\n    radial-gradient(circle at 8% 92%, rgba(26, 122, 122, 0.08), transparent 30%),\n    #eef4f5;\n  color: var(--ink);\n}\n\n/* Common thread — centered conclusion composition */\n#common-thread.segment {\n  overflow: hidden;\n}\n\n#common-thread .slide-frame-main {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  gap: 0.7rem;\n  text-align: center;\n}\n\n#common-thread .slide-frame-main > h1 {\n  max-width: none;\n  margin: 0 auto;\n  color: var(--accent);\n  font-size: clamp(0.78rem, 1.4vw, 0.9rem);\n  font-weight: 820;\n  letter-spacing: 0.16em;\n  line-height: 1.2;\n  text-align: center;\n  text-transform: uppercase;\n}\n\n#common-thread .slide-frame-main > h1::after {\n  display: none;\n}\n\n#common-thread .slide-frame-main > h2 {\n  max-width: min(42rem, 100%);\n  margin: 0.15rem auto 0;\n  color: var(--ink, var(--fg));\n  font-size: clamp(1.75rem, 3vw, 2.35rem);\n  font-weight: 780;\n  letter-spacing: -0.03em;\n  line-height: 1.15;\n  text-align: center;\n}\n\n#common-thread .lede {\n  max-width: 42ch;\n  margin: 0.35rem auto 0;\n  color: var(--muted);\n  font-size: 1.1rem;\n  text-align: center;\n}\n\n#common-thread .thread-grid {\n  display: grid;\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n  gap: 0.7rem;\n  width: min(40rem, 100%);\n  margin: 1rem auto 0;\n}\n\n#common-thread .thread-grid > p {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 0.55rem;\n  margin: 0;\n  padding: 0.95rem 1.05rem;\n  border: 1px solid var(--line, var(--border));\n  border-radius: 0.85rem;\n  background: var(--card, var(--surface-bg));\n  box-shadow: 0 0.45rem 1.2rem rgba(24, 62, 108, 0.05);\n  font-size: 1.02rem;\n}\n\n#common-thread .thread-grid span {\n  color: var(--muted);\n  font-weight: 550;\n}\n\n#common-thread .thread-grid i {\n  color: var(--accent);\n  font-style: normal;\n  font-weight: 800;\n}\n\n#common-thread .thread-grid strong {\n  color: var(--ink, var(--fg));\n  font-weight: 750;\n}\n\n#common-thread .thread-scope {\n  max-width: 46ch;\n  margin: 1.1rem auto 0;\n  color: var(--muted);\n  font-size: 1.02rem;\n  line-height: 1.4;\n}\n\n#common-thread .thread-principle {\n  max-width: 38ch;\n  margin: 0.55rem auto 0;\n  padding: 0.95rem 1.2rem;\n  border-left: 0.28rem solid var(--accent);\n  border-radius: 0 0.85rem 0.85rem 0;\n  background: linear-gradient(90deg, rgba(31, 111, 235, 0.1), rgba(43, 184, 200, 0.06));\n  color: var(--ink, var(--fg));\n  font-size: 1.12rem;\n  font-weight: 650;\n  line-height: 1.35;\n  text-align: left;\n}\n\n/* Full HD video capture — slightly roomier career/Exergy layouts */\n#xframe[data-xframe-format=\"video\"] .career_highlight .horizontal-split-left > h2 {\n  font-size: clamp(1.55rem, 2.2vw, 2.05rem);\n}\n\n#xframe[data-xframe-format=\"video\"] #xframe-exergy .exergy-card {\n  padding: 1.15rem 1.25rem 1.05rem;\n  gap: 0.55rem;\n}\n\n#xframe[data-xframe-format=\"video\"] #xframe-exergy .horizontal-split-right {\n  gap: 1.05rem;\n}\n```"
     },
     {
       "kind": "style",
@@ -8340,6 +8353,17 @@
         "v": 1,
         "f": 9
       }
+    }
+  },
+  "pipeline": {
+    "select": {
+      "status": "done",
+      "source_segments": 15,
+      "method": "slides",
+      "slides": "1-15"
+    },
+    "resolve": {
+      "status": "pending"
     }
   }
 }
