@@ -1677,7 +1677,7 @@ a.xframe-snapshot:hover img { filter: brightness(1.03); }
   line-height: 1.35;
 }
 
-#intake .xframe-input-control:has(#xframe-input-specific_opportunity) textarea {
+#intake .xframe-input-control:has(#xframe-input-specific_opportunity):not(.is-expanded) textarea {
   flex: 0 0 auto;
   height: 2.75rem !important;
   min-height: 2.75rem !important;
@@ -1873,10 +1873,14 @@ a.xframe-snapshot:hover img { filter: brightness(1.03); }
   };
 
   specific.addEventListener("input", sync);
+  general.addEventListener("input", sync);
   // Template hydration may fill values after this script runs.
-  document.getElementById("xframe")?.addEventListener("xframe:slidechange", sync);
+  const root = document.getElementById("xframe");
+  root?.addEventListener("xframe:slidechange", sync);
+  root?.addEventListener("xframe:input-hydrated", sync);
   queueMicrotask(sync);
   setTimeout(sync, 0);
+  requestAnimationFrame(sync);
   sync();
 })();</script>
     <button type="button" class="xframe-button-control" data-xframe-control="button" data-xframe-action="generate-journey" data-align="center">Apply guidance</button>
@@ -10528,6 +10532,10 @@ ${indent}${end}`;
         if (target.dataset.xframeTemplateProperty === "value" && (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)) {
           target.value = rendered;
           target.dispatchEvent(new Event("input", { bubbles: true }));
+          root2.dispatchEvent(new CustomEvent("xframe:input-hydrated", {
+            bubbles: true,
+            detail: { target, name: target.name || void 0 }
+          }));
         } else if (target.dataset.xframeTemplateProperty === "show") {
           const normalized = rendered.trim().toLowerCase();
           target.hidden = !normalized || normalized === "false" || normalized === "0" || normalized === "none";
