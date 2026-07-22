@@ -73,7 +73,10 @@ body {
 }
 /* presentation:slidedeck — positioning-independent content rules */
 #xframe { overflow: visible; }
-#xframe:fullscreen { width: 100vw; height: 100vh; border: 0; border-radius: 0; box-shadow: none; }
+:root:fullscreen,
+:root:fullscreen body { overflow: hidden; }
+:root:fullscreen body { padding: 0; }
+:root:fullscreen #xframe { border: 0; border-radius: 0; box-shadow: none; overflow: hidden; }
 .segment { position: absolute; inset: 0; padding: 2.4rem 2.8rem; display: none; overflow: auto; }
 .segment h1, .segment h2, .segment h3, .segment h4, .segment h5, .segment h6 { margin: 0; line-height: 1.2; color: var(--fg); }
 .segment h1 { font-size: 2.65rem; line-height: 1.05; }
@@ -98,7 +101,8 @@ body {
 .layout-container.layout-stack { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; min-width: 0; }
 .layout-container[data-layout-direction="horizontal"] { flex-direction: row; }
 #xframe > .layout-container { height: 100%; }
-#xframe:fullscreen .layout-controls { top: auto; bottom: 1rem; }
+:root:fullscreen .layout-controls { top: auto; bottom: 2.25rem; }
+:root:fullscreen .xframe-narrative-dock { top: auto; bottom: 2.25rem; right: 1.5rem; left: auto; }
 .layout-segments { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; }
 .layout-container > :is(.region, .layout-container) {
   flex-grow: var(--layout-weight, 0);
@@ -2740,13 +2744,53 @@ window.__XFRAME__.runtime.register("hud", (runtime) => {
     return Number.isNaN(value) ? 0 : clampIndex(value - 1);
   };
 
-  const fitCanvas = () => {
-    if (document.fullscreenElement === root) {
-      root.style.transform = "";
+  const canvasSize = () => {
+    const styles = getComputedStyle(document.documentElement);
+    const w = Number.parseFloat(styles.getPropertyValue("--canvas-w"));
+    const h = Number.parseFloat(styles.getPropertyValue("--canvas-h"));
+    return {
+      w: Number.isFinite(w) && w > 0 ? w : (root.offsetWidth || 1),
+      h: Number.isFinite(h) && h > 0 ? h : (root.offsetHeight || 1),
+    };
+  };
+
+  const isFullscreen = () => Boolean(document.fullscreenElement);
+
+  const syncFullscreenBackdrop = () => {
+    const doc = document.documentElement;
+    const body = document.body;
+    if (!isFullscreen()) {
+      doc.style.background = "";
+      body.style.background = "";
       return;
     }
-    const w = root.offsetWidth || 1;
-    const h = root.offsetHeight || 1;
+    const active = slides.find((slide) => slide.classList.contains("active"));
+    let source = root;
+    if (active instanceof HTMLElement) {
+      const bg = getComputedStyle(active).backgroundColor;
+      if (bg && bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent") source = active;
+    }
+    const canvasBg = getComputedStyle(source).background;
+    doc.style.background = canvasBg;
+    body.style.background = canvasBg;
+  };
+
+  const fitCanvas = () => {
+    const { w, h } = canvasSize();
+    if (isFullscreen()) {
+      syncFullscreenBackdrop();
+      const padX = 20;
+      const padTop = 28;
+      const padBottom = 56;
+      const availW = Math.max(window.innerWidth - padX * 2, 1);
+      const availH = Math.max(window.innerHeight - padTop - padBottom, 1);
+      const scale = Math.max(availW / w, availH / h);
+      root.style.transformOrigin = "center center";
+      root.style.transform = "scale(" + scale + ")";
+      return;
+    }
+    syncFullscreenBackdrop();
+    root.style.transformOrigin = "";
     const chrome = hud ? hud.offsetHeight + 16 : 0;
     const scale = Math.min((window.innerWidth * 0.92) / w, (window.innerHeight * 0.82) / (h + chrome), 1);
     root.style.transform = "scale(" + scale + ")";
@@ -2782,6 +2826,7 @@ window.__XFRAME__.runtime.register("hud", (runtime) => {
       try { history.replaceState(null, "", hash); } catch {}
     }
     root.dispatchEvent(new CustomEvent("xframe:slidechange", { detail: { index } }));
+    if (isFullscreen()) syncFullscreenBackdrop();
   };
 
   const cycleTheme = () => {
@@ -2790,6 +2835,7 @@ window.__XFRAME__.runtime.register("hud", (runtime) => {
     const at = deckThemes.indexOf(current);
     const nextTheme = deckThemes[(at < 0 ? 0 : at + 1) % deckThemes.length];
     applyTheme(nextTheme);
+    if (isFullscreen()) syncFullscreenBackdrop();
   };
 
   const cycleFormat = () => {
@@ -2805,7 +2851,7 @@ window.__XFRAME__.runtime.register("hud", (runtime) => {
 
   const updateFullscreenControl = () => {
     if (!fullscreenButton) return;
-    const active = document.fullscreenElement === root;
+    const active = isFullscreen();
     fullscreenButton.textContent = active ? "⤢" : "⛶";
     fullscreenButton.title = active ? "Exit full screen (f)" : "Enter full screen (f)";
     fullscreenButton.setAttribute("aria-label", active ? "Exit full screen" : "Enter full screen");
@@ -2813,8 +2859,8 @@ window.__XFRAME__.runtime.register("hud", (runtime) => {
 
   const toggleFullscreen = async () => {
     try {
-      if (document.fullscreenElement === root) await document.exitFullscreen();
-      else await root.requestFullscreen();
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
     } catch {}
   };
 
