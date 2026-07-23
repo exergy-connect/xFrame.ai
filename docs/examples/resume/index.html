@@ -4287,8 +4287,37 @@ window.__XFRAME__.runtime.register("narrative", { import: ["language.applyLangua
       (node) => Number(node.dataset.xframeNarrativeSlide) === index,
     );
     if (!slide) return false;
-    const audios = [...slide.querySelectorAll("audio[data-narrative-audio]")]
+    let audios = [...slide.querySelectorAll("audio[data-narrative-audio]")]
       .filter((audio) => audio instanceof HTMLAudioElement && !audio.hidden);
+    if (!audios.length) {
+      const speak = slide.querySelector("[data-narrative-speak]:not([hidden])");
+      if (speak instanceof HTMLButtonElement
+        && speak.dataset.xframeSpeakState === "ready") {
+        speak.dataset.xframeWalkthroughRequested = "true";
+        speak.click();
+        const started = performance.now();
+        let synthesisStarted = false;
+        await new Promise((resolve) => {
+          const check = () => {
+            const generated = slide.querySelector(
+              "audio[data-narrative-audio][data-xframe-gemini-tts]",
+            );
+            synthesisStarted ||= speak.dataset.xframeTtsBusy === "true";
+            if (generated instanceof HTMLAudioElement
+              || id !== playbackId
+              || (synthesisStarted && speak.dataset.xframeTtsBusy !== "true")
+              || performance.now() - started >= 60000) {
+              resolve();
+              return;
+            }
+            requestAnimationFrame(check);
+          };
+          requestAnimationFrame(check);
+        });
+        audios = [...slide.querySelectorAll("audio[data-narrative-audio]")]
+          .filter((audio) => audio instanceof HTMLAudioElement && !audio.hidden);
+      }
+    }
     if (!audios.length) return false;
     let played = false;
     for (const audio of audios) {
@@ -12301,10 +12330,15 @@ ${indent}${end}`;
         const audio = mountNarrativeGeminiAudio(narrative, resolvedLocale, objectUrl, text);
         delete button.dataset.xframeTtsBusy;
         console.debug("[xFrame] TTS audio mounted", { provider, locale: resolvedLocale, src: objectUrl.slice(0, 32) });
-        await audio.play().catch((error) => {
-          console.debug("[xFrame] TTS autoplay blocked; controls available", error);
-        });
+        const walkthroughRequested = button.dataset.xframeWalkthroughRequested === "true";
+        delete button.dataset.xframeWalkthroughRequested;
+        if (!walkthroughRequested) {
+          await audio.play().catch((error) => {
+            console.debug("[xFrame] TTS autoplay blocked; controls available", error);
+          });
+        }
       } catch (error) {
+        delete button.dataset.xframeWalkthroughRequested;
         delete button.dataset.xframeTtsBusy;
         console.debug("[xFrame] TTS synthesize failed", error);
         setSpeakButtonState(button, "ready");
