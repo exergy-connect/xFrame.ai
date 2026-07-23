@@ -4534,11 +4534,9 @@ window.__XFRAME__.runtime.register("walkthrough", { import: ["hud.goTo"] }, (run
   const start = (fromBeginning = false) => {
     runtime.narrative?.stop?.();
     runId += 1;
-    if (suggestedPath.length && (fromBeginning || state === "complete"
-      || !suggestedPath.includes(runtime.hud.index))) {
-      runtime.hud.goTo(suggestedPath[0], "walkthrough");
-    } else if (fromBeginning || state === "complete") {
-      runtime.hud.goTo(0, "walkthrough");
+    const restart = fromBeginning || state === "complete";
+    if (restart) {
+      runtime.hud.goTo(suggestedPath.length ? suggestedPath[0] : 0, "walkthrough");
     }
     setState("playing");
     void run(runId);
