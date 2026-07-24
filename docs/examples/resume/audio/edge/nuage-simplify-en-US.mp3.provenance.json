@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "provider": "edge",
+  "model": "en-US-AndrewNeural",
+  "generated_at": "2026-07-24T04:03:14.970Z",
+  "content_hash": "9f9ea43abdd8ce7c301f62202edbc2927140404f33a5f3417a828dae92aac4d8"
+}
