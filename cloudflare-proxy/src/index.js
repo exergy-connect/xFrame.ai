@@ -365,8 +365,6 @@ async function mintInvite(request, env, cors = {}) {
   // Day-mode defaults use local midnight for "today", which can be almost a day ago in UTC.
   if (notBefore < Date.now() - 36 * 60 * 60_000) throw new ClientError(400, "notBefore is too far in the past");
   if (expiresAt <= Math.max(notBefore, Date.now())) throw new ClientError(400, "expiresAt must be after notBefore");
-  const maxWindow = positiveInt(env.INVITE_MAX_WINDOW_SECONDS, 30 * 24 * 60 * 60) * 1000;
-  if (expiresAt - notBefore > maxWindow) throw new ClientError(400, "Invite time window is too long");
   const calls = Number(body.calls);
   const maxCalls = positiveInt(env.INVITE_MAX_CALLS, 20);
   if (!Number.isInteger(calls) || calls < 1 || calls > maxCalls) {
