@@ -41,8 +41,8 @@ are separate concepts.
 | `index.html` | Browser demo that compiles via HTTP URLs. |
 | `topology.xp` | Lab content: `addressing` + sparse `topology`, `_document._target: containerlab.deploy`. |
 | `templates/_final/clab.yml.xpt` | Final emission (multi-file segment stream → `output/…`). |
-| `templates/devices/frr.xpt` | Device config concept (`devices: frr`). |
-| `templates/modules/bgp.xpt` | Protocol module concept (`modules: bgp`). |
+| `templates/devices/frr.xpt` | Device concept (`devices: frr`) — conf `#1`, initialize `#2`. |
+| `templates/modules/bgp.xpt` | Module concept (`modules: bgp`) — conf `#1`, `bgpd=yes` `#2`. |
 | `semantic-lab.test.ts` | Tests for emission / `assign_ips` (used in the xForm package test suite). |
 
 Compose sources in order: **framework → topology** (later overrides earlier).
@@ -54,9 +54,26 @@ The framework `{% include %}`s its filter modules.
 addressing + topology (sparse)
   → create._transform: _input | normalize_links | assign_ips(addressing)
   → addressed model (nodes, links, interface IPs, BGP neighbors…)
-  → --final clab.yml  →  output/clab.yml + output/config/*.conf
+  → --final clab.yml  →  output/clab.yml + config/*.conf + *-initialize.sh + lab.sh
   → (optional) containerlab.deploy using topology_file
 ```
+
+`normalize_links` folds author `loopback:` into a typed entry on `node.interfaces`.
+`assign_ips` only assigns addresses. Device templates iterate `node.interfaces`
+without special-casing loopback.
+
+## Template concepts
+
+| Concept | Templates |
+|---------|-----------|
+| `_final` | `templates/_final/clab.yml.xpt` — Containerlab + per-node configs + `lab.sh` |
+| `devices` | `templates/devices/frr.xpt` — `#1` FRR conf, `#2` self-starting `initialize.sh` |
+| `modules` | `templates/modules/bgp.xpt` — `#1` BGP stanza, `#2` enables `bgpd` in daemons |
+
+Each FRR node bind-mounts `frr.conf` and `initialize.sh`. The container entrypoint
+runs `initialize.sh`, which writes `/etc/frr/daemons` (module `#2` fragments such as
+`bgpd=yes`), waits for Containerlab data interfaces, starts FRR, and applies initial
+vtysh config.
 
 ## Browser demo
 
@@ -119,15 +136,40 @@ node skills/xform/scripts/xform.min.js \
   --approval <hash>
 ```
 
+## Lab CLI
+
+After deploy, from `docs/examples/xform-semantic-lab/output/`:
+
+```bash
+./lab.sh          # new bash with lab helpers (or: bash lab.sh)
+# — or —
+source lab.sh     # load helpers into the current shell
+```
+
+Then:
+
+```text
+dut                     # interactive vtysh on dut
+dut show bgp summary    # one-shot command
+x1 shell                # bash inside x1
+nodes                   # list node names
+status                  # containerlab inspect
+```
+
+Node names are functions with tab-completion for `show` / `configure` / `shell`.
+Inside vtysh, FRR's own completion still applies.
+
 ## Artifacts
 
 | Path | Content |
 |------|---------|
 | `output/semantic-lab-fw.json` | Full compile tree (named after the first document source) |
-| `output/clab.yml` | Containerlab topology |
+| `output/clab.yml` | Containerlab topology (binds conf + initialize.sh; entrypoint runs init) |
 | `output/config/dut.conf` | FRR config for `dut` |
 | `output/config/x1.conf` | FRR config for `x1` |
 | `output/config/x2.conf` | FRR config for `x2` |
+| `output/config/*-initialize.sh` | Per-node FRR entrypoint (daemons + host prep + vtysh) |
+| `output/lab.sh` | Sourceable / executable bash CLI with node helpers + completion |
 
 ## Takeaways for building similar tooling
 

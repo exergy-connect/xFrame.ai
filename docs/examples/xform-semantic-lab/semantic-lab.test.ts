@@ -32,11 +32,25 @@ test("semantic lab example emits Containerlab and device configs", async () => {
   const nodes = addressed.nodes;
   assert.equal((nodes.dut.mgmt as { ipv4: string }).ipv4, "192.168.121.101");
   assert.equal(
-    (nodes.dut.interfaces as Array<{ ipv4: string }>)[0].ipv4,
+    (nodes.dut.interfaces as Array<{ ifname: string; ipv4: string }>).find(
+      (i) => i.ifname === "eth1",
+    )?.ipv4,
     "10.1.0.1/30",
   );
   assert.equal(
+    (nodes.dut.interfaces as Array<{ ifname: string; type?: string }>).find(
+      (i) => i.type === "loopback",
+    )?.ifname,
+    "lo",
+  );
+  assert.equal(
     (nodes.x2.loopback as { ipv4: string }).ipv4,
+    "172.42.42.1/24",
+  );
+  assert.equal(
+    (nodes.x2.interfaces as Array<{ ifname: string; ipv4: string }>).find(
+      (i) => i.ifname === "lo",
+    )?.ipv4,
     "172.42.42.1/24",
   );
   const result = await emitFinal(tree, "clab.yml", { baseDir: labDir });
@@ -51,6 +65,32 @@ test("semantic lab example emits Containerlab and device configs", async () => {
   assert.match(byPath["config/x1.conf"]!, /router bgp 65100/);
   assert.match(byPath["config/x2.conf"]!, /network 172\.42\.42\.0\/24/);
   assert.match(byPath["config/x2.conf"]!, /ip address 172\.42\.42\.1\/24/);
+
+  assert.match(byPath["clab.yml"]!, /config\/dut-initialize\.sh:\/etc\/config\/initialize\.sh/);
+  assert.match(byPath["clab.yml"]!, /entrypoint: \/bin\/bash/);
+  assert.match(byPath["clab.yml"]!, /cmd: \/etc\/config\/initialize\.sh/);
+  assert.doesNotMatch(byPath["clab.yml"]!, /^\s*exec:/m);
+  assert.doesNotMatch(byPath["clab.yml"]!, /\/etc\/frr\/daemons/);
+
+  const dutInit = byPath["config/dut-initialize.sh"]!;
+  assert.ok(dutInit);
+  assert.match(dutInit, /^#!\/bin\/bash/m);
+  assert.match(dutInit, /ip link add mgmt type vrf/);
+  assert.match(dutInit, /bgpd=yes/);
+  assert.match(dutInit, /\/usr\/lib\/frr\/docker-start/);
+  assert.match(dutInit, /^wait$/m);
+  assert.match(byPath["config/x1-initialize.sh"]!, /bgpd=yes/);
+  assert.match(byPath["config/x2-initialize.sh"]!, /hostname x2/);
+
+  const labSh = byPath["lab.sh"]!;
+  assert.ok(labSh);
+  assert.match(labSh, /^#!\/usr\/bin\/env bash/m);
+  assert.match(labSh, /_LAB_NODES=\(dut x1 x2/);
+  assert.match(labSh, /^dut\(\)/m);
+  assert.match(labSh, /^x1\(\)/m);
+  assert.match(labSh, /^x2\(\)/m);
+  assert.match(labSh, /complete -o default -F _lab_complete_node_cmds dut/);
+  assert.match(labSh, /exec bash --rcfile/);
 });
 
 test("assign_ips only fills addresses the author left out", async () => {
@@ -82,7 +122,7 @@ test("assign_ips only fills addresses the author left out", async () => {
       string,
       {
         mgmt: { ipv4: string };
-        interfaces: Array<{ ipv4: string }>;
+        interfaces: Array<{ ifname: string; ipv4: string }>;
         bgp: { neighbors: Array<{ name: string; ipv4: string }> };
       }
     >;
@@ -90,8 +130,14 @@ test("assign_ips only fills addresses the author left out", async () => {
 
   assert.equal(addressed.nodes.b!.mgmt.ipv4, "192.168.121.50");
   assert.equal(addressed.nodes.a!.mgmt.ipv4, "192.168.121.101");
-  assert.equal(addressed.nodes.b!.interfaces[0]!.ipv4, "192.0.2.99/24");
-  assert.equal(addressed.nodes.a!.interfaces[0]!.ipv4, "10.1.0.1/30");
+  assert.equal(
+    addressed.nodes.b!.interfaces.find((i) => i.ifname === "eth1")!.ipv4,
+    "192.0.2.99/24",
+  );
+  assert.equal(
+    addressed.nodes.a!.interfaces.find((i) => i.ifname === "eth1")!.ipv4,
+    "10.1.0.1/30",
+  );
   assert.equal(addressed.nodes.a!.bgp.neighbors[0]!.ipv4, "192.0.2.99");
 });
 

@@ -1,6 +1,7 @@
 /**
  * Assign mgmt/loopback/link addresses and BGP neighbor IPs from pools.
- * Expects links already normalized (`interfaces: [{ node }, ...]`).
+ * Expects `normalize_links` first (links as `interfaces: [{ node }, ...]`,
+ * and each node with a `type: loopback` entry on `interfaces`).
  * Author-specified addresses are kept, but must be usable hosts in the
  * relevant pool / link subnet (not network or broadcast).
  */
@@ -93,48 +94,54 @@ export function ip_assign(topology, addressing) {
       node.mgmt.ipv6 = ipv6_host(mgmt.ipv6, mgmtStart + id);
     }
 
-    node.loopback = node.loopback ?? {};
-    node.loopback.ifname = node.loopback.ifname ?? "lo";
+    // Loopback addressing targets the loopback interface created by normalize_links.
+    const lb = node.interfaces.find((iface) => iface?.type === "loopback");
+    if (!lb) {
+      throw new Error(
+        `Node ${nname} is missing a loopback interface (run normalize_links first)`,
+      );
+    }
+    node.loopback = lb;
 
     // Loopback may intentionally sit outside the pool (e.g. a custom advertise
     // prefix). When the author supplies a CIDR, only check it is a usable host
     // in that prefix; bare addresses still require the loopback pool.
-    if (isAssignedAddress(node.loopback.ipv4)) {
-      const hasPrefix = String(node.loopback.ipv4).includes("/");
-      validateAuthorIPv4(node.loopback.ipv4, {
+    if (isAssignedAddress(lb.ipv4)) {
+      const hasPrefix = String(lb.ipv4).includes("/");
+      validateAuthorIPv4(lb.ipv4, {
         pool: hasPrefix ? undefined : loopbackPool.ipv4,
         label: `Node ${nname} loopback.ipv4`,
       });
-    } else if (loopbackPool.ipv4 && node.loopback.ipv4 == null) {
-      node.loopback.ipv4 = `${ipv4_host(loopbackPool.ipv4, id)}/${loopbackPrefix}`;
+    } else if (loopbackPool.ipv4 && lb.ipv4 == null) {
+      lb.ipv4 = `${ipv4_host(loopbackPool.ipv4, id)}/${loopbackPrefix}`;
     }
 
-    if (isAssignedAddress(node.loopback.ipv6)) {
-      const hasPrefix = String(node.loopback.ipv6).includes("/");
-      validateAuthorIPv6(node.loopback.ipv6, {
+    if (isAssignedAddress(lb.ipv6)) {
+      const hasPrefix = String(lb.ipv6).includes("/");
+      validateAuthorIPv6(lb.ipv6, {
         pool: hasPrefix ? undefined : loopbackPool.ipv6,
         label: `Node ${nname} loopback.ipv6`,
       });
-    } else if (loopbackPool.ipv6 && node.loopback.ipv6 == null) {
+    } else if (loopbackPool.ipv6 && lb.ipv6 == null) {
       const p6 = Number(loopbackPool.prefix6 ?? 128);
-      node.loopback.ipv6 = `${ipv6_host(loopbackPool.ipv6, id)}/${p6}`;
+      lb.ipv6 = `${ipv6_host(loopbackPool.ipv6, id)}/${p6}`;
     }
 
     node.bgp = node.bgp ?? {};
-    if (node.bgp.router_id == null && node.loopback.ipv4) {
-      node.bgp.router_id = ip_address(node.loopback.ipv4);
+    if (node.bgp.router_id == null && lb.ipv4) {
+      node.bgp.router_id = ip_address(lb.ipv4);
     }
-    if (node.bgp.ipv4 == null && node.loopback.ipv4) {
+    if (node.bgp.ipv4 == null && lb.ipv4) {
       node.bgp.ipv4 = true;
     }
-    if (node.bgp.ipv6 == null && node.loopback.ipv6) {
+    if (node.bgp.ipv6 == null && lb.ipv6) {
       node.bgp.ipv6 = true;
     }
     if (
       (node.bgp.advertise == null || node.bgp.advertise.length === 0) &&
-      node.loopback.ipv4
+      lb.ipv4
     ) {
-      node.bgp.advertise = [{ ipv4: ipv4_network(node.loopback.ipv4) }];
+      node.bgp.advertise = [{ ipv4: ipv4_network(lb.ipv4) }];
     }
 
     nodes[nname] = node;

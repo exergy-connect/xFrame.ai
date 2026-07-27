@@ -1,5 +1,6 @@
 /**
- * Normalize topology.links into dicts with interfaces[].
+ * Normalize topology.links into dicts with interfaces[], and fold each node's
+ * author `loopback` shorthand into a typed loopback entry on `node.interfaces`.
  */
 
 function clone(value) {
@@ -8,6 +9,10 @@ function clone(value) {
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isAssigned(value) {
+  return typeof value === "string" && value.trim() !== "";
 }
 
 function adjustLinkObject(link, linkname, nodes) {
@@ -81,6 +86,37 @@ function adjustInterfaceList(iflist, linkname, nodes) {
   return out;
 }
 
+/**
+ * Ensure each node has a loopback interface on `interfaces` (from author
+ * `loopback:` shorthand or a default `lo`). `node.loopback` aliases that entry.
+ */
+function ensureLoopbackInterface(node) {
+  node.interfaces = Array.isArray(node.interfaces) ? [...node.interfaces] : [];
+  const author = isPlainObject(node.loopback) ? clone(node.loopback) : {};
+  let lb = node.interfaces.find((iface) => iface?.type === "loopback");
+  if (!lb) {
+    lb = {
+      type: "loopback",
+      ifname: author.ifname ?? "lo",
+      ifindex: 0,
+      ...(isAssigned(author.ipv4) ? { ipv4: author.ipv4 } : {}),
+      ...(isAssigned(author.ipv6) ? { ipv6: author.ipv6 } : {}),
+    };
+    node.interfaces.unshift(lb);
+  } else {
+    lb.type = "loopback";
+    lb.ifname = lb.ifname ?? author.ifname ?? "lo";
+    lb.ifindex = lb.ifindex ?? 0;
+    if (isAssigned(author.ipv4) && !isAssigned(lb.ipv4)) {
+      lb.ipv4 = author.ipv4;
+    }
+    if (isAssigned(author.ipv6) && !isAssigned(lb.ipv6)) {
+      lb.ipv6 = author.ipv6;
+    }
+  }
+  node.loopback = lb;
+}
+
 export function normalize_links(topology) {
   if (!isPlainObject(topology)) {
     throw new Error("normalize_links requires a topology mapping");
@@ -94,8 +130,14 @@ export function normalize_links(topology) {
     throw new Error("normalize_links requires topology.links to be a list");
   }
   const out = clone(topology);
+  out.nodes = {};
+  for (const [nname, raw] of Object.entries(nodes)) {
+    const node = clone(raw) ?? {};
+    ensureLoopbackInterface(node);
+    out.nodes[nname] = node;
+  }
   out.links = rawLinks.map((link, idx) =>
-    adjustLinkObject(link, `links[${idx + 1}]`, nodes),
+    adjustLinkObject(link, `links[${idx + 1}]`, out.nodes),
   );
   return out;
 }

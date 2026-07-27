@@ -42,3 +42,6 @@ router bgp {{ node.bgp.as }}
 {% endif %}
 !
 ...
+---
+bgpd=yes
+...
