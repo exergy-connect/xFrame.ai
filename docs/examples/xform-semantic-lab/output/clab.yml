@@ -2,7 +2,7 @@ name: ebgp-session
 prefix: ""
 
 mgmt:
-  network: netlab_mgmt
+  network: lab_mgmt
   ipv4-subnet: 192.168.121.0/24
 
 topology:

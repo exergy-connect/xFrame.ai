@@ -1,5 +1,5 @@
 ---
-# Local lab topology — sparse authoring for netlab tests/integration/bgp/01-ebgp-session.yml.
+# Local lab topology — sparse eBGP session example for semantic lab tests.
 # Addressing pools + topology.nodes/links; containerlab.create (framework) assigns IPs.
 
 name: ebgp-session
@@ -15,10 +15,10 @@ _document:
   modules: bgp
   _target: containerlab.deploy
 
-# Pools (netlab defaults/addressing.yml subset)
+# Address pools (lab addressing defaults)
 addressing:
   mgmt:
-    network: netlab_mgmt
+    network: lab_mgmt
     ipv4: 192.168.121.0/24
     start: 100
   loopback:

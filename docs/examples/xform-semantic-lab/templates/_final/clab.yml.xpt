@@ -11,7 +11,7 @@ name: {{ name }}
 prefix: ""
 
 mgmt:
-  network: {{ addressing.mgmt.network | default('netlab_mgmt') }}
+  network: {{ addressing.mgmt.network | default('lab_mgmt') }}
   ipv4-subnet: {{ addressing.mgmt.ipv4 | default('192.168.121.0/24') }}
 
 topology:

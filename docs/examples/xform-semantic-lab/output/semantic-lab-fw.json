@@ -1,33 +1,33 @@
 {
   "_meta": {
-    "createdAt": "2026-07-27T20:44:27.905Z",
-    "modifiedAt": "2026-07-27T20:44:27.905Z",
+    "createdAt": "2026-07-27T21:32:50.473Z",
+    "modifiedAt": "2026-07-27T21:32:50.473Z",
     "version": "0.1.0"
   },
   "_sources": [
     {
-      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-netlab/netlab-fw.xpt",
-      "hash": "sha256:9b849c6e11eb945c5746536c53c57822d7716e804a2d76cfc454bac1b656f321",
-      "createdAt": "2026-07-27T20:44:23.041Z",
-      "modifiedAt": "2026-07-27T20:44:23.041Z"
+      "path": "file:///home/jbemmel/Projects/xFrame/xFrame.ai/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt",
+      "hash": "sha256:f383f09e3e99fb73fc75e7eadf757202230f4d596a6cba24e226de7bb2d86385",
+      "createdAt": "2026-07-27T21:32:43.210Z",
+      "modifiedAt": "2026-07-27T21:32:43.210Z"
     },
     {
-      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-netlab/topology.xp",
-      "hash": "sha256:c8131525b5ae10561a85f16d9229b450a088b2531881a3acf8e00a9d300892ad",
-      "createdAt": "2026-07-27T20:44:23.042Z",
-      "modifiedAt": "2026-07-27T20:44:23.042Z"
+      "path": "file:///home/jbemmel/Projects/xFrame/xFrame.ai/docs/examples/xform-semantic-lab/topology.xp",
+      "hash": "sha256:65c9e63829112db1d9bfebab191f89cf35f9062f3eb1048246001a1ead02ecb8",
+      "createdAt": "2026-07-27T21:32:43.210Z",
+      "modifiedAt": "2026-07-27T21:32:43.210Z"
     },
     {
-      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-netlab/templates/devices/frr.xpt",
-      "hash": "sha256:d7898e93395ef9baec808f1d7d7a0b2e923ce8401a31c3982c34d1d6d58da870",
-      "createdAt": "2026-07-27T20:44:23.042Z",
-      "modifiedAt": "2026-07-27T20:44:23.042Z"
+      "path": "file:///home/jbemmel/Projects/xFrame/xFrame.ai/docs/examples/xform-semantic-lab/templates/devices/frr.xpt",
+      "hash": "sha256:01833302c90b42542e508fb8183836174e4ea58a5bda7f621d19e1f6161b5c07",
+      "createdAt": "2026-07-27T21:32:43.210Z",
+      "modifiedAt": "2026-07-27T21:32:43.210Z"
     },
     {
-      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-netlab/templates/modules/bgp.xpt",
-      "hash": "sha256:6a92840c88027d5e5c4bfabe5f5f1246b4a9ded991a606f196be5e3b9e0db218",
-      "createdAt": "2026-07-27T20:44:23.042Z",
-      "modifiedAt": "2026-07-27T20:44:23.042Z"
+      "path": "file:///home/jbemmel/Projects/xFrame/xFrame.ai/docs/examples/xform-semantic-lab/templates/modules/bgp.xpt",
+      "hash": "sha256:c36429f4e568ee173481287e393eeda5187092a12a3ab4991aad05313b00da48",
+      "createdAt": "2026-07-27T21:32:43.210Z",
+      "modifiedAt": "2026-07-27T21:32:43.210Z"
     }
   ],
   "_concepts": {
@@ -37,13 +37,13 @@
     "devices": {
       "_templates": "file://./templates/devices/",
       "_resolved": {
-        "template": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-netlab/templates/devices/frr.xpt"
+        "template": "file:///home/jbemmel/Projects/xFrame/xFrame.ai/docs/examples/xform-semantic-lab/templates/devices/frr.xpt"
       }
     },
     "modules": {
       "_templates": "file://./templates/modules/",
       "_resolved": {
-        "template": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-netlab/templates/modules/bgp.xpt"
+        "template": "file:///home/jbemmel/Projects/xFrame/xFrame.ai/docs/examples/xform-semantic-lab/templates/modules/bgp.xpt"
       }
     },
     "_capability": {
@@ -112,7 +112,7 @@
     ],
     "addressing": {
       "mgmt": {
-        "network": "netlab_mgmt",
+        "network": "lab_mgmt",
         "ipv4": "192.168.121.0/24",
         "start": 100
       },
@@ -416,7 +416,7 @@
     "provenance": {
       "source": 0,
       "line": 23,
-      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-netlab/netlab-fw.xpt"
+      "path": "file:///home/jbemmel/Projects/xFrame/xFrame.ai/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt"
     },
     "decisions": []
   }

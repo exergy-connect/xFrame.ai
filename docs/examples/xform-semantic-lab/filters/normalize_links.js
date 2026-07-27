@@ -1,6 +1,5 @@
 /**
- * Normalize topology.links into dicts with interfaces[]
- * (netlab netsim/augment/links.py adjust_link_object / adjust_link_list).
+ * Normalize topology.links into dicts with interfaces[].
  */
 
 function clone(value) {

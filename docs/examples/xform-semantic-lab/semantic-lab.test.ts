@@ -7,10 +7,10 @@ import { emitFinal, isFinalFilesBundle } from "../../src/api/final.js";
 import { DOCUMENT_EXT } from "../../src/shared/constants.js";
 import { loadFilterFiles } from "../../src/pipeline/loadFilters.js";
 
-const netlabDir = path.dirname(fileURLToPath(import.meta.url));
-const filterDir = path.join(netlabDir, "filters");
+const labDir = path.dirname(fileURLToPath(import.meta.url));
+const filterDir = path.join(labDir, "filters");
 
-async function loadNetlabFilters() {
+async function loadLabFilters() {
   return loadFilterFiles([
     path.join(filterDir, "ip.js"),
     path.join(filterDir, "normalize_links.js"),
@@ -18,13 +18,13 @@ async function loadNetlabFilters() {
   ]);
 }
 
-test("netlab example emits Containerlab and device configs", async () => {
+test("semantic lab example emits Containerlab and device configs", async () => {
   const tree = await compileFiles(
     [
-      path.join(netlabDir, "netlab-fw.xpt"),
-      path.join(netlabDir, `topology${DOCUMENT_EXT}`),
+      path.join(labDir, "semantic-lab-fw.xpt"),
+      path.join(labDir, `topology${DOCUMENT_EXT}`),
     ],
-    { baseDir: netlabDir, execute: false },
+    { baseDir: labDir, execute: false },
   );
   const addressed = tree._concepts.addressed as {
     nodes: Record<string, Record<string, unknown>>;
@@ -39,7 +39,7 @@ test("netlab example emits Containerlab and device configs", async () => {
     (nodes.x2.loopback as { ipv4: string }).ipv4,
     "172.42.42.1/24",
   );
-  const result = await emitFinal(tree, "clab.yml", { baseDir: netlabDir });
+  const result = await emitFinal(tree, "clab.yml", { baseDir: labDir });
   assert.ok(isFinalFilesBundle(result));
   const byPath = Object.fromEntries(result.files.map((f) => [f.path, f.content]));
   assert.ok(byPath["clab.yml"]);
@@ -54,7 +54,7 @@ test("netlab example emits Containerlab and device configs", async () => {
 });
 
 test("assign_ips only fills addresses the author left out", async () => {
-  const netlabFilters = await loadNetlabFilters();
+  const labFilters = await loadLabFilters();
   const topology = {
     nodes: {
       a: { id: 1, bgp: { as: 65000, neighbors: [{ name: "b", as: 65001 }] } },
@@ -74,8 +74,8 @@ test("assign_ips only fills addresses the author left out", async () => {
     p2p: { ipv4: "10.1.0.0/16", prefix: 30 },
   };
 
-  const addressed = netlabFilters.assign_ips!(
-    netlabFilters.normalize_links!(topology),
+  const addressed = labFilters.assign_ips!(
+    labFilters.normalize_links!(topology),
     addressing,
   ) as {
     nodes: Record<
@@ -96,15 +96,15 @@ test("assign_ips only fills addresses the author left out", async () => {
 });
 
 test("assign_ips rejects author IPs outside the pool or reserved", async () => {
-  const netlabFilters = await loadNetlabFilters();
+  const labFilters = await loadLabFilters();
   const addressing = {
     mgmt: { ipv4: "192.168.121.0/24", start: 100 },
     loopback: { ipv4: "10.0.0.0/24", prefix: 32 },
     p2p: { ipv4: "10.1.0.0/16", prefix: 30 },
   };
   const assign = (topology: unknown) =>
-    netlabFilters.assign_ips!(
-      netlabFilters.normalize_links!(topology),
+    labFilters.assign_ips!(
+      labFilters.normalize_links!(topology),
       addressing,
     );
 

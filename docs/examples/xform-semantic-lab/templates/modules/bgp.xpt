@@ -1,5 +1,5 @@
 ---
-# BGP module defaults (netlab modules/bgp — simplified for FRR emission).
+# BGP module defaults (simplified for FRR emission).
 advertise_loopback: true
 next_hop_self: true
 ---

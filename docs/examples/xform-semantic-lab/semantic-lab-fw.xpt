@@ -1,9 +1,9 @@
 ---
 {% include "file://./filters/normalize_links.js" %}
 {% include "file://./filters/assign_ips.js" %}
-# netlab framework — reusable device / module concepts and lab emission.
+# Semantic lab framework — reusable device / module concepts and lab emission.
 # Compose before local topology so author values override framework defaults.
-# Stand-in for a published framework such as https://netlab.tools/fw.xpt
+# Stand-in for a published framework document.
 # Shared IP/link filters load via include tags above (assign_ips imports ip.js).
 
 # Final emission — templates/_final/<extension>.xpt (--final clab.yml)
