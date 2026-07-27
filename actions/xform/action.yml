@@ -81,4 +81,30 @@ runs:
         [[ "${NO_RECURSE}" == "true" ]] && cmd+=(--no-recurse)
         [[ "${SKIP_SYMLINKS}" == "true" ]] && cmd+=(--skip-symlinks)
         [[ "${NO_EXECUTE}" == "true" ]] && cmd+=(--no-execute)
+        echo "xform: ${cmd[*]}"
         "${cmd[@]}"
+        # Summarize artifacts written beside the primary .xp/.xpt source.
+        primary=""
+        for s in "${sources[@]}"; do
+          case "$s" in
+            *.xp|*.xpt) primary="$s" ;;
+          esac
+        done
+        if [[ -n "${OUTPUT}" && -f "${OUTPUT}" ]]; then
+          echo "xform: wrote ${OUTPUT} ($(wc -c < "${OUTPUT}") bytes)"
+        fi
+        if [[ -n "$primary" ]]; then
+          out_dir="$(dirname "$primary")/output"
+          if [[ -d "$out_dir" ]]; then
+            echo "xform: outputs under ${out_dir}:"
+            find "$out_dir" -type f -printf '  %p (%s bytes)\n' | sort
+            if [[ -n "${FINAL}" ]]; then
+              for candidate in "$out_dir"/*."${FINAL}" "$out_dir/${FINAL}"; do
+                [[ -f "$candidate" ]] || continue
+                echo "xform: ${FINAL} preview (${candidate}):"
+                sed -n '1,40p' "$candidate"
+                break
+              done
+            fi
+          fi
+        fi
