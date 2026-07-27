@@ -11,6 +11,7 @@ Public repository of **Cursor agent skills** for [xFrame](https://github.com/exe
 | **xframe-model** | Model authoring and schema guidance for xFrame. |
 | **xframe-consolidate** | Normalize and consolidate JSON model and data into validated JSON Schema plus consolidated data (optional JS output). Run from the command line or let the agent consolidate when you ask to validate model/data. |
 | **xframe-present** | Compile a Markdown deck into a single self-contained HTML slideshow (offline-capable, printable to PDF). Supports consolidated-data graphs and click-to-zoom images. |
+| **xform** | Compile composable `.xp` semantic documents into deterministic materializations (compile-tree JSON or finalized artifacts). |
 | **xframe-code** | Program-structure schema (packages, classes, methods, fields) using the xYang JSON Schema profile. Manual install only (see below). |
 
 ## Install (Cursor)
@@ -23,7 +24,7 @@ Run from your project root:
 bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh)
 ```
 
-Installs **xframe-model**, **xframe-consolidate**, and **xframe-present** into `.cursor/skills/` and records the suite version.
+Installs **xframe-model**, **xframe-consolidate**, **xframe-present**, and **xform** into `.cursor/skills/` and records the suite version.
 
 ### Check for updates
 
@@ -42,6 +43,7 @@ mkdir -p .cursor/skills
 cp -r path/to/xFrame.ai/skills/xframe-model .cursor/skills/
 cp -r path/to/xFrame.ai/skills/xframe-consolidate .cursor/skills/
 cp -r path/to/xFrame.ai/skills/xframe-present .cursor/skills/
+cp -r path/to/xFrame.ai/skills/xform .cursor/skills/
 # optional:
 cp -r path/to/xFrame.ai/skills/xframe-code .cursor/skills/
 ```
@@ -86,12 +88,13 @@ npx wrangler secret put GEMINI_API_KEY
 
 ## GitHub Actions
 
-This repo publishes two **composite** actions that wrap the bundled minified scripts under `skills/`. **Node.js ≥18** is required on the job runner (`ubuntu-latest` includes a suitable Node). Pin a branch, tag, or SHA (for example `@main`).
+This repo publishes **composite** actions that wrap the bundled minified scripts under `skills/`. **Node.js ≥18** is required on the job runner (`ubuntu-latest` includes a suitable Node); **xForm** needs **Node.js ≥24**. Pin a branch, tag, or SHA (for example `@main`).
 
 | Action | `uses` | Script |
 | --- | --- | --- |
 | [**xFrame consolidate**](actions/consolidate/action.yml) | `exergy-connect/xFrame.ai/actions/consolidate@main` | `skills/xframe-consolidate/scripts/consolidate.min.js` |
 | [**xFrame present**](actions/present/action.yml) | `exergy-connect/xFrame.ai/actions/present@main` | `skills/xframe-present/scripts/present.min.js` |
+| [**xForm**](actions/xform/action.yml) | `exergy-connect/xFrame.ai/actions/xform@main` | `skills/xform/scripts/xform.min.js` |
 
 [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo composite actions (`./actions/consolidate`, `./actions/present`) and is intended as a copyable template. External workflows pin the published refs below.
 

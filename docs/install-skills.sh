@@ -2,7 +2,7 @@
 # xFrame.ai skill suite installer
 
 REPO="https://github.com/exergy-connect/xFrame.ai.git"
-SKILLS=("skills/xframe-model" "skills/xframe-consolidate" "skills/xframe-present")
+SKILLS=("skills/xframe-model" "skills/xframe-consolidate" "skills/xframe-present" "skills/xform")
 TARGET=".cursor/skills"
 VERSION_URL="https://exergy-connect.github.io/xFrame.ai/latest"
 
