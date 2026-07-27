@@ -86,7 +86,7 @@ node skills/xform/scripts/xform.min.js deck.xp runtime.json filters.js --final h
 - uses: exergy-connect/xFrame.ai/actions/xform@main
   with:
     sources: path/to/document.xp
-    final: html
+    materialization: html
 ```
 
 ## Directory layout

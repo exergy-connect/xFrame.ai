@@ -1,13 +1,14 @@
 name: 'xForm'
 description: >-
-  Compile composable .xp semantic documents into deterministic outputs
-  (compile-tree JSON or finalized artifacts). Requires Node.js 24+ on the runner.
+  Compile composable .xp semantic documents into deterministic materializations.
+  Produces either an intermediate compile-tree representation (JSON) or finalized
+  artifacts. Requires Node.js 24+ on the runner.
 
 inputs:
   sources:
     description: >-
-      Space-separated source paths (*.xp, *.json, *.js, directories, or dir/*.ext
-      patterns), relative to the workflow workspace unless absolute.
+      Space-separated semantic sources (*.xp, *.json, *.js, directories, or
+      directory patterns) used to construct the xForm document model.
     required: true
   output:
     description: >-
@@ -15,9 +16,10 @@ inputs:
       output/<document>.json beside the primary .xp source.
     required: false
     default: ''
-  final:
+  materialization:
     description: >-
-      Finalization extension (e.g. `html`). Passed as `--final <extension>`.
+      Materialization target extension (e.g. `html`). Passed as
+      `--final <extension>`.
     required: false
     default: ''
   tree:
@@ -46,7 +48,7 @@ runs:
         ACTION_PATH: ${{ github.action_path }}
         SOURCES: ${{ inputs.sources }}
         OUTPUT: ${{ inputs.output }}
-        FINAL: ${{ inputs.final }}
+        FINAL: ${{ inputs.materialization }}
         TREE: ${{ inputs.tree }}
         KEEP_SEPS: ${{ inputs.keep-segment-separators }}
         NO_RECURSE: ${{ inputs.no-recurse }}
