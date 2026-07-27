@@ -83,7 +83,7 @@ jobs:
       - name: Compile netlab example
         uses: ./actions/xform
         with:
-          sources: ${{ env.NETLAB }}/filters ${{ env.NETLAB }}/netlab-fw.xp ${{ env.NETLAB }}/topology.xp
+          sources: ${{ env.NETLAB }}/netlab-fw.xpt ${{ env.NETLAB }}/topology.xp
           materialization: clab.yml
           no-execute: "true"
 

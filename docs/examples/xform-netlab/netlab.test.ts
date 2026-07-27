@@ -21,8 +21,7 @@ async function loadNetlabFilters() {
 test("netlab example emits Containerlab and device configs", async () => {
   const tree = await compileFiles(
     [
-      filterDir,
-      path.join(netlabDir, `netlab-fw${DOCUMENT_EXT}`),
+      path.join(netlabDir, "netlab-fw.xpt"),
       path.join(netlabDir, `topology${DOCUMENT_EXT}`),
     ],
     { baseDir: netlabDir, execute: false },
@@ -40,7 +39,7 @@ test("netlab example emits Containerlab and device configs", async () => {
     (nodes.x2.loopback as { ipv4: string }).ipv4,
     "172.42.42.1/24",
   );
-  const result = emitFinal(tree, "clab.yml", { baseDir: netlabDir });
+  const result = await emitFinal(tree, "clab.yml", { baseDir: netlabDir });
   assert.ok(isFinalFilesBundle(result));
   const byPath = Object.fromEntries(result.files.map((f) => [f.path, f.content]));
   assert.ok(byPath["clab.yml"]);

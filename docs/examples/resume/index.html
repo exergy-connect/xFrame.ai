@@ -453,6 +453,11 @@ body {
         height: calc(2.2rem * var(--frame-scale, 1));
       }
 
+      /* Keep narration controls clear of the slide-number footer on the right. */
+      #xframe-chrome .xframe-audio-dock {
+        transform: translateX(calc(-3.25rem * var(--frame-scale, 1)));
+      }
+
       #xframe-chrome .xframe-narrative-speak {
         min-width: calc(15rem * var(--frame-scale, 1));
         height: calc(2.2rem * var(--frame-scale, 1));
