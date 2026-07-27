@@ -1,0 +1,47 @@
+---
+# Lab package — Containerlab topology plus per-node device configs.
+# Body is an xForm segment stream; each segment sets `_document._output`.
+---
+_document:
+  _output:
+    _basename: clab
+    _extension: yml
+===
+name: {{ name }}
+prefix: ""
+
+mgmt:
+  network: {{ addressing.mgmt.network | default('netlab_mgmt') }}
+  ipv4-subnet: {{ addressing.mgmt.ipv4 | default('192.168.121.0/24') }}
+
+topology:
+  nodes:
+{% for nname, node in addressed.nodes | dictsort %}
+    {{ nname }}:
+      kind: {{ kind }}
+      image: {{ image }}
+      runtime: {{ runtime }}
+{% if node.mgmt and node.mgmt.ipv4 %}
+      mgmt-ipv4: {{ node.mgmt.ipv4 }}
+{% endif %}
+      binds:
+        - {{ 'config/' ~ nname ~ '.conf' }}:{{ config_path }}
+{% endfor %}
+
+  links:
+{% for link in addressed.links %}
+  - endpoints:
+{% for iface in link.interfaces %}
+      - "{{ iface.node }}:{{ iface.ifname }}"
+{% endfor %}
+{% endfor %}
+{% for nname, node in addressed.nodes | dictsort %}
+---
+_document:
+  _output:
+    _basename: config/{{ nname }}
+    _extension: conf
+===
+{{ include("templates/devices/" ~ node.device ~ ".xpt#1", with={"node": node, "name": nname}) }}
+{% endfor %}
+...

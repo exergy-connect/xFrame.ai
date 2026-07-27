@@ -1,0 +1,64 @@
+---
+# netlab framework — reusable device / module concepts and lab emission.
+# Compose before local topology so author values override framework defaults.
+# Stand-in for a published framework such as https://netlab.tools/fw.xp
+
+# Final emission — templates/_final/<extension>.xpt (--final clab.yml)
+_final:
+  _templates: file://./templates/_final/
+
+# Device concept — templates/devices/<name>.xpt (e.g. devices: frr)
+devices:
+  _templates: file://./templates/devices/
+
+# Module concept — templates/modules/<name>.xpt (e.g. modules: bgp)
+modules:
+  _templates: file://./templates/modules/
+
+# Create addressed lab from sparse `topology`, then deploy or destroy `topology_file`.
+# deploy depends on create and passes "{{ topology }}" into create's `_input`.
+_capability:
+  containerlab:
+    # Reusable command inherited by deploy / destroy.
+    _commands:
+      clab:
+        _command: "{{ which('containerlab') }}"
+        _version: "{{ _command }} version --short"
+        _env:
+          CLAB_RUNTIME:
+          CLAB_VERSION_CHECK:
+          CLAB_LABDIR_BASE:
+    _assert:
+      - test: "{{ topology_file.endsWith('.yml') or topology_file.endsWith('.yaml') }}"
+        message: topology_file must be a YAML Containerlab file
+    create:
+      _input: topology
+      _output: addressed
+      _transform: "{{ topology | normalize_links | assign_ips(addressing) }}"
+      _assert:
+        - test: "{{ topology is defined and addressing is defined }}"
+          message: containerlab.create requires topology and addressing pools
+    deploy:
+      _input: topology_file
+      _output: running_lab
+      _executors:
+        clab:
+          _depends:
+            _capability:
+              containerlab:
+                create: "{{ topology }}"
+          _args: "deploy -t {{ topology_file }}"
+    destroy:
+      _input: topology_file
+      _output: destroyed_lab
+      _executors:
+        clab:
+          _args: "destroy -t {{ topology_file }}"
+
+topology_file: output/clab.yml
+
+# Default realization: FRR device + BGP module (topology may override)
+_document:
+  devices: frr
+  modules: bgp
+---

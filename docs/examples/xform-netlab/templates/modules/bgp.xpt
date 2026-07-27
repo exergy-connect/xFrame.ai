@@ -1,0 +1,44 @@
+---
+# BGP module defaults (netlab modules/bgp — simplified for FRR emission).
+advertise_loopback: true
+next_hop_self: true
+---
+!
+router bgp {{ node.bgp.as }}
+  no bgp ebgp-requires-policy
+  no bgp default ipv4-unicast
+  bgp default show-hostname
+  bgp bestpath as-path multipath-relax
+{% if node.bgp.router_id %}
+  bgp router-id {{ node.bgp.router_id }}
+{% endif %}
+!
+{% for n in node.bgp.neighbors | default([]) %}
+{% if n.ipv4 %}
+  neighbor {{ n.ipv4 }} remote-as {{ n.as }}
+  neighbor {{ n.ipv4 }} description {{ n.name }}
+!
+{% endif %}
+{% endfor %}
+{% if node.bgp.ipv4 %}
+ address-family ipv4 unicast
+!
+{% for pfx in node.bgp.advertise | default([]) %}
+{% if pfx.ipv4 %}
+  network {{ pfx.ipv4 }}
+{% endif %}
+{% endfor %}
+!
+{% for n in node.bgp.neighbors | default([]) %}
+{% if n.ipv4 and n.activate and n.activate.ipv4 %}
+  neighbor {{ n.ipv4 }} activate
+{% if n.type == 'ibgp' and next_hop_self %}
+  neighbor {{ n.ipv4 }} next-hop-self
+{% endif %}
+!
+{% endif %}
+{% endfor %}
+ exit-address-family
+{% endif %}
+!
+...

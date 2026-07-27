@@ -1,0 +1,75 @@
+---
+# Local lab topology — sparse authoring for netlab tests/integration/bgp/01-ebgp-session.yml.
+# Addressing pools + topology.nodes/links; containerlab.create (framework) assigns IPs.
+
+name: ebgp-session
+provider: clab
+module: [bgp]
+
+# Framework already selects devices: frr and modules: bgp; restate so a
+# topology-only compile still resolves templates when fw is listed first.
+# `_target` realizes the framework's containerlab.deploy capability
+# (deploy output/clab.yml); requires approval.
+_document:
+  devices: frr
+  modules: bgp
+  _target: containerlab.deploy
+
+# Pools (netlab defaults/addressing.yml subset)
+addressing:
+  mgmt:
+    network: netlab_mgmt
+    ipv4: 192.168.121.0/24
+    start: 100
+  loopback:
+    ipv4: 10.0.0.0/24
+    prefix: 32
+  p2p:
+    ipv4: 10.1.0.0/16
+    prefix: 30
+
+# Sparse lab — no interface/link addresses; create._transform fills them in.
+topology:
+  nodes:
+    dut:
+      id: 1
+      device: frr
+      module: [bgp]
+      bgp:
+        as: 65000
+        neighbors:
+          - name: x1
+            as: 65100
+            type: ebgp
+          - name: x2
+            as: 65101
+            type: ebgp
+
+    x1:
+      id: 2
+      device: frr
+      module: [bgp]
+      bgp:
+        as: 65100
+        neighbors:
+          - name: dut
+            as: 65000
+            type: ebgp
+
+    x2:
+      id: 3
+      device: frr
+      module: [bgp]
+      loopback:
+        ipv4: 172.42.42.1/24
+      bgp:
+        as: 65101
+        neighbors:
+          - name: dut
+            as: 65000
+            type: ebgp
+
+  links:
+    - dut-x1
+    - dut-x2
+---

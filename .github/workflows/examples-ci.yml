@@ -1,4 +1,5 @@
-# Regenerate example consolidated output, compile locale decks (example-deck*.md), then commit once.
+# Regenerate example consolidated output, compile locale decks (example-deck*.md),
+# compile the xForm netlab example, then commit once.
 name: xFrame examples
 
 on:
@@ -13,9 +14,12 @@ on:
       - "examples/present/snapshots/**"
       - "examples/present/diagrams/**"
       - "examples/present/*.png"
+      - "docs/examples/xform-netlab/**"
       - "skills/xframe-present/**"
+      - "skills/xform/**"
       - "actions/present/action.yml"
       - "actions/consolidate/action.yml"
+      - "actions/xform/action.yml"
       - ".github/workflows/examples-ci.yml"
   workflow_dispatch:
 
@@ -30,6 +34,7 @@ env:
   TZ: America/Chicago
   DATA: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
   PRESENT_OUT: examples/present/output
+  NETLAB: docs/examples/xform-netlab
 
 jobs:
   examples:
@@ -74,6 +79,14 @@ jobs:
             cp "$html" "docs/examples/present/$base"
           done
 
+      # External repos: uses: exergy-connect/xFrame.ai/actions/xform@main
+      - name: Compile netlab example
+        uses: ./actions/xform
+        with:
+          sources: ${{ env.NETLAB }}/filters ${{ env.NETLAB }}/netlab-fw.xp ${{ env.NETLAB }}/topology.xp
+          materialization: clab.yml
+          no-execute: "true"
+
       - name: Commit generated examples
         run: |
           git config user.name "github-actions[bot]"
@@ -95,11 +108,14 @@ jobs:
             [[ "$base" =~ ^example-deck(\.[A-Za-z0-9-]+)?\.html$ ]] || continue
             git add -f "docs/examples/present/$base"
           done
+          if [[ -d "$NETLAB/output" ]]; then
+            git add -f "$NETLAB/output"
+          fi
           if git diff --staged --quiet; then
             echo "No changes to generated examples."
             exit 0
           fi
-          git commit -m "examples: refresh consolidated output and presentation (CI) [skip ci]"
+          git commit -m "examples: refresh consolidated output, presentation, and netlab (CI) [skip ci]"
           for attempt in 1 2 3 4 5; do
             if git push origin "${GITHUB_REF_NAME}"; then
               echo "Pushed on attempt $attempt"
