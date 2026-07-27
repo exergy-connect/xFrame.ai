@@ -25,6 +25,18 @@
       color: var(--fg);
       padding: 1.5rem;
     }
+    #build-stamp {
+      position: fixed;
+      top: 0.85rem;
+      right: 1rem;
+      z-index: 10;
+      margin: 0;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.01em;
+      pointer-events: none;
+    }
     main {
       max-width: 960px;
       margin: 0 auto;
@@ -127,6 +139,7 @@
   </style>
 </head>
 <body>
+  <p id="build-stamp" aria-live="polite">build …</p>
   <main>
     <h1>xForm netlab</h1>
     <p class="lede">
@@ -167,6 +180,7 @@
       prefetchHttpTexts,
     } from "../../web/xform/xform.browser.min.js";
 
+    const BUNDLE_URL = new URL("../../web/xform/xform.browser.min.js", import.meta.url);
     const pageBase = new URL("./", location.href);
     const runBtn = document.getElementById("run");
     const status = document.getElementById("status");
@@ -174,6 +188,33 @@
     const output = document.getElementById("output");
     const frameworkSelect = document.getElementById("framework");
     const topologyInput = document.getElementById("topology");
+    const buildStamp = document.getElementById("build-stamp");
+
+    async function showBundleBuildStamp() {
+      try {
+        const response = await fetch(BUNDLE_URL.href, { cache: "no-cache" });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const head = (await response.text()).slice(0, 240);
+        const match = head.match(
+          /xform browser bundle build:\s*([^\s]+)\s+sha=([^\s\n]+)/,
+        );
+        if (!match) {
+          buildStamp.textContent = "build unknown";
+          return;
+        }
+        const stamp = match[1].replace("T", " ");
+        const sha = match[2];
+        buildStamp.textContent =
+          sha === "local-dev" ? `build ${stamp}` : `build ${stamp} · ${sha.slice(0, 7)}`;
+        buildStamp.title = `xform.browser.min.js ${match[1]} sha=${sha}`;
+      } catch {
+        buildStamp.textContent = "build unknown";
+      }
+    }
+
+    void showBundleBuildStamp();
 
     /** @type {Record<string, string>} */
     let files = {};
