@@ -1,0 +1,74 @@
+name: 'xForm'
+description: >-
+  Compile composable .xp semantic documents into deterministic outputs
+  (compile-tree JSON or finalized artifacts). Requires Node.js 24+ on the runner.
+
+inputs:
+  sources:
+    description: >-
+      Space-separated source paths (*.xp, *.json, *.js, directories, or dir/*.ext
+      patterns), relative to the workflow workspace unless absolute.
+    required: true
+  output:
+    description: >-
+      Output path for the compile-tree JSON (`-o`). If omitted, defaults to
+      output/<document>.json beside the primary .xp source.
+    required: false
+    default: ''
+  final:
+    description: >-
+      Finalization extension (e.g. `html`). Passed as `--final <extension>`.
+    required: false
+    default: ''
+  tree:
+    description: 'Set to `true` to pass `--tree` (write full compile-tree JSON).'
+    required: false
+    default: 'false'
+  keep-segment-separators:
+    description: 'Set to `true` to pass `--keep-segment-separators`.'
+    required: false
+    default: 'false'
+  no-recurse:
+    description: 'Set to `true` to pass `--no-recurse`.'
+    required: false
+    default: 'false'
+  skip-symlinks:
+    description: 'Set to `true` to pass `--skip-symlinks`.'
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Run xform.min.js
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        SOURCES: ${{ inputs.sources }}
+        OUTPUT: ${{ inputs.output }}
+        FINAL: ${{ inputs.final }}
+        TREE: ${{ inputs.tree }}
+        KEEP_SEPS: ${{ inputs.keep-segment-separators }}
+        NO_RECURSE: ${{ inputs.no-recurse }}
+        SKIP_SYMLINKS: ${{ inputs.skip-symlinks }}
+      run: |
+        set -euo pipefail
+        script="${ACTION_PATH}/../../skills/xform/scripts/xform.min.js"
+        if [[ ! -f "$script" ]]; then
+          echo "::error file=${script}::xForm script missing (expected bundled xform skill asset)."
+          exit 1
+        fi
+        # shellcheck disable=SC2206
+        sources=( ${SOURCES} )
+        if [[ ${#sources[@]} -eq 0 ]]; then
+          echo "::error::sources input is empty"
+          exit 1
+        fi
+        cmd=(node "$script" "${sources[@]}")
+        [[ -n "${OUTPUT}" ]] && cmd+=(-o "$OUTPUT")
+        [[ -n "${FINAL}" ]] && cmd+=(--final "$FINAL")
+        [[ "${TREE}" == "true" ]] && cmd+=(--tree)
+        [[ "${KEEP_SEPS}" == "true" ]] && cmd+=(--keep-segment-separators)
+        [[ "${NO_RECURSE}" == "true" ]] && cmd+=(--no-recurse)
+        [[ "${SKIP_SYMLINKS}" == "true" ]] && cmd+=(--skip-symlinks)
+        "${cmd[@]}"
