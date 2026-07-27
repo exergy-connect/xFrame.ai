@@ -16,7 +16,7 @@ modules:
   _templates: file://./templates/modules/
 
 # Compile-time Jinja filters used by containerlab.create._transform below.
-# `{% include %}` registers each module; assign_ips.js imports ip.js itself.
+# Tag-include of each .js module registers it; assign_ips.js imports ip.js itself.
 {% include "file://./filters/normalize_links.js" %}
 {% include "file://./filters/assign_ips.js" %}
 
