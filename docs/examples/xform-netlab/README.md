@@ -77,7 +77,9 @@ addressing + topology (sparse)
 
 ## Browser demo
 
-Serve the xFrame.ai repo root over HTTP, then open
+Live page: [exergy-connect.github.io/xFrame.ai/examples/xform-netlab/](https://exergy-connect.github.io/xFrame.ai/examples/xform-netlab/)
+
+Or serve the xFrame.ai repo root over HTTP and open
 [`index.html`](./index.html) (loads `../../web/xform/xform.browser.min.js` and
 compiles `netlab-fw.xpt` + `topology.xp` as page-relative URLs):
 

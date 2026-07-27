@@ -41,6 +41,30 @@
       max-width: 42rem;
       line-height: 1.45;
     }
+    .fields {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .field {
+      display: grid;
+      gap: 0.3rem;
+    }
+    .field label {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .field input,
+    .field select {
+      font: inherit;
+      color: var(--fg);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.55rem 0.7rem;
+      width: 100%;
+    }
     .toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -106,10 +130,28 @@
   <main>
     <h1>xForm netlab</h1>
     <p class="lede">
-      Loads <code>netlab-fw.xpt</code> and <code>topology.xp</code> as URLs in this
-      page, runs the browser xForm bundle, and emits Containerlab + FRR configs
+      Compiles a framework and topology as URLs in this page via the browser
+      xForm bundle, then emits Containerlab + FRR configs
       (<code>execute: false</code>).
     </p>
+    <div class="fields">
+      <div class="field">
+        <label for="framework">Framework</label>
+        <select id="framework">
+          <option value="netlab-fw.xpt" selected>netlab-fw.xpt (local)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="topology">Topology URL</label>
+        <input
+          id="topology"
+          type="text"
+          spellcheck="false"
+          autocomplete="off"
+          value="topology.xp"
+        >
+      </div>
+    </div>
     <div class="toolbar">
       <button type="button" id="run">Compile</button>
       <span id="status" role="status">Ready</span>
@@ -125,13 +167,25 @@
       prefetchHttpTexts,
     } from "../../web/xform/xform.browser.min.js";
 
+    const pageBase = new URL("./", location.href);
     const runBtn = document.getElementById("run");
     const status = document.getElementById("status");
     const tabs = document.getElementById("tabs");
     const output = document.getElementById("output");
+    const frameworkSelect = document.getElementById("framework");
+    const topologyInput = document.getElementById("topology");
 
     /** @type {Record<string, string>} */
     let files = {};
+
+    /** Resolve a page-relative or absolute URL against this example directory. */
+    function resolveUrl(value, label) {
+      const trimmed = String(value ?? "").trim();
+      if (!trimmed) {
+        throw new Error(`${label} URL is required`);
+      }
+      return new URL(trimmed, pageBase).href;
+    }
 
     function setStatus(text, state = "") {
       status.textContent = text;
@@ -166,18 +220,18 @@
       runBtn.disabled = true;
       setStatus("Compiling…");
       try {
-        const base = new URL("./", location.href);
-        const fwUrl = new URL("netlab-fw.xpt", base).href;
-        const topoUrl = new URL("topology.xp", base).href;
+        const fwUrl = resolveUrl(frameworkSelect.value, "Framework");
+        const topoUrl = resolveUrl(topologyInput.value, "Topology");
+        const fwBase = new URL("./", fwUrl);
         const templateUrls = [
-          new URL("templates/_final/clab.yml.xpt", base).href,
-          new URL("templates/devices/frr.xpt", base).href,
-          new URL("templates/modules/bgp.xpt", base).href,
+          new URL("templates/_final/clab.yml.xpt", fwBase).href,
+          new URL("templates/devices/frr.xpt", fwBase).href,
+          new URL("templates/modules/bgp.xpt", fwBase).href,
         ];
         const filterUrls = [
-          new URL("filters/normalize_links.js", base).href,
-          new URL("filters/assign_ips.js", base).href,
-          new URL("filters/ip.js", base).href,
+          new URL("filters/normalize_links.js", fwBase).href,
+          new URL("filters/assign_ips.js", fwBase).href,
+          new URL("filters/ip.js", fwBase).href,
         ];
 
         await prefetchHttpTexts([
@@ -191,7 +245,7 @@
           execute: false,
         });
         const result = await emitFinal(tree, "clab.yml", {
-          baseDir: base.href,
+          baseDir: fwBase.href,
         });
 
         /** @type {Record<string, string>} */
