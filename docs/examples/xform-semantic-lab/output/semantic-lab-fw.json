@@ -1,33 +1,33 @@
 {
   "_meta": {
-    "createdAt": "2026-07-27T21:33:05.801Z",
-    "modifiedAt": "2026-07-27T21:33:05.801Z",
+    "createdAt": "2026-07-27T21:50:44.055Z",
+    "modifiedAt": "2026-07-27T21:50:44.055Z",
     "version": "0.1.0"
   },
   "_sources": [
     {
       "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt",
-      "hash": "sha256:f383f09e3e99fb73fc75e7eadf757202230f4d596a6cba24e226de7bb2d86385",
-      "createdAt": "2026-07-27T21:33:04.254Z",
-      "modifiedAt": "2026-07-27T21:33:04.254Z"
+      "hash": "sha256:9cfbaf15b99a048994a3a62a91166852ac0fe8c50864586806a5d90d045927bd",
+      "createdAt": "2026-07-27T21:50:42.297Z",
+      "modifiedAt": "2026-07-27T21:50:42.297Z"
     },
     {
       "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/topology.xp",
       "hash": "sha256:65c9e63829112db1d9bfebab191f89cf35f9062f3eb1048246001a1ead02ecb8",
-      "createdAt": "2026-07-27T21:33:04.255Z",
-      "modifiedAt": "2026-07-27T21:33:04.255Z"
+      "createdAt": "2026-07-27T21:50:42.298Z",
+      "modifiedAt": "2026-07-27T21:50:42.298Z"
     },
     {
       "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/templates/devices/frr.xpt",
       "hash": "sha256:01833302c90b42542e508fb8183836174e4ea58a5bda7f621d19e1f6161b5c07",
-      "createdAt": "2026-07-27T21:33:04.255Z",
-      "modifiedAt": "2026-07-27T21:33:04.255Z"
+      "createdAt": "2026-07-27T21:50:42.298Z",
+      "modifiedAt": "2026-07-27T21:50:42.298Z"
     },
     {
       "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/templates/modules/bgp.xpt",
       "hash": "sha256:c36429f4e568ee173481287e393eeda5187092a12a3ab4991aad05313b00da48",
-      "createdAt": "2026-07-27T21:33:04.255Z",
-      "modifiedAt": "2026-07-27T21:33:04.255Z"
+      "createdAt": "2026-07-27T21:50:42.298Z",
+      "modifiedAt": "2026-07-27T21:50:42.298Z"
     }
   ],
   "_concepts": {
@@ -69,10 +69,10 @@
         "create": {
           "_input": "topology",
           "_output": "addressed",
-          "_transform": "{{ topology | normalize_links | assign_ips(addressing) }}",
+          "_transform": "{{ _input | normalize_links | assign_ips(addressing) }}",
           "_assert": [
             {
-              "test": "{{ topology is defined and addressing is defined }}",
+              "test": "{{ _input is defined and addressing is defined }}",
               "message": "containerlab.create requires topology and addressing pools"
             }
           ]
@@ -415,7 +415,7 @@
     ],
     "provenance": {
       "source": 0,
-      "line": 23,
+      "line": 26,
       "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt"
     },
     "decisions": []
