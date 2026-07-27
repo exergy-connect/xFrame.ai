@@ -1,33 +1,33 @@
 {
   "_meta": {
-    "createdAt": "2026-07-27T21:50:44.055Z",
-    "modifiedAt": "2026-07-27T21:50:44.055Z",
+    "createdAt": "2026-07-27T22:33:47.244Z",
+    "modifiedAt": "2026-07-27T22:33:47.244Z",
     "version": "0.1.0"
   },
   "_sources": [
     {
       "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt",
       "hash": "sha256:9cfbaf15b99a048994a3a62a91166852ac0fe8c50864586806a5d90d045927bd",
-      "createdAt": "2026-07-27T21:50:42.297Z",
-      "modifiedAt": "2026-07-27T21:50:42.297Z"
+      "createdAt": "2026-07-27T22:33:44.465Z",
+      "modifiedAt": "2026-07-27T22:33:44.465Z"
     },
     {
       "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/topology.xp",
       "hash": "sha256:65c9e63829112db1d9bfebab191f89cf35f9062f3eb1048246001a1ead02ecb8",
-      "createdAt": "2026-07-27T21:50:42.298Z",
-      "modifiedAt": "2026-07-27T21:50:42.298Z"
+      "createdAt": "2026-07-27T22:33:44.465Z",
+      "modifiedAt": "2026-07-27T22:33:44.465Z"
     },
     {
       "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/templates/devices/frr.xpt",
-      "hash": "sha256:01833302c90b42542e508fb8183836174e4ea58a5bda7f621d19e1f6161b5c07",
-      "createdAt": "2026-07-27T21:50:42.298Z",
-      "modifiedAt": "2026-07-27T21:50:42.298Z"
+      "hash": "sha256:38ee97f794b95d319d523a478db1ddf667835b79632d217c3f4a516ef2956298",
+      "createdAt": "2026-07-27T22:33:44.465Z",
+      "modifiedAt": "2026-07-27T22:33:44.465Z"
     },
     {
       "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/templates/modules/bgp.xpt",
-      "hash": "sha256:c36429f4e568ee173481287e393eeda5187092a12a3ab4991aad05313b00da48",
-      "createdAt": "2026-07-27T21:50:42.298Z",
-      "modifiedAt": "2026-07-27T21:50:42.298Z"
+      "hash": "sha256:d3f19a52c440f2c6c806f1210aedeeb5bbb125c732e791049a0ff745d0250636",
+      "createdAt": "2026-07-27T22:33:44.465Z",
+      "modifiedAt": "2026-07-27T22:33:44.465Z"
     }
   ],
   "_concepts": {
@@ -197,6 +197,7 @@
     "runtime": "docker",
     "mgmt_if": "eth0",
     "config_path": "/etc/frr/frr.conf",
+    "init_path": "/etc/config/initialize.sh",
     "interface_name": "eth{ifindex}",
     "advertise_loopback": true,
     "next_hop_self": true,
@@ -248,8 +249,13 @@
               }
             ]
           },
-          "name": "dut",
           "interfaces": [
+            {
+              "type": "loopback",
+              "ifname": "lo",
+              "ifindex": 0,
+              "ipv4": "10.0.0.1/32"
+            },
             {
               "ifname": "eth1",
               "ifindex": 1,
@@ -261,12 +267,15 @@
               "ipv4": "10.1.0.5/30"
             }
           ],
+          "loopback": {
+            "type": "loopback",
+            "ifname": "lo",
+            "ifindex": 0,
+            "ipv4": "10.0.0.1/32"
+          },
+          "name": "dut",
           "mgmt": {
             "ipv4": "192.168.121.101"
-          },
-          "loopback": {
-            "ifname": "lo",
-            "ipv4": "10.0.0.1/32"
           }
         },
         "x1": {
@@ -296,20 +305,28 @@
               }
             ]
           },
-          "name": "x1",
           "interfaces": [
+            {
+              "type": "loopback",
+              "ifname": "lo",
+              "ifindex": 0,
+              "ipv4": "10.0.0.2/32"
+            },
             {
               "ifname": "eth1",
               "ifindex": 1,
               "ipv4": "10.1.0.2/30"
             }
           ],
+          "loopback": {
+            "type": "loopback",
+            "ifname": "lo",
+            "ifindex": 0,
+            "ipv4": "10.0.0.2/32"
+          },
+          "name": "x1",
           "mgmt": {
             "ipv4": "192.168.121.102"
-          },
-          "loopback": {
-            "ifname": "lo",
-            "ipv4": "10.0.0.2/32"
           }
         },
         "x2": {
@@ -319,8 +336,10 @@
             "bgp"
           ],
           "loopback": {
-            "ipv4": "172.42.42.1/24",
-            "ifname": "lo"
+            "type": "loopback",
+            "ifname": "lo",
+            "ifindex": 0,
+            "ipv4": "172.42.42.1/24"
           },
           "bgp": {
             "as": 65101,
@@ -343,14 +362,20 @@
               }
             ]
           },
-          "name": "x2",
           "interfaces": [
+            {
+              "type": "loopback",
+              "ifname": "lo",
+              "ifindex": 0,
+              "ipv4": "172.42.42.1/24"
+            },
             {
               "ifname": "eth1",
               "ifindex": 1,
               "ipv4": "10.1.0.6/30"
             }
           ],
+          "name": "x2",
           "mgmt": {
             "ipv4": "192.168.121.103"
           }

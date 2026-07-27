@@ -14,6 +14,9 @@ topology:
       mgmt-ipv4: 192.168.121.101
       binds:
         - config/dut.conf:/etc/frr/frr.conf
+        - config/dut-initialize.sh:/etc/config/initialize.sh
+      entrypoint: /bin/bash
+      cmd: /etc/config/initialize.sh
     x1:
       kind: linux
       image: quay.io/frrouting/frr:10.6.1
@@ -21,6 +24,9 @@ topology:
       mgmt-ipv4: 192.168.121.102
       binds:
         - config/x1.conf:/etc/frr/frr.conf
+        - config/x1-initialize.sh:/etc/config/initialize.sh
+      entrypoint: /bin/bash
+      cmd: /etc/config/initialize.sh
     x2:
       kind: linux
       image: quay.io/frrouting/frr:10.6.1
@@ -28,6 +34,9 @@ topology:
       mgmt-ipv4: 192.168.121.103
       binds:
         - config/x2.conf:/etc/frr/frr.conf
+        - config/x2-initialize.sh:/etc/config/initialize.sh
+      entrypoint: /bin/bash
+      cmd: /etc/config/initialize.sh
 
   links:
   - endpoints:
