@@ -26,7 +26,7 @@ Authors write pools + sparse `topology`. The framework owns IP assignment throug
 `containerlab.create._transform`:
 
 ```text
-topology | normalize_links | assign_ips(addressing)  →  addressed.nodes / addressed.links
+`_input` | normalize_links | assign_ips(addressing)  →  addressed.nodes / addressed.links
 ```
 
 `topology` (lab data) and `topology_file` (path to the emitted Containerlab YAML)
@@ -52,7 +52,7 @@ The framework `{% include %}`s its filter modules.
 
 ```text
 addressing + topology (sparse)
-  → create._transform: normalize_links | assign_ips(addressing)
+  → create._transform: _input | normalize_links | assign_ips(addressing)
   → addressed model (nodes, links, interface IPs, BGP neighbors…)
   → --final clab.yml  →  output/clab.yml + output/config/*.conf
   → (optional) containerlab.deploy using topology_file

@@ -1,10 +1,7 @@
 ---
-{% include "file://./filters/normalize_links.js" %}
-{% include "file://./filters/assign_ips.js" %}
 # Semantic lab framework — reusable device / module concepts and lab emission.
 # Compose before local topology so author values override framework defaults.
 # Stand-in for a published framework document.
-# Shared IP/link filters load via include tags above (assign_ips imports ip.js).
 
 # Final emission — templates/_final/<extension>.xpt (--final clab.yml)
 _final:
@@ -18,8 +15,14 @@ devices:
 modules:
   _templates: file://./templates/modules/
 
-# Create addressed lab from sparse `topology`, then deploy or destroy `topology_file`.
-# deploy depends on create and passes "{{ topology }}" into create's `_input`.
+# Compile-time Jinja filters used by containerlab.create._transform below.
+# `{% include %}` registers each module; assign_ips.js imports ip.js itself.
+{% include "file://./filters/normalize_links.js" %}
+{% include "file://./filters/assign_ips.js" %}
+
+# Create addressed lab from sparse topology, then deploy or destroy topology_file.
+# `_input` names the accepted concept shape; the caller assigns its value
+# (depends leaf, or the ambient concept of that name). `_transform` reads `_input`.
 _capability:
   containerlab:
     # Reusable command inherited by deploy / destroy.
@@ -36,13 +39,15 @@ _capability:
       - test: "{{ topology_file.endsWith('.yml') or topology_file.endsWith('.yaml') }}"
         message: topology_file must be a YAML Containerlab file
     create:
+      # Accepted shape: sparse `topology` (nodes/links). Caller binds the value.
       _input: topology
       _output: addressed
-      _transform: "{{ topology | normalize_links | assign_ips(addressing) }}"
+      _transform: "{{ _input | normalize_links | assign_ips(addressing) }}"
       _assert:
-        - test: "{{ topology is defined and addressing is defined }}"
+        - test: "{{ _input is defined and addressing is defined }}"
           message: containerlab.create requires topology and addressing pools
     deploy:
+      # Accepted shape: path to Containerlab YAML (`topology_file`).
       _input: topology_file
       _output: running_lab
       _executors:
@@ -53,6 +58,7 @@ _capability:
                 create: "{{ topology }}"
           _args: "deploy -t {{ topology_file }}"
     destroy:
+      # Accepted shape: path to Containerlab YAML (`topology_file`).
       _input: topology_file
       _output: destroyed_lab
       _executors:
