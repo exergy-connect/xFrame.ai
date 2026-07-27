@@ -43,6 +43,7 @@ directories, or `dir/*.ext` patterns (recursive filesystem order by default).
 | Option | Description |
 |--------|-------------|
 | `<source>...` | One or more sources (positional). |
+| `-h, --help` | Show CLI help (all options) and exit. |
 | `-o, --output <file>` | Override the compile-tree JSON path. |
 | `--tree` | Write the full compile tree as JSON (default behavior). |
 | `--final <extension>` | Apply `templates/_final/<extension>.xpt` (or `_final._templates`); write `output/<document>.<extension>`. Segment-stream finals write each segment's `_document._output` under `output/`. |

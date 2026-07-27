@@ -38,6 +38,12 @@ inputs:
     description: 'Set to `true` to pass `--skip-symlinks`.'
     required: false
     default: 'false'
+  no-execute:
+    description: >-
+      Set to `true` to pass `--no-execute` (emit the `_execution` plan only;
+      do not realize / run capability commands).
+    required: false
+    default: 'false'
 
 runs:
   using: composite
@@ -53,6 +59,7 @@ runs:
         KEEP_SEPS: ${{ inputs.keep-segment-separators }}
         NO_RECURSE: ${{ inputs.no-recurse }}
         SKIP_SYMLINKS: ${{ inputs.skip-symlinks }}
+        NO_EXECUTE: ${{ inputs.no-execute }}
       run: |
         set -euo pipefail
         script="${ACTION_PATH}/../../skills/xform/scripts/xform.min.js"
@@ -73,4 +80,5 @@ runs:
         [[ "${KEEP_SEPS}" == "true" ]] && cmd+=(--keep-segment-separators)
         [[ "${NO_RECURSE}" == "true" ]] && cmd+=(--no-recurse)
         [[ "${SKIP_SYMLINKS}" == "true" ]] && cmd+=(--skip-symlinks)
+        [[ "${NO_EXECUTE}" == "true" ]] && cmd+=(--no-execute)
         "${cmd[@]}"
