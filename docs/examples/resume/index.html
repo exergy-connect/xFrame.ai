@@ -4250,12 +4250,46 @@ window.__XFRAME__.runtime.register("invite", { import: ["encoding.decodeBytes", 
     features,
   });
 
-  const loadInvite = async () => {
-    const url = location.href;
-    const short_url = url.length < 256 ? url : url.split("?")[0].split("#")[0];
-    const localTesting = url.startsWith("file:") || location.hostname === "127.0.0.1";
+  const inviteTokenStorageKey = () => `xframe-present:invite-token:${location.pathname}`;
+
+  const stripInviteTokenFromUrl = () => {
+    const params = new URLSearchParams(location.search);
+    if (!params.has("xframe_invite")) return;
+    params.delete("xframe_invite");
+    const search = params.toString();
+    const next = `${location.pathname}${search ? `?${search}` : ""}${location.hash}`;
+    try { history.replaceState(null, "", next); } catch { /* file: / opaque origins */ }
+  };
+
+  /** Read invite from query (or sessionStorage after strip); clean the address bar on first sight. */
+  const takeInviteToken = () => {
+    const fromQuery = new URLSearchParams(location.search).get("xframe_invite")?.trim() || undefined;
+    if (fromQuery) {
+      try { sessionStorage.setItem(inviteTokenStorageKey(), fromQuery); } catch { /* private mode */ }
+      stripInviteTokenFromUrl();
+      return fromQuery;
+    }
     try {
-      const token = new URLSearchParams(location.search).get("xframe_invite")?.trim();
+      return sessionStorage.getItem(inviteTokenStorageKey())?.trim() || undefined;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const loadInvite = async () => {
+    const localTesting = location.href.startsWith("file:") || location.hostname === "127.0.0.1";
+    let url = location.href;
+    let short_url = url.length < 256 ? url : url.split("?")[0].split("#")[0];
+    try {
+      const token = takeInviteToken();
+      // Prefer a URL that still carries the invite token for sharing, even after the
+      // address bar was cleaned to path + slide hash.
+      if (token) {
+        const parsed = new URL(location.href);
+        parsed.searchParams.set("xframe_invite", token);
+        url = parsed.href;
+        short_url = url.length < 256 ? url : url.split("?")[0].split("#")[0];
+      }
       const payload = token?.split(".")[0];
       // Local opens without a token grant every modeled feature for testing.
       if (!payload) {
@@ -11505,8 +11539,35 @@ ${indent}${end}`;
       features
     };
   }
+  function inviteTokenStorageKey() {
+    return `xframe-present:invite-token:${location.pathname}`;
+  }
+  function stripInviteTokenFromUrl() {
+    const params = new URLSearchParams(location.search);
+    if (!params.has("xframe_invite")) return;
+    params.delete("xframe_invite");
+    const search = params.toString();
+    const next = `${location.pathname}${search ? `?${search}` : ""}${location.hash}`;
+    try {
+      history.replaceState(null, "", next);
+    } catch {
+    }
+  }
   function inviteTokenFromQuery() {
-    return new URLSearchParams(location.search).get("xframe_invite")?.trim() || void 0;
+    const fromQuery = new URLSearchParams(location.search).get("xframe_invite")?.trim() || void 0;
+    if (fromQuery) {
+      try {
+        sessionStorage.setItem(inviteTokenStorageKey(), fromQuery);
+      } catch {
+      }
+      stripInviteTokenFromUrl();
+      return fromQuery;
+    }
+    try {
+      return sessionStorage.getItem(inviteTokenStorageKey())?.trim() || void 0;
+    } catch {
+      return void 0;
+    }
   }
   function parseInviteClaims(token) {
     try {
@@ -12906,6 +12967,7 @@ ${indent}${end}`;
       }).observe(bind, { characterData: true, childList: true, subtree: true });
     }
   }
+  inviteTokenFromQuery();
   var root = document.getElementById("xframe");
   if (root instanceof HTMLElement) wire(root);
 })();
