@@ -1,6 +1,6 @@
 ---
 name: xform
-description: Compiles composable .xp semantic documents into deterministic outputs (compile-tree JSON, finalized HTML/YAML/text, multi-file artifacts). Supports Jinja concepts/templates, .json runtime bindings, .js filter modules, capability realization, and CLI overrides. Use when compiling .xp decks or labs, running the xform script, or finalizing structured documents.
+description: Compiles composable .xp semantic documents into deterministic outputs (compile-tree JSON, finalized HTML/YAML/text, multi-file artifacts). Supports Jinja concepts/templates, .json runtime bindings, .js filter modules, capability realization, and CLI overrides. Use when compiling .xp decks or labs, running the xform script, or finalizing structured documents. For authoring .xp files, use the create-xp skill.
 disable-model-invocation: true
 ---
 
@@ -11,6 +11,8 @@ templates, and Jinja evaluation produce a compile tree (JSON by default) or a
 finalized output (`--final`).
 
 Requires **Node.js ≥24**.
+
+To **write or edit** `.xp` / `.xpt` sources, use the **create-xp** skill.
 
 ## When to use
 
@@ -92,5 +94,6 @@ node skills/xform/scripts/xform.min.js deck.xp runtime.json filters.js --final h
 
 ## Directory layout
 
-- `skills/xform/SKILL.md` — this skill
+- `skills/xform/SKILL.md` — this skill (compile / CLI)
 - `skills/xform/scripts/xform.min.js` — minified CLI bundle (Node ESM)
+- `skills/create-xp/SKILL.md` — authoring `.xp` documents
