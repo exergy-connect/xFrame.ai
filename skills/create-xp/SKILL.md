@@ -47,8 +47,11 @@ note:
 - **Framework concepts** use the reserved leading `_` (`_document`, `_templates`,
   `_attributes`, `_content`, `_assert`, …).
 - **Shapes** declare allowed directive fields via `_attributes` (type name,
-  enum list, or `{ _type?, _required? }`). Optional `_format`: `content` |
-  `xml` | `binary`.
+  enum list, `{ _type?, _required? }`, `{ _concept? }`, or
+  `{ _dict: Shape }` for a named set of Shape instances). Optional `_format`:
+  `content` | `xml` | `binary`.
+- **Collections:** `[Shape]` = ordered list of Shape; `{ _dict: Shape }` =
+  dict/set keyed by name whose values are Shape.
 - **Directives** in the body: `conceptName:` + indented fields matching a shape.
   Deeper `_content:` holds nested body text.
 
