@@ -1,6 +1,6 @@
 ---
 name: xform
-description: Compiles composable .xp semantic documents into deterministic outputs (compile-tree JSON, finalized HTML/YAML/text, multi-file artifacts). Supports Jinja concepts/templates, .json runtime bindings, .js filter modules, capability realization, and CLI overrides. Use when compiling .xp decks or labs, running the xform script, or finalizing structured documents. For authoring .xp files, use the create-xp skill.
+description: Compiles composable .xp semantic documents into deterministic outputs (compile-tree JSON, finalized HTML/YAML/text, multi-file artifacts). Supports Jinja concepts/templates, .json runtime bindings, .js filter modules, capability realization, and CLI overrides. Also sets up new projects with a Dev Container using ghcr.io/exergy-connect/experiments/xform:latest. Use when compiling .xp decks or labs, scaffolding an xForm project/devcontainer, running the xform script, or finalizing structured documents. For authoring .xp files, use the create-xp skill.
 disable-model-invocation: true
 ---
 
@@ -10,18 +10,57 @@ Compile **structured `.xp` documents** into deterministic artifacts. Concepts,
 templates, and Jinja evaluation produce a compile tree (JSON by default) or a
 finalized output (`--final`).
 
-Requires **Node.js ≥24**.
+Requires **Node.js ≥24** (or the published controller image below).
 
 To **write or edit** `.xp` / `.xpt` sources, use the **create-xp** skill.
 
 ## When to use
 
 - User wants to **compile** an `.xp` document, deck, lab, or framework.
+- User wants to **scaffold a new project** with an xForm Dev Container.
 - User mentions **xForm**, **xform**, compile trees, or `--final html`.
 - User wants concept YAML/JSON output under `output/`.
 - User wants to apply a final template (`templates/_final/<ext>.xpt`).
 
+## New project (Dev Container)
+
+When starting a **new project** (or adding a container to an existing one), create
+`.devcontainer/devcontainer.json` that pulls the published image. Do **not**
+build from `xform/Dockerfile` unless the user is developing the compiler itself.
+
+```json
+{
+  "name": "xform",
+  "image": "ghcr.io/exergy-connect/experiments/xform:latest",
+  "remoteUser": "node",
+  "runArgs": ["--privileged"],
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
+  "forwardPorts": [42042],
+  "containerEnv": {
+    "XFORM_WORKSPACE": "/tmp/xform-ws"
+  }
+}
+```
+
+Notes:
+
+- `--privileged` is required so the image entrypoint can start in-container
+  `dockerd` (Containerlab / lab deploy).
+- Leave `XFORM_ROOT` / `XFORM_EXAMPLES` unset so the baked `/app` and `/examples`
+  are used. `xform` is already on `PATH`.
+- After writing the file, reopen the folder in the container (VS Code / Cursor
+  **Dev Containers**, or Codespaces).
+- Compile with `xform <source>... [options]` (same flags as below). Lab UI:
+  http://127.0.0.1:42042/
+
 ## How to run
+
+**Inside the Dev Container / published image:**
+
+```bash
+xform <source>... [options]
+```
 
 **xFrame.ai layout** (this repo after publish):
 
