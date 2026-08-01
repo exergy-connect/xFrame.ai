@@ -54,7 +54,7 @@ directories, or `dir/*.ext` patterns (recursive filesystem order by default).
 | `--keep-segment-separators` | With `--final`, join segments with `---` (default: blank line). |
 | `--no-recurse` | Do not recurse into subdirectories when expanding dirs/patterns. |
 | `--skip-symlinks` | Do not follow or include symlinks when expanding dirs/patterns. |
-| `--target <capability>` | Realize this capability path (overrides `_document._target`). |
+| `--target <capability>` | Realize this capability path (overrides `_document._final`). |
 | `--executor <name>` | Prefer a named capability executor. |
 | `--no-execute` | Emit the `_execution` plan only (do not realize / run commands). |
 | `--dryrun` | Print `_command` lines without spawning. |
