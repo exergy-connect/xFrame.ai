@@ -1,21 +1,21 @@
 {
   "_meta": {
-    "createdAt": "2026-08-02T06:43:03.395Z",
-    "modifiedAt": "2026-08-02T06:43:03.395Z",
+    "createdAt": "2026-08-02T06:43:22.785Z",
+    "modifiedAt": "2026-08-02T06:43:22.785Z",
     "version": "0.1.0"
   },
   "_sources": [
     {
-      "path": "file:///tmp/xframe-ai-check/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt",
+      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt",
       "hash": "sha256:ed0a26b939bc7e98166e4f494648661509f15194a1631c569a8b609c1de5e2ea",
-      "createdAt": "2026-08-02T06:42:32.564Z",
-      "modifiedAt": "2026-08-02T06:43:03.302Z"
+      "createdAt": "2026-08-02T06:43:21.026Z",
+      "modifiedAt": "2026-08-02T06:43:21.026Z"
     },
     {
-      "path": "file:///tmp/xframe-ai-check/docs/examples/xform-semantic-lab/topology.xp",
+      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/topology.xp",
       "hash": "sha256:bbe9e4e987d21d58374f496e61aa9f6c850e0ca980bd3194b2b2a16f9c80f779",
-      "createdAt": "2026-08-02T06:43:03.284Z",
-      "modifiedAt": "2026-08-02T06:43:03.302Z"
+      "createdAt": "2026-08-02T06:43:21.027Z",
+      "modifiedAt": "2026-08-02T06:43:21.027Z"
     }
   ],
   "_concepts": {
@@ -411,7 +411,7 @@
     "provenance": {
       "source": 0,
       "line": 26,
-      "path": "file:///tmp/xframe-ai-check/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt"
+      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt"
     },
     "decisions": []
   }
