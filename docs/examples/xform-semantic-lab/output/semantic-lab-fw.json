@@ -1,33 +1,21 @@
 {
   "_meta": {
-    "createdAt": "2026-07-27T22:33:47.244Z",
-    "modifiedAt": "2026-07-27T22:33:47.244Z",
+    "createdAt": "2026-08-02T06:43:03.395Z",
+    "modifiedAt": "2026-08-02T06:43:03.395Z",
     "version": "0.1.0"
   },
   "_sources": [
     {
-      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt",
-      "hash": "sha256:9cfbaf15b99a048994a3a62a91166852ac0fe8c50864586806a5d90d045927bd",
-      "createdAt": "2026-07-27T22:33:44.465Z",
-      "modifiedAt": "2026-07-27T22:33:44.465Z"
+      "path": "file:///tmp/xframe-ai-check/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt",
+      "hash": "sha256:ed0a26b939bc7e98166e4f494648661509f15194a1631c569a8b609c1de5e2ea",
+      "createdAt": "2026-08-02T06:42:32.564Z",
+      "modifiedAt": "2026-08-02T06:43:03.302Z"
     },
     {
-      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/topology.xp",
-      "hash": "sha256:65c9e63829112db1d9bfebab191f89cf35f9062f3eb1048246001a1ead02ecb8",
-      "createdAt": "2026-07-27T22:33:44.465Z",
-      "modifiedAt": "2026-07-27T22:33:44.465Z"
-    },
-    {
-      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/templates/devices/frr.xpt",
-      "hash": "sha256:38ee97f794b95d319d523a478db1ddf667835b79632d217c3f4a516ef2956298",
-      "createdAt": "2026-07-27T22:33:44.465Z",
-      "modifiedAt": "2026-07-27T22:33:44.465Z"
-    },
-    {
-      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/templates/modules/bgp.xpt",
-      "hash": "sha256:d3f19a52c440f2c6c806f1210aedeeb5bbb125c732e791049a0ff745d0250636",
-      "createdAt": "2026-07-27T22:33:44.465Z",
-      "modifiedAt": "2026-07-27T22:33:44.465Z"
+      "path": "file:///tmp/xframe-ai-check/docs/examples/xform-semantic-lab/topology.xp",
+      "hash": "sha256:bbe9e4e987d21d58374f496e61aa9f6c850e0ca980bd3194b2b2a16f9c80f779",
+      "createdAt": "2026-08-02T06:43:03.284Z",
+      "modifiedAt": "2026-08-02T06:43:03.302Z"
     }
   ],
   "_concepts": {
@@ -35,15 +23,19 @@
       "_templates": "file://./templates/_final/"
     },
     "devices": {
-      "_templates": "file://./templates/devices/",
-      "_resolved": {
-        "template": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/templates/devices/frr.xpt"
+      "_templates": {
+        "_location": "file://./templates/devices/",
+        "_mappings": {
+          ".xpt": "_xp_file"
+        }
       }
     },
     "modules": {
-      "_templates": "file://./templates/modules/",
-      "_resolved": {
-        "template": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/templates/modules/bgp.xpt"
+      "_templates": {
+        "_location": "file://./templates/modules/",
+        "_mappings": {
+          ".xpt": "_xp_file"
+        }
       }
     },
     "_capability": {
@@ -105,6 +97,13 @@
       }
     },
     "topology_file": "output/clab.yml",
+    "kind": "linux",
+    "image": "quay.io/frrouting/frr:10.6.1",
+    "runtime": "docker",
+    "mgmt_if": "eth0",
+    "config_path": "/etc/frr/frr.conf",
+    "init_path": "/etc/config/initialize.sh",
+    "interface_name": "eth{ifindex}",
     "name": "ebgp-session",
     "provider": "clab",
     "module": [
@@ -192,24 +191,13 @@
         "dut-x2"
       ]
     },
-    "kind": "linux",
-    "image": "quay.io/frrouting/frr:10.6.1",
-    "runtime": "docker",
-    "mgmt_if": "eth0",
-    "config_path": "/etc/frr/frr.conf",
-    "init_path": "/etc/config/initialize.sh",
-    "interface_name": "eth{ifindex}",
-    "advertise_loopback": true,
-    "next_hop_self": true,
     "_document": {
       "_path": "topology.xp",
       "_output": {
         "_basename": "topology",
         "_extension": "xp"
       },
-      "_target": "containerlab.deploy",
-      "devices": "frr",
-      "modules": "bgp"
+      "_final": "containerlab.create"
     },
     "addressed": {
       "nodes": {
@@ -417,31 +405,13 @@
   },
   "segments": [],
   "_execution": {
-    "capability": "containerlab.deploy",
-    "target": "running_lab",
-    "candidates": [
-      {
-        "name": "clab",
-        "args": "deploy -t {{ topology_file }}",
-        "depends": {
-          "_capability": {
-            "containerlab": {
-              "create": "{{ topology }}"
-            }
-          }
-        },
-        "version": "{{ _command }} version --short",
-        "env": {
-          "CLAB_RUNTIME": null,
-          "CLAB_VERSION_CHECK": null,
-          "CLAB_LABDIR_BASE": null
-        }
-      }
-    ],
+    "capability": "containerlab.create",
+    "target": "addressed",
+    "candidates": [],
     "provenance": {
       "source": 0,
       "line": 26,
-      "path": "file:///home/runner/work/xFrame.ai/xFrame.ai/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt"
+      "path": "file:///tmp/xframe-ai-check/docs/examples/xform-semantic-lab/semantic-lab-fw.xpt"
     },
     "decisions": []
   }

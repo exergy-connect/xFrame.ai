@@ -8,12 +8,12 @@ module: [bgp]
 
 # Framework already selects devices: frr and modules: bgp; restate so a
 # topology-only compile still resolves templates when fw is listed first.
-# `_target` realizes the framework's containerlab.deploy capability
-# (deploy output/clab.yml); requires approval.
+# `_document._final` runs containerlab.create (normalize + assign_ips).
+# Deploy with: --target containerlab.deploy (requires approval).
+# Device/module template packs are declared on the framework; do not bind them
+# on `_document` (that would pull parameterized bodies into `_content`).
 _document:
-  devices: frr
-  modules: bgp
-  _target: containerlab.deploy
+  _final: containerlab.create
 
 # Address pools (lab addressing defaults)
 addressing:

@@ -39,7 +39,7 @@ are separate concepts.
 | `filters/` | Jinja filter modules (`{% include %}` from the framework; may import each other). |
 | `semantic-lab-fw.xpt` | Framework: filter includes, template roots, `containerlab.create` / `deploy` / `destroy`, defaults. |
 | `index.html` | Browser demo that compiles via HTTP URLs. |
-| `topology.xp` | Lab content: `addressing` + sparse `topology`, `_document._target: containerlab.deploy`. |
+| `topology.xp` | Lab content: `addressing` + sparse `topology`, `_document._final: containerlab.create`. |
 | `templates/_final/clab.yml.xpt` | Final emission (multi-file segment stream → `output/…`). |
 | `templates/devices/frr.xpt` | Device concept (`devices: frr`) — conf `#1`, initialize `#2`. |
 | `templates/modules/bgp.xpt` | Module concept (`modules: bgp`) — conf `#1`, `bgpd=yes` `#2`. |

@@ -67,8 +67,14 @@ _capability:
 
 topology_file: output/clab.yml
 
-# Default realization: FRR device + BGP module (topology may override)
-_document:
-  devices: frr
-  modules: bgp
+# Ambient defaults for templates/_final/clab.yml.xpt (kind/image/…).
+# Kept here instead of `_document.devices: frr` so parameterized device bodies
+# (which reference `node`) are not pulled into `_content`.
+kind: linux
+image: quay.io/frrouting/frr:10.6.1
+runtime: docker
+mgmt_if: eth0
+config_path: /etc/frr/frr.conf
+init_path: /etc/config/initialize.sh
+interface_name: eth{ifindex}
 ---
