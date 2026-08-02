@@ -1,0 +1,5 @@
+---
+_boolean:
+  _decode: from__boolean_string
+  _encode: to__boolean_string
+---

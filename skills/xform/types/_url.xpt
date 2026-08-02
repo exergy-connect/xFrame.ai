@@ -1,0 +1,11 @@
+---
+_url:
+  _extends: _string
+  # encode/decode: statically imported types/_url.js (kernel)
+  _attributes:
+    scheme: _string
+    host: _string
+    path: [_string]
+    query: _string
+    fragment: _string
+---

@@ -1,0 +1,5 @@
+---
+_enum:
+  _decode: from__enum_string
+  _encode: to__enum_string
+---

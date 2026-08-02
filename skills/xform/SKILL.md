@@ -147,4 +147,5 @@ node skills/xform/scripts/xform.min.js deck.xp runtime.json filters.js --final h
 
 - `skills/xform/SKILL.md` — this skill (compile / CLI)
 - `skills/xform/scripts/xform.min.js` — minified CLI bundle (Node ESM)
+- `skills/xform/types/` — shipped type package (`_type.xpt` index; required by the CLI)
 - `skills/create-xp/SKILL.md` — authoring `.xp` documents

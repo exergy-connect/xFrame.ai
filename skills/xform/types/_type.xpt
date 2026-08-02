@@ -1,0 +1,35 @@
+---
+# Bootstrap index for the shipped type package.
+# `<name>: _type` registers a type loaded via `_type._templates` on demand.
+# `<name>: { _alias: <canonical> }` is a spelling only — not a separate type.
+# For aliases, `_id` is the target (`_int._id` → `_integer`), not the spelling.
+# Kernel types (`_url`, `_list`, `_dict`) are also listed for symmetry; the
+# engine resolves them via static import, not this locator.
+
+_type:
+  _templates:
+    _location: file://./
+    _mappings:
+      ".xpt": _xp_file
+      ".js": _javascript
+
+_string: _type
+_integer: _type
+_boolean: _type
+_object: _type
+_enum: _type
+_true: _type
+_false: _type
+
+# Spellings; each implies `_id` of the aliased type.
+_int:
+  _alias: _integer
+_number:
+  _alias: _integer
+_bool:
+  _alias: _boolean
+
+_url: _type
+_list: _type
+_dict: _type
+---

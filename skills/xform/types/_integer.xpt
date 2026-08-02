@@ -1,0 +1,6 @@
+---
+_integer:
+  _extends: _string
+  _decode: from__integer_string
+  _encode: to__integer_string
+---

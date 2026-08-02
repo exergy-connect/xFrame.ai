@@ -1,0 +1,5 @@
+---
+_object:
+  _decode: from__object_string
+  _encode: to__object_string
+---
