@@ -37,9 +37,16 @@ build from `xform/Dockerfile` unless the user is developing the compiler itself.
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
   "forwardPorts": [42042],
+  "portsAttributes": {
+    "42042": {
+      "label": "xForm Lab UI",
+      "onAutoForward": "notify"
+    }
+  },
   "containerEnv": {
     "XFORM_WORKSPACE": "/tmp/xform-ws"
-  }
+  },
+  "postStartCommand": "sudo /usr/local/bin/docker-entrypoint.sh true && (curl -sf http://127.0.0.1:42042/ >/dev/null || (cd /app && nohup node server/index.js >/tmp/xform-server.log 2>&1 &))"
 }
 ```
 
@@ -47,6 +54,11 @@ Notes:
 
 - `--privileged` is required so the image entrypoint can start in-container
   `dockerd` (Containerlab / lab deploy).
+- Dev Containers override the image `ENTRYPOINT`/`CMD` by default. `postStart`
+  starts `dockerd` via `docker-entrypoint.sh`, then brings up the lab UI if it
+  is not already listening on 42042.
+- Do **not** add the `docker-in-docker` feature; it conflicts with the image’s
+  own `dockerd`.
 - Leave `XFORM_ROOT` / `XFORM_EXAMPLES` unset so the baked `/app` and `/examples`
   are used. `xform` is already on `PATH`.
 - After writing the file, reopen the folder in the container (VS Code / Cursor
