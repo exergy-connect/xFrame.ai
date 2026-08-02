@@ -12,7 +12,7 @@ structure over presentation strings. Compile with the **xform** skill.
 ## File shape
 
 Every `.xp` / `.xpt` is a stream of YAML-style documents delimited by whole-line
-`---` (or `...`). Markers only—no Jinja sniffing.
+`---` (or `...`).
 
 1. **Front matter** (first document) — top-level keys are **concepts** (shapes,
    bindings, data). Exception: compiler-owned `_assert`.
@@ -45,7 +45,7 @@ note:
 
 - **User concepts** describe domain meaning. Names must not start with `_`.
 - **Framework concepts** use the reserved leading `_` (`_document`, `_templates`,
-  `_attributes`, `_content`, `_assert`, …).
+  `_attributes`, `_content`, `_assert`, `_capability`, …).
 - **Shapes** declare allowed directive fields via `_attributes` (type name,
   enum list, `{ _type?, _required? }`, `{ _concept? }`, or
   `{ _dict: Shape }` for a named set of Shape instances). Optional `_format`:
@@ -79,6 +79,12 @@ network_interface_vlan: …
 
 Compound instance labels (`small_turtle`) are fine when they name one thing,
 not a fake hierarchy.
+
+## Capabilities and `_api`
+
+`_capability` contracts (`_input` / `_output` + `_transform` or `_executors`)
+may set `_api: _true` to **export a change workflow**: callers POST into the live document (body → `_input`, response → `_output`) to introduce or replace concepts—not a one-shot compile side effect. App name = top-level `_id`, else `.xp` basename. After **Deploy API**:
+`GET|POST /api/<app>/<capability…>`. Compile does not install routes. See `examples/api/`.
 
 ## Composition patterns
 
