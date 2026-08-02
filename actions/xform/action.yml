@@ -44,6 +44,19 @@ inputs:
       do not realize / run capability commands).
     required: false
     default: 'false'
+  auto-approve:
+    description: >-
+      Set to `true` to pass `--auto-approve` (run capability commands without
+      interactive approval; required for non-interactive CI capability runs).
+    required: false
+    default: 'false'
+  working-directory:
+    description: >-
+      Directory to run xform from (relative to the workspace, or absolute).
+      Defaults to the job workspace root. Use when sources and relative
+      capability paths (e.g. `output/`) are rooted in a subdirectory.
+    required: false
+    default: ''
 
 runs:
   using: composite
@@ -60,12 +73,18 @@ runs:
         NO_RECURSE: ${{ inputs.no-recurse }}
         SKIP_SYMLINKS: ${{ inputs.skip-symlinks }}
         NO_EXECUTE: ${{ inputs.no-execute }}
+        AUTO_APPROVE: ${{ inputs.auto-approve }}
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
       run: |
         set -euo pipefail
         script="${ACTION_PATH}/../../skills/xform/scripts/xform.min.js"
         if [[ ! -f "$script" ]]; then
           echo "::error file=${script}::xForm script missing (expected bundled xform skill asset)."
           exit 1
+        fi
+        if [[ -n "${WORKING_DIRECTORY}" ]]; then
+          cd "${WORKING_DIRECTORY}"
+          echo "xform: cwd $(pwd)"
         fi
         # shellcheck disable=SC2206
         sources=( ${SOURCES} )
@@ -81,6 +100,7 @@ runs:
         [[ "${NO_RECURSE}" == "true" ]] && cmd+=(--no-recurse)
         [[ "${SKIP_SYMLINKS}" == "true" ]] && cmd+=(--skip-symlinks)
         [[ "${NO_EXECUTE}" == "true" ]] && cmd+=(--no-execute)
+        [[ "${AUTO_APPROVE}" == "true" ]] && cmd+=(--auto-approve)
         echo "xform: ${cmd[*]}"
         "${cmd[@]}"
         # Summarize artifacts written beside the primary .xp/.xpt source.
