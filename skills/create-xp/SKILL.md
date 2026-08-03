@@ -82,7 +82,7 @@ not a fake hierarchy.
 
 ## Capabilities and `_api`
 
-`_capability` contracts (`_input` / `_output` + `_transform` or `_executors`)
+`_capability` contracts (`_input` / `_output` + Jinja realization or `_content`)
 may set `_api: _true` to **export a change workflow**: callers POST into the live document (body → `_input`, response → `_output`) to introduce or replace concepts—not a one-shot compile side effect. App name = top-level `_id`, else `.xp` basename. After **Deploy API**:
 `GET|POST /api/<app>/<capability…>`. Compile does not install routes. See `examples/api/`.
 
