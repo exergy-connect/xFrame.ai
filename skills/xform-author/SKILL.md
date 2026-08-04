@@ -140,10 +140,11 @@ approval identity.
 Scope-local string fields (non-`_` keys) merge root→leaf independently — closer
 names win — because they are not a single attribute map.
 
-`_input` may be a type/concept name, or a mapping whose mandatory `_content` is
-the default `_input` binding. Other keys are ambient parts (e.g. env) resolved
-from the concept tree by name: `_input: { _content: _string, persistence: persistence }`
-exposes `{{ _input }}` and `{{ persistence.url }}` / `_xform.concepts.persistence`.
+`_input` may be a type/concept name, or a mapping with optional `_content` (the
+default `_input` binding) plus ambient parts resolved from the concept tree by
+name. Omit `_content` for nullary ops used as values (`{{ persist.list | to_json }}`):
+`_input: { _content: _string, persistence: persistence }` exposes `{{ _input }}`
+and `{{ persistence.url }}` / `_xform.concepts.persistence`.
 
 ```yaml
 _capability:
