@@ -3629,12 +3629,48 @@ window.__XFRAME__.runtime.register("ai-index", () => {
       }],
     });
 
+    /** True when `name` appears in a pdf-extract control's input → depends chain. */
+    const pdfExtractConsumers = (name) => {
+      if (!name) return [];
+      const consumers = [];
+      for (const pdf of root.querySelectorAll("[data-xframe-control='pdf-extract']")) {
+        if (!(pdf instanceof HTMLElement)) continue;
+        let cursor = pdf.dataset.input?.trim() || "";
+        const seen = new Set();
+        while (cursor && !seen.has(cursor)) {
+          seen.add(cursor);
+          if (cursor === name) {
+            consumers.push(pdf);
+            break;
+          }
+          const node = root.querySelector(`[data-xframe-variable="${CSS.escape(cursor)}"]`);
+          if (!(node instanceof HTMLElement)) break;
+          cursor = node.dataset.xframeVariableDepends?.trim() || "";
+        }
+      }
+      return consumers;
+    };
+
+    /**
+     * Skip PDF-pipeline-only variables when every consuming pdf-extract control is
+     * hidden (feature gated off). Keep variables that still have a display bind.
+     */
+    const shouldSkipPdfGated = (variable) => {
+      const name = variable.dataset.xframeVariable?.trim() || "";
+      if (!name) return false;
+      const consumers = pdfExtractConsumers(name);
+      if (!consumers.length) return false;
+      if (consumers.some((pdf) => !pdf.hidden)) return false;
+      return !root.querySelector(`[data-xframe-variable-bind="${CSS.escape(name)}"]`);
+    };
+
     let timer = 0;
     const generate = (refresh = false) => {
       clearTimeout(timer);
       timer = window.setTimeout(() => {
         const detail = { context: createContext(), refresh };
         for (const variable of variables) {
+          if (shouldSkipPdfGated(variable)) continue;
           variable.dispatchEvent(new CustomEvent("xframe:render-template", { bubbles: true, detail }));
         }
       }, refresh ? 0 : 50);
@@ -4680,7 +4716,9 @@ window.__XFRAME__.runtime.register("pdf-extract", { import: ["encoding.decodeJso
       : `${html}${section}`;
   };
 
-  /** Keep upstream LLM refresh controls in sync with this control's `show` state. */
+  /** Keep upstream LLM refresh controls in sync with this control's `show` state.
+   * Stop at variables that still have a display/narrative bind so shared upstreams
+   * (e.g. tailored_narrative) stay refreshable when PDF extract is feature-gated off. */
   const syncPipelineRefreshVisibility = (control) => {
     const hide = control.hidden;
     let name = control.dataset.input?.trim() || "";
@@ -4689,6 +4727,7 @@ window.__XFRAME__.runtime.register("pdf-extract", { import: ["encoding.decodeJso
       seen.add(name);
       const variable = root.querySelector(`[data-xframe-variable="${CSS.escape(name)}"]`);
       if (!(variable instanceof HTMLElement)) break;
+      if (root.querySelector(`[data-xframe-variable-bind="${CSS.escape(name)}"]`)) break;
       const group = variable.closest(".xframe-llm-refresh-group");
       if (group instanceof HTMLElement) group.hidden = hide;
       name = variable.dataset.xframeVariableDepends?.trim() || "";
