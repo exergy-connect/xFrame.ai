@@ -44,7 +44,7 @@ note:
 
 - **User concepts** describe domain meaning. Names must not start with `_`.
 - **Framework concepts** use the reserved leading `_` (`_document`, `_templates`,
-  `_attributes`, `_content`, `_assert`, `_capability`, …).
+  `_realizations`, `_attributes`, `_content`, `_assert`, `_capability`, …).
 - **Shapes** declare allowed directive fields via `_attributes` (type name,
   enum list, `{ _type?, _required? }`, `{ _concept? }`, or
   `{ _dict: Shape }` for a named set of Shape instances). Optional `_format`:
@@ -83,12 +83,12 @@ not a fake hierarchy.
 ## Capabilities
 
 Declare a semantic transition at any dotted path below `_capability`. A contract
-is a named mapping with `_input`, `_output`, or `_content`; namespace mappings
-need none of them. `_document._final` or CLI `--target` selects a dotted path.
+is a named mapping with `_input`, `_output`, or `_realization`; namespace mappings need none of
+them. `_document._final` or CLI `--target` selects a dotted path.
 
 ### Pure Jinja realization
 
-Use `_content.jinja` for an in-process transformation. During realization the
+Use `_realization.jinja` for an in-process transformation. During realization the
 declared input concept is also available as `_input`. Fully resolved Jinja
 fields inside it are materialized plain scalars, arrays, and objects before a
 filter sees them.
@@ -100,7 +100,7 @@ _capability:
     render:
       _input: graph
       _output: graph_svg
-      _content:
+      _realization:
         jinja: "{{ _input | to_svg_graph }}"
 
 graph:
@@ -119,10 +119,31 @@ deferred.
 
 ### External executor alternatives
 
-Named mappings under `_content` are replaceable executor realizations. Set
-`_document._executor` (or CLI `--executor`) to prefer one. `which()` resolves an
+Named mappings under `_realization` are replaceable realizations. Capability attributes
+(`_realization`, `_commands`, `_assert`, …) inherit down the YAML tree:
+resolve at the current node, then walk parents until found; a child that
+redeclares the key replaces the whole value. Declare `_realization` on a
+namespace to share realizations with every child contract.
+
+`_realization` may bind concept `_realizations`: `_realization: storage_implementation`
+or named Jinja refs into that catalog. Use `_realizations` (not `_templates`) for
+capability backend catalogs; keep `_templates` for document/style selection.
+expands every template id under that concept, or name slots explicitly with
+`{{ storage_implementation['neo4j'] }}`. `.xpj` templates become javascript
+realizations. Prefer one with
+CLI `--with <capability.path>=<name>` (e.g. `--with persist.store=neo4j`, or
+`--with persist=neo4j` for every capability under that prefix). `_document._executor`
+is a global fallback. `which()` resolves an
 executable on `PATH`. `_version` output and resolved `_env` participate in the
 approval identity.
+
+Scope-local string fields (non-`_` keys) merge root→leaf independently — closer
+names win — because they are not a single attribute map.
+
+`_input` may be a type/concept name, or a mapping whose mandatory `_content` is
+the default `_input` binding. Other keys are ambient parts (e.g. env) resolved
+from the concept tree by name: `_input: { _content: _string, persistence: persistence }`
+exposes `{{ _input }}` and `{{ persistence.url }}` / `_xform.concepts.persistence`.
 
 ```yaml
 _capability:
@@ -141,7 +162,7 @@ _capability:
       _assert:
         - test: "{{ _input | length > 0 }}"
           message: input must not be empty
-      _content:
+      _realization:
         node:
           _args: "-p process.argv[1].toUpperCase() '{{ _input }}'"
         portable:
@@ -179,6 +200,8 @@ otherwise the `.xp` basename. Ordinary compile does not install routes. See
 - **Concept templates:** declare `style._templates:
   file://./templates/style/`, then bind `_document.style: title` to load
   `templates/style/title.xpt`; authored root fields deep-merge over defaults.
+- **Capability realizations:** declare `storage_implementation._realizations`
+  over `impl/*.xpj`, then bind persist `_realization` from that catalog.
 - **Includes:** `{% include "….xpt" %}` or
   `{{ include("other.xp", segments=["title"]) }}`.
 - **Assertions:** `_assert: [{ test: "{{ … }}", message: "…" }]` in front matter
