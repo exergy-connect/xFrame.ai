@@ -1,0 +1,61 @@
+name: Update latest skill version
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "skills/**"
+  # Skill syncs currently use `[skip ci]`, which suppresses push workflows.
+  # Reconcile periodically so those pushes still update the version marker.
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-skills-latest
+  cancel-in-progress: true
+
+jobs:
+  update-latest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Update latest skill version
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          skills_commit="$(git log -1 --format=%H -- skills/)"
+          current_version="$(cat docs/latest 2>/dev/null || true)"
+          if [[ "$current_version" == *".$skills_commit" ]]; then
+            echo "docs/latest already points to $skills_commit."
+            exit 0
+          fi
+
+          version="$(date -u +'%Y-%m-%dT%H:%M:%S').${skills_commit}"
+          printf '%s\n' "$version" > docs/latest
+          git add docs/latest
+
+          git commit -m "chore: update latest skill version"
+
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then
+              echo "Updated docs/latest to $version"
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt); rebasing and retrying"
+            git pull --rebase origin main
+          done
+
+          echo "Failed to push docs/latest after multiple attempts" >&2
+          exit 1
