@@ -1,7 +1,6 @@
 ---
-name: xform
-description: Compiles composable .xp semantic documents into deterministic outputs (compile-tree JSON, finalized HTML/YAML/text, multi-file artifacts). Supports Jinja concepts/templates, .json runtime bindings, .js filter modules, capability realization, and CLI overrides. Also sets up new projects with a Dev Container using ghcr.io/exergy-connect/experiments/xform:latest. Use when compiling .xp decks or labs, scaffolding an xForm project/devcontainer, running the xform script, or finalizing structured documents. For authoring .xp files, use the create-xp skill.
-disable-model-invocation: true
+name: xform-run
+description: Compiles composable .xp semantic documents into deterministic outputs (compile-tree JSON, finalized HTML/YAML/text, multi-file artifacts). Supports Jinja concepts/templates, .json runtime bindings, .js filter modules, capability realization, and CLI overrides. Also sets up new projects with a Dev Container using ghcr.io/exergy-connect/experiments/xform:latest. Use when compiling .xp decks or labs, scaffolding an xForm project/devcontainer, running the xform script, or finalizing structured documents. For authoring .xp files, use the xform-author skill.
 ---
 
 # xForm
@@ -12,7 +11,7 @@ finalized output (`--final`).
 
 Requires **Node.js ≥24** (or the published controller image below).
 
-To **write or edit** `.xp` / `.xpt` sources, use the **create-xp** skill.
+To **write or edit** `.xp` / `.xpt` sources, use the **xform-author** skill.
 
 ## When to use
 
@@ -77,13 +76,13 @@ xform <source>... [options]
 **xFrame.ai layout** (this repo after publish):
 
 ```bash
-node skills/xform/scripts/xform.min.js <source>... [options]
+node skills/xform-run/scripts/xform.min.js <source>... [options]
 ```
 
 **Cursor install layout** (skills under `.cursor/skills/`):
 
 ```bash
-node .cursor/skills/xform/scripts/xform.min.js <source>... [options]
+node .cursor/skills/xform-run/scripts/xform.min.js <source>... [options]
 ```
 
 **Sources:** `*.xp` documents, `*.json` concept bindings, `*.js` filter modules,
@@ -118,20 +117,20 @@ directories, or `dir/*.ext` patterns (recursive filesystem order by default).
 ### Jinja-only compile
 
 ```bash
-node skills/xform/scripts/xform.min.js compile <template> [runtime.json ...] [filters.js ...] [--final] [-o output]
+node skills/xform-run/scripts/xform.min.js compile <template> [runtime.json ...] [filters.js ...] [--final] [-o output]
 ```
 
 ### Examples
 
 ```bash
 # Compile tree JSON
-node skills/xform/scripts/xform.min.js deck.xp
+node skills/xform-run/scripts/xform.min.js deck.xp
 
 # Final HTML
-node skills/xform/scripts/xform.min.js deck.xp --final html
+node skills/xform-run/scripts/xform.min.js deck.xp --final html
 
 # Bindings + filters
-node skills/xform/scripts/xform.min.js deck.xp runtime.json filters.js --final html -o out/deck.html
+node skills/xform-run/scripts/xform.min.js deck.xp runtime.json filters.js --final html -o out/deck.html
 ```
 
 ## GitHub Action
@@ -145,6 +144,6 @@ node skills/xform/scripts/xform.min.js deck.xp runtime.json filters.js --final h
 
 ## Directory layout
 
-- `skills/xform/SKILL.md` — this skill (compile / CLI)
-- `skills/xform/scripts/xform.min.js` — minified CLI bundle (Node ESM)
-- `skills/create-xp/SKILL.md` — authoring `.xp` documents
+- `skills/xform-run/SKILL.md` — this skill (compile / CLI)
+- `skills/xform-run/scripts/xform.min.js` — minified CLI bundle (Node ESM)
+- `skills/xform-author/SKILL.md` — authoring `.xp` documents

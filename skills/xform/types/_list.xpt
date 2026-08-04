@@ -1,4 +1,0 @@
----
-_list:
-  # Parametric; `_of` set by desugar of authored `[T]`. Kernel: types/_list.js
----

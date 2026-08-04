@@ -1,4 +1,0 @@
----
-_dict:
-  # Parametric; `_of` set by desugar of authored `_dict: T`. Kernel: types/_dict.js
----
