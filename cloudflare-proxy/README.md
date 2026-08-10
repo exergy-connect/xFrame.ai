@@ -8,7 +8,6 @@ Endpoints (same origin as the deck, e.g. `https://xframe-ai.jvb127.workers.dev`)
 - `POST /invite/mint`: admin-secret-protected minting API. The signed token limits its presentation origin, activation/expiry window, and browser-enforced AI call allowance.
 - `POST /v1/chat/completions`: limited OpenAI-compatible chat for xFrame's runtime LLM and translation filters. Forwards `response_format` of type `json_object` / `json_schema` to Gemini structured outputs (`responseMimeType` + `responseJsonSchema`).
 - `POST /v1/audio/speech`: exact-recitation narration. Cascades Gemini 3.1 Flash TTS → Gemini 2.5 Flash TTS → Microsoft Edge Read Aloud (each Gemini free tier is ~10 RPD).
-- `POST /v1/live-token`: constrained, single-use ephemeral token for Gemini Live (conversational voice agents — not slide narration).
 - `GET /health`: deployment health check (requires an allowed `Origin`).
 
 Optional standalone deploy of this folder alone (`name`: `xframe-gemini-proxy`) is still supported via this directory's `wrangler.jsonc`, but the primary production target is root `xframe-ai`.
@@ -38,7 +37,7 @@ Test the REST endpoint (against `wrangler dev` or the deployed Worker):
 curl https://xframe-ai.jvb127.workers.dev/v1/chat/completions \
   -H 'Origin: https://xframe-ai.jvb127.workers.dev' \
   -H 'Content-Type: application/json' \
-  --data '{"model":"gemini-3.1-flash-lite","messages":[{"role":"user","content":"Say hello"}]}'
+  --data '{"model":"gemini-3.5-flash-lite","messages":[{"role":"user","content":"Say hello"}]}'
 ```
 
 ## Deploy
@@ -65,22 +64,26 @@ Open `/invite`, enter the target presentation URL, allowed time window, AI-call 
 - **File mode (default):** gzip → AES-256-GCM into Workers KV at key `contexts/<invite-id>.ctx`. The signed token carries only `contextFile` (relative path) and `contextKey` (decode key). Plaintext length is limited by `INVITE_MAX_KV_CONTEXT_CHARS` (5000 when unset or invalid). The encrypted blob must fit within Cloudflare's 25 MiB KV per-value limit. Requires the `INVITE_CONTEXTS` KV binding. The combined Worker serves `GET /contexts/<uuid>.ctx` from KV before falling through to static assets.
 - **Token mode (`contextStorage: "token"`):** gzip-compressed context embedded as `contextGzip` in the token; verification transparently expands it to `context`.
 
-Optional `features` (for example `["pdf_extract", "text_to_speech"]`) are stored on the signed claims; unknown feature ids are rejected. Optional `opportunity: true` is a separate claim (alongside context) that marks the invite context as a specific opportunity so presentations can populate the opportunity input instead of general interest. `INVITE_SIGNING_SECRET` requires a signed invite for `/v1/audio/speech` and `/v1/live-token` (Gemini TTS / Live). `/v1/chat/completions` stays origin-gated (and rate-limited) so résumé adaptation works without an invite; when an invite Bearer is sent, it is still verified. Use separate, long random values for the invite secrets. During migration, omitting `INVITE_SIGNING_SECRET` leaves the existing origin-based behavior in place.
+Optional `features` (for example `["pdf_extract", "text_to_speech"]`) are stored on the signed claims; unknown feature ids are rejected. Optional `opportunity: true` is a separate claim (alongside context) that marks the invite context as a specific opportunity so presentations can populate the opportunity input instead of general interest. `INVITE_SIGNING_SECRET` requires a signed invite for `/v1/audio/speech` (Gemini TTS). `/v1/chat/completions` stays origin-gated (and rate-limited) so résumé adaptation works without an invite; when an invite Bearer is sent, it is still verified. Use separate, long random values for the invite secrets. During migration, omitting `INVITE_SIGNING_SECRET` leaves the existing origin-based behavior in place.
 
 | Name | Kind | Purpose |
 | --- | --- | --- |
 | `INVITE_CONTEXTS` | KV binding | Stores encrypted invite context blobs |
+| `GEMINI_MODEL` | var | Primary chat model id (required) |
+| `GEMINI_FALLBACK_MODEL` | var | Optional chat fallback on quota/5xx |
+| `GEMINI_TTS_MODEL` | var | Primary Gemini TTS model id (required unless `provider=edge`) |
+| `GEMINI_TTS_FALLBACK_MODEL` | var | Optional Gemini TTS fallback on quota/5xx |
 | `MAX_INPUT_CHARS` | var | Max chat/TTS prompt chars (default `40000`) |
 | `INVITE_MAX_KV_CONTEXT_CHARS` | var | Max plaintext context chars for KV/file storage (default `5000`; must leave ≥25000 under `MAX_INPUT_CHARS`) |
 | `INVITE_CONTEXT_DIR` | var | Must stay `contexts` (path contract with the presentation runtime) |
 
-The proxy cryptographically enforces invite signature, activation/expiry window, and presentation origin for TTS/Live. The call allowance is intentionally loose: xFrame records each uncached invited AI request in that browser's `localStorage`. Clearing site data or switching browsers resets the local counter; use a Cloudflare rate-limit binding when a hard server-side quota is required.
+The proxy cryptographically enforces invite signature, activation/expiry window, and presentation origin for TTS. The call allowance is intentionally loose: xFrame records each uncached invited AI request in that browser's `localStorage`. Clearing site data or switching browsers resets the local counter; use a Cloudflare rate-limit binding when a hard server-side quota is required.
 
-Point xFrame's runtime LLM base URL at the Worker origin with a `/v1` suffix, e.g. `https://xframe-ai.jvb127.workers.dev/v1`. For the Cloudflare proxy preset, use a non-secret placeholder such as `cloudflare-proxy` in the BYOA form (never the Gemini key). Omit `Authorization` for uninvited chat; send `Authorization: Bearer <xframe_invite>` when an invite is present or when calling TTS/Live.
+Point xFrame's runtime LLM base URL at the Worker origin with a `/v1` suffix, e.g. `https://xframe-ai.jvb127.workers.dev/v1`. For the Cloudflare proxy preset, use a non-secret placeholder such as `cloudflare-proxy` in the BYOA form (never the Gemini key). Omit `Authorization` for uninvited chat; send `Authorization: Bearer <xframe_invite>` when an invite is present or when calling TTS.
 
 ## Production protection
 
-The model, input size, and maximum output tokens are controlled by Worker configuration. For a public deployment, also:
+The model, input size, and maximum output tokens are controlled by Worker configuration. Chat uses `GEMINI_MODEL` then optional `GEMINI_FALLBACK_MODEL`; TTS uses `GEMINI_TTS_MODEL` then optional `GEMINI_TTS_FALLBACK_MODEL` (all set in `wrangler.jsonc` vars). For a public deployment, also:
 
 1. Uncomment the `ratelimits` binding in `wrangler.jsonc` and choose a namespace ID and threshold.
 2. Configure Turnstile and store its secret with `npx wrangler secret put TURNSTILE_SECRET_KEY`. Send each client token in `X-Turnstile-Token`.
@@ -99,14 +102,8 @@ Call `POST /v1/audio/speech` with JSON:
 
 Cascade (`provider: "auto"`, default):
 
-1. `GEMINI_TTS_MODEL` (default `gemini-3.1-flash-tts-preview`)
-2. `GEMINI_TTS_FALLBACK_MODEL` (default `gemini-2.5-flash-preview-tts`) on quota/5xx
+1. `GEMINI_TTS_MODEL` (from `wrangler.jsonc` vars)
+2. optional `GEMINI_TTS_FALLBACK_MODEL` on quota/5xx
 3. Microsoft Edge Read Aloud — voice chosen from `locale` + `gender` (Edge voice list, with static fallbacks)
 
 Response: `{ audio, mimeType, voice, locale?, model, provider }` where `audio` is base64 (Gemini PCM/L16 or Edge `audio/mpeg`).
-
-Do **not** use `/v1/live-token` for presentation narration — Live Native Audio is a conversational agent and will often greet like a phone attendant instead of reading the script.
-
-## Live token client contract (agents only)
-
-Call `/v1/live-token` immediately before opening the socket. Connect to the returned `websocketUrl` with `?access_token=<token>`. Ephemeral tokens require the constrained `v1alpha` Live endpoint and expire quickly; never cache them.

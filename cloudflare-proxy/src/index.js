@@ -1,11 +1,6 @@
 import { resolveEdgeVoice, synthesizeEdgeTts } from "./edge-tts.js";
 
 const GEMINI_API = "https://generativelanguage.googleapis.com";
-const DEFAULT_MODEL = "gemini-2.5-flash";
-/** Prefer 3.1; free tier is ~10 RPD per TTS model, so fall back to 2.5 then Edge. */
-const DEFAULT_TTS_MODEL = "gemini-3.1-flash-tts-preview";
-const DEFAULT_TTS_FALLBACK_MODEL = "gemini-2.5-flash-preview-tts";
-const DEFAULT_LIVE_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025";
 /** Default max chars for chat/TTS prompt input (`MAX_INPUT_CHARS`). */
 const DEFAULT_MAX_INPUT_CHARS = 40_000;
 /** Max chars when embedding context in the invite URL/token (`contextStorage: "token"`). */
@@ -94,9 +89,6 @@ export default {
       }
       if (url.pathname === "/v1/audio/speech") {
         return await audioSpeech(request, env, cors);
-      }
-      if (url.pathname === "/v1/live-token") {
-        return await createLiveToken(env, cors);
       }
       return jsonError(404, "Not found", cors);
     } catch (error) {
@@ -326,9 +318,9 @@ function normalizeContextStorage(raw) {
   return value;
 }
 
-/** TTS / Live mint require a signed invite; chat completions stay origin-gated. */
+/** TTS requires a signed invite; chat completions stay origin-gated. */
 function pathRequiresInvite(pathname) {
-  return pathname === "/v1/audio/speech" || pathname === "/v1/live-token";
+  return pathname === "/v1/audio/speech";
 }
 
 async function verifyInvite(request, env, pathname = new URL(request.url).pathname) {
@@ -633,11 +625,7 @@ export async function chatCompletions(request, env, cors = {}) {
     throw new ClientError(400, "messages must be a non-empty array");
   }
 
-  const configuredModel = env.GEMINI_MODEL || DEFAULT_MODEL;
-  if (body.model && body.model !== configuredModel) {
-    throw new ClientError(400, `Only model ${configuredModel} is allowed`);
-  }
-
+  const models = geminiChatModels(env, body.model);
   const maxChars = positiveInt(env.MAX_INPUT_CHARS, DEFAULT_MAX_INPUT_CHARS);
   const messages = normalizeMessages(body.messages, maxChars);
   const systemText = messages.filter((m) => m.role === "system").map((m) => m.content).join("\n\n");
@@ -656,7 +644,7 @@ export async function chatCompletions(request, env, cors = {}) {
   };
   const started = Date.now();
   console.log("[xFrame proxy] chat/completions", {
-    model: configuredModel,
+    models,
     messageCount: messages.length,
     systemChars: systemText.length,
     userChars: contents.reduce((sum, entry) => sum + (entry.parts[0]?.text?.length || 0), 0),
@@ -673,64 +661,159 @@ export async function chatCompletions(request, env, cors = {}) {
     userPreview: previewText(contents[0]?.parts?.[0]?.text || "", 400),
   });
 
-  const upstream = await fetch(
-    `${GEMINI_API}/v1beta/models/${encodeURIComponent(configuredModel)}:generateContent?key=${encodeURIComponent(env.GEMINI_API_KEY)}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...(systemText ? { systemInstruction: { parts: [{ text: systemText }] } } : {}),
-        contents,
-        generationConfig,
-      }),
-    },
-  );
-  const payload = await upstream.json().catch(() => ({}));
-  if (!upstream.ok) {
-    console.error("[xFrame proxy] Gemini generateContent failed", {
-      status: upstream.status,
-      errorStatus: payload?.error?.status || "unknown",
-      message: payload?.error?.message || "Gemini request failed",
-      ms: Date.now() - started,
+  const attempts = [];
+  for (const model of models) {
+    const result = await tryGeminiChat({
+      apiKey: env.GEMINI_API_KEY,
+      model,
+      systemText,
+      contents,
+      generationConfig,
     });
-    return jsonError(upstream.status, payload?.error?.message || "Gemini request failed", cors);
+    attempts.push(result.attempt);
+    if (result.ok) {
+      console.log("[xFrame proxy] Gemini ok", {
+        model,
+        ms: Date.now() - started,
+        finishReason: result.finishReason,
+        promptTokens: result.usage.prompt_tokens,
+        completionTokens: result.usage.completion_tokens,
+        outputChars: result.content.length,
+        outputPreview: previewText(result.content, 400),
+        attempts,
+      });
+      return json({
+        id: crypto.randomUUID(),
+        object: "chat.completion",
+        created: Math.floor(Date.now() / 1000),
+        model,
+        choices: [{
+          index: 0,
+          message: { role: "assistant", content: result.content },
+          finish_reason: result.finishReason,
+        }],
+        usage: result.usage,
+      }, 200, cors);
+    }
+    console.warn("[xFrame proxy] Gemini chat attempt failed", result.attempt);
+    if (!result.retryable) {
+      return jsonError(result.status || 502, result.message || "Gemini request failed", cors);
+    }
   }
 
-  const content = payload.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("") || "";
-  if (!content) {
-    console.error("[xFrame proxy] Gemini returned no content", {
-      finishReason: payload.candidates?.[0]?.finishReason || null,
-      ms: Date.now() - started,
-    });
-    return jsonError(502, "Gemini returned no content", cors);
+  const last = attempts[attempts.length - 1];
+  return jsonError(last?.status || 502, last?.message || "Gemini request failed", cors);
+}
+
+function geminiChatModels(env, requested) {
+  const primary = requireConfiguredString(env.GEMINI_MODEL, "GEMINI_MODEL");
+  const secondary = optionalConfiguredString(env.GEMINI_FALLBACK_MODEL);
+  const allowed = secondary ? [primary, secondary] : [primary];
+  const models = [];
+  if (typeof requested === "string" && requested.trim()) {
+    const want = requested.trim();
+    if (!allowed.includes(want)) {
+      throw new ClientError(400, `Only models ${allowed.join(" or ")} are allowed`);
+    }
+    models.push(want);
   }
-  console.log("[xFrame proxy] Gemini ok", {
-    model: configuredModel,
-    ms: Date.now() - started,
-    finishReason: payload.candidates?.[0]?.finishReason || null,
-    promptTokens: payload.usageMetadata?.promptTokenCount || 0,
-    completionTokens: payload.usageMetadata?.candidatesTokenCount || 0,
-    outputChars: content.length,
-    outputPreview: previewText(content, 400),
-  });
-  return json({
-    id: crypto.randomUUID(),
-    object: "chat.completion",
-    created: Math.floor(Date.now() / 1000),
-    model: configuredModel,
-    choices: [{ index: 0, message: { role: "assistant", content }, finish_reason: finishReason(payload) }],
-    usage: {
-      prompt_tokens: payload.usageMetadata?.promptTokenCount || 0,
-      completion_tokens: payload.usageMetadata?.candidatesTokenCount || 0,
-      total_tokens: payload.usageMetadata?.totalTokenCount || 0,
-    },
-  }, 200, cors);
+  for (const model of allowed) {
+    if (!models.includes(model)) models.push(model);
+  }
+  return models;
+}
+
+async function tryGeminiChat({ apiKey, model, systemText, contents, generationConfig }) {
+  const started = Date.now();
+  try {
+    const upstream = await fetch(
+      `${GEMINI_API}/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(systemText ? { systemInstruction: { parts: [{ text: systemText }] } } : {}),
+          contents,
+          generationConfig,
+        }),
+      },
+    );
+    const payload = await upstream.json().catch(() => ({}));
+    if (!upstream.ok) {
+      const message = payload?.error?.message || "Gemini request failed";
+      return {
+        ok: false,
+        retryable: isGeminiRetryable(upstream.status, payload),
+        status: upstream.status,
+        message,
+        attempt: {
+          provider: "gemini",
+          model,
+          status: upstream.status,
+          errorStatus: payload?.error?.status || "unknown",
+          message,
+          ms: Date.now() - started,
+        },
+      };
+    }
+
+    const content = payload.candidates?.[0]?.content?.parts?.map((part) => part.text || "").join("") || "";
+    if (!content) {
+      const message = "Gemini returned no content";
+      return {
+        ok: false,
+        retryable: true,
+        status: 502,
+        message,
+        attempt: {
+          provider: "gemini",
+          model,
+          status: 502,
+          finishReason: payload.candidates?.[0]?.finishReason || null,
+          message,
+          ms: Date.now() - started,
+        },
+      };
+    }
+
+    return {
+      ok: true,
+      content,
+      finishReason: finishReason(payload),
+      usage: {
+        prompt_tokens: payload.usageMetadata?.promptTokenCount || 0,
+        completion_tokens: payload.usageMetadata?.candidatesTokenCount || 0,
+        total_tokens: payload.usageMetadata?.totalTokenCount || 0,
+      },
+      attempt: {
+        provider: "gemini",
+        model,
+        status: 200,
+        ms: Date.now() - started,
+      },
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      ok: false,
+      retryable: true,
+      status: 502,
+      message,
+      attempt: {
+        provider: "gemini",
+        model,
+        status: 502,
+        message,
+        ms: Date.now() - started,
+      },
+    };
+  }
 }
 
 /**
- * Narration TTS cascade (exact recitation, not Live dialog):
- *   1. Gemini 3.1 Flash TTS (~10 free RPD)
- *   2. Gemini 2.5 Flash TTS (~10 free RPD, separate quota)
+ * Narration TTS cascade (exact recitation):
+ *   1. GEMINI_TTS_MODEL
+ *   2. optional GEMINI_TTS_FALLBACK_MODEL on quota/5xx
  *   3. Microsoft Edge Read Aloud (no Gemini key / unlimited for this use)
  */
 export async function audioSpeech(request, env, cors = {}) {
@@ -770,7 +853,7 @@ export async function audioSpeech(request, env, cors = {}) {
     voiceIndex,
     edgeVoice: typeof body.edgeVoice === "string" ? body.edgeVoice : undefined,
   });
-  const models = geminiTtsModels(env, body.model);
+  const models = provider === "edge" ? [] : geminiTtsModels(env, body.model);
   const started = Date.now();
   const attempts = [];
   console.log("[xFrame proxy] audio/speech", {
@@ -863,23 +946,24 @@ export async function audioSpeech(request, env, cors = {}) {
 }
 
 function geminiTtsModels(env, requested) {
-  const primary = env.GEMINI_TTS_MODEL || DEFAULT_TTS_MODEL;
-  const secondary = env.GEMINI_TTS_FALLBACK_MODEL || DEFAULT_TTS_FALLBACK_MODEL;
+  const primary = requireConfiguredString(env.GEMINI_TTS_MODEL, "GEMINI_TTS_MODEL");
+  const secondary = optionalConfiguredString(env.GEMINI_TTS_FALLBACK_MODEL);
+  const allowed = secondary ? [primary, secondary] : [primary];
   const models = [];
   if (typeof requested === "string" && requested.trim()) {
     const want = requested.trim();
-    if (want !== primary && want !== secondary) {
-      throw new ClientError(400, `Only models ${primary} or ${secondary} are allowed`);
+    if (!allowed.includes(want)) {
+      throw new ClientError(400, `Only models ${allowed.join(" or ")} are allowed`);
     }
     models.push(want);
   }
-  for (const model of [primary, secondary]) {
-    if (model && !models.includes(model)) models.push(model);
+  for (const model of allowed) {
+    if (!models.includes(model)) models.push(model);
   }
   return models;
 }
 
-function isGeminiTtsRetryable(status, payload) {
+function isGeminiRetryable(status, payload) {
   if (status === 429 || status === 503 || status >= 500) return true;
   const code = String(payload?.error?.status || "").toUpperCase();
   if (code === "RESOURCE_EXHAUSTED" || code === "UNAVAILABLE" || code === "INTERNAL") return true;
@@ -912,7 +996,7 @@ async function tryGeminiTts({ apiKey, model, voice, prompt }) {
     if (!upstream.ok) {
       return {
         ok: false,
-        retryable: isGeminiTtsRetryable(upstream.status, payload),
+        retryable: isGeminiRetryable(upstream.status, payload),
         status: upstream.status,
         attempt: {
           provider: "gemini",
@@ -978,42 +1062,6 @@ function bytesToBase64(bytes) {
     binary += String.fromCharCode(...bytes.subarray(offset, offset + chunk));
   }
   return btoa(binary);
-}
-
-export async function createLiveToken(env, cors = {}) {
-  requireSecret(env.GEMINI_API_KEY, "GEMINI_API_KEY");
-  const model = env.GEMINI_LIVE_MODEL || DEFAULT_LIVE_MODEL;
-  const now = Date.now();
-  const expireMs = positiveInt(env.LIVE_TOKEN_EXPIRE_MS, 30 * 60_000);
-  const newSessionExpireMs = positiveInt(env.LIVE_TOKEN_NEW_SESSION_EXPIRE_MS, 60_000);
-  // Wire format matches @google/genai tokens.create (fields at top level; constraints
-  // land on bidiGenerateContentSetup after the SDK unwraps liveConnectConstraints.setup).
-  const modelResource = model.startsWith("models/") ? model : `models/${model}`;
-  const upstream = await fetch(`${GEMINI_API}/v1alpha/auth_tokens?key=${encodeURIComponent(env.GEMINI_API_KEY)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      uses: 1,
-      expireTime: new Date(now + expireMs).toISOString(),
-      newSessionExpireTime: new Date(now + newSessionExpireMs).toISOString(),
-      bidiGenerateContentSetup: {
-        model: modelResource,
-        generationConfig: { responseModalities: ["AUDIO"] },
-      },
-    }),
-  });
-  const payload = await upstream.json().catch(() => ({}));
-  if (!upstream.ok) {
-    console.error("Gemini auth token request failed", upstream.status, payload?.error?.status || "unknown");
-    return jsonError(upstream.status, payload?.error?.message || "Token request failed", cors);
-  }
-  return json({
-    token: payload.name,
-    model,
-    expiresAt: payload.expireTime,
-    newSessionExpiresAt: payload.newSessionExpireTime,
-    websocketUrl: "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained",
-  }, 200, cors);
 }
 
 function previewText(value, max = 400) {
@@ -1149,6 +1197,18 @@ function requireSecret(value, name) {
   if (typeof value !== "string" || !value.trim()) {
     throw new ClientError(503, `${name} is not configured`);
   }
+}
+
+function requireConfiguredString(value, name) {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new ClientError(503, `${name} is not configured`);
+  }
+  return value.trim();
+}
+
+function optionalConfiguredString(value) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  return value.trim();
 }
 
 function json(value, status = 200, headers = {}) {

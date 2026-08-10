@@ -15,6 +15,7 @@ const env = {
   ALLOWED_ORIGINS: "https://resume.example",
   GEMINI_API_KEY: "secret-key",
   GEMINI_MODEL: "gemini-test",
+  GEMINI_FALLBACK_MODEL: "gemini-fallback-test",
 };
 
 /** Minimal Workers KV mock for invite context tests. */
@@ -693,6 +694,33 @@ test("rejects models that are not configured server-side", async () => {
   assert.equal(response.status, 400);
 });
 
+test("cascades chat quota exhaustion from primary to fallback model", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  const calls = [];
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    if (String(url).includes("models/gemini-test:")) {
+      return Response.json({ error: { status: "RESOURCE_EXHAUSTED", message: "quota" } }, { status: 429 });
+    }
+    assert.match(String(url), /models\/gemini-fallback-test:generateContent/);
+    return Response.json({
+      candidates: [{ content: { parts: [{ text: "fallback hi" }] }, finishReason: "STOP" }],
+      usageMetadata: { promptTokenCount: 1, candidatesTokenCount: 1, totalTokenCount: 2 },
+    });
+  };
+  const response = await worker.fetch(new Request("https://proxy.example/v1/chat/completions", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: "Hello" }] }),
+  }), env);
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.model, "gemini-fallback-test");
+  assert.equal(body.choices[0].message.content, "fallback hi");
+  assert.equal(calls.length, 2);
+});
+
 test("returns an error when GEMINI_API_KEY is not configured", async () => {
   const response = await worker.fetch(new Request("https://proxy.example/v1/chat/completions", {
     method: "POST",
@@ -702,6 +730,30 @@ test("returns an error when GEMINI_API_KEY is not configured", async () => {
   assert.equal(response.status, 503);
   assert.deepEqual(await response.json(), {
     error: { message: "GEMINI_API_KEY is not configured", type: "proxy_error" },
+  });
+});
+
+test("returns an error when GEMINI_MODEL is not configured", async () => {
+  const response = await worker.fetch(new Request("https://proxy.example/v1/chat/completions", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: "Hello" }] }),
+  }), { ...env, GEMINI_MODEL: "" });
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    error: { message: "GEMINI_MODEL is not configured", type: "proxy_error" },
+  });
+});
+
+test("returns an error when GEMINI_TTS_MODEL is not configured", async () => {
+  const response = await worker.fetch(new Request("https://proxy.example/v1/audio/speech", {
+    method: "POST",
+    headers: { Origin: "https://resume.example", "Content-Type": "application/json" },
+    body: JSON.stringify({ input: "Hello", voice: "Charon" }),
+  }), { ...env, GEMINI_TTS_MODEL: "" });
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), {
+    error: { message: "GEMINI_TTS_MODEL is not configured", type: "proxy_error" },
   });
 });
 
@@ -835,27 +887,4 @@ test("cascades Gemini TTS quota exhaustion to the fallback model then Edge", asy
   assert.equal(calls.filter((url) => url.includes("generateContent")).length, 2);
   assert.equal(calls.some((url) => url.includes("/voices/list")), true);
   assert.equal(calls.some((url) => url.includes("/edge/v1")), true);
-});
-
-test("issues constrained single-use Live tokens", async (t) => {
-  const originalFetch = globalThis.fetch;
-  t.after(() => { globalThis.fetch = originalFetch; });
-  globalThis.fetch = async (url, init) => {
-    assert.match(String(url), /v1alpha\/auth_tokens\?key=secret-key$/);
-    const body = JSON.parse(init.body);
-    assert.equal(body.uses, 1);
-    assert.equal(body.bidiGenerateContentSetup.model, "models/gemini-live-test");
-    assert.deepEqual(body.bidiGenerateContentSetup.generationConfig.responseModalities, ["AUDIO"]);
-    assert.equal(body.authToken, undefined);
-    return Response.json({ name: "auth_tokens/temporary", expireTime: "later" });
-  };
-  const response = await worker.fetch(new Request("https://proxy.example/v1/live-token", {
-    method: "POST",
-    headers: { Origin: "https://resume.example" },
-  }), { ...env, GEMINI_LIVE_MODEL: "gemini-live-test" });
-  assert.equal(response.status, 200);
-  const body = await response.json();
-  assert.equal(body.token, "auth_tokens/temporary");
-  assert.equal(body.model, "gemini-live-test");
-  assert.match(body.websocketUrl, /BidiGenerateContentConstrained$/);
 });
