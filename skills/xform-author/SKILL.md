@@ -183,6 +183,8 @@ author `_command` directly and may override `_version`.
   nearer scopes override aliases/locals.
 - A capability is callable as a dotted Jinja filter. The piped value binds to
   its declared input: `{{ greeting | text.uppercase | _final() }}`.
+  Named arguments bind ambient `_input` parts (when the contract declares them):
+  `{{ prompt | llm.complete(llm=gemini.gpt-4o) }}`.
 - `_id` on a capability package indexes it for device `_capabilities` lookup.
 - Successful command execution binds `_output` only after approval/run, with
   `_result`, `_approval._source`, `_command`, `_exitcode`, `_exectime`, and
@@ -195,6 +197,13 @@ API**, callers use `GET|POST /api/<app>/<capability…>`; POST body binds to
 `_input` and the realized `_output` is returned. App name is top-level `_id`,
 otherwise the `.xp` basename. Ordinary compile does not install routes. See
 `examples/api/`.
+
+### Process environment (`_env`)
+
+The compiler binds a built-in **`_env`** concept from `process.env` (string
+values) for Jinja and concept fields: `{{ _env.OPENROUTER_API_KEY }}`. This is
+**not** the same as capability `_commands.<alias>._env` (spawn env policy for
+external executors).
 
 ## Composition patterns
 
