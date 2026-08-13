@@ -143,8 +143,9 @@ names win — because they are not a single attribute map.
 `_input` may be a type/concept name, or a mapping with optional `_content` (the
 default `_input` binding) plus ambient parts resolved from the concept tree by
 name. Omit `_content` for nullary ops used as values (`{{ persist.list | to_json }}`):
-`_input: { _content: _string, persistence: persistence }` exposes `{{ _input }}`
-and `{{ persistence.url }}` / `_xform.concepts.persistence`.
+`_input: { _content: _string, $persistence: persistence }` exposes `{{ _input }}`
+and `{{ $persistence.url }}` / `_xform.concepts.persistence`. Parameter names must
+differ from the concept they bind (prefer `$concept` when the names would collide).
 
 ```yaml
 _capability:
@@ -184,7 +185,7 @@ author `_command` directly and may override `_version`.
 - A capability is callable as a dotted Jinja filter. The piped value binds to
   its declared input: `{{ greeting | text.uppercase | _final() }}`.
   Named arguments bind ambient `_input` parts (when the contract declares them):
-  `{{ prompt | llm.complete(llm=gemini.gpt-4o) }}`.
+  `{{ prompt | llm.complete($llm=gemini.gpt-4o) }}`.
 - `_id` on a capability package indexes it for device `_capabilities` lookup.
 - Successful command execution binds `_output` only after approval/run, with
   `_result`, `_approval._source`, `_command`, `_exitcode`, `_exectime`, and
