@@ -21,7 +21,7 @@ Default outputs: IR + HTML. `.xp` must start with a closed YAML fence (`---` …
 | Option | Description |
 |--------|-------------|
 | `--ir` `--html` `--png` `--pptx` | Outputs. If omitted, writes IR and HTML. |
-| `--screenshots` | With `--pptx`: photograph each HTML slide as a full-bleed PNG. |
+| `--screenshots` | With `--pptx`: photograph each slide as a full-bleed PNG (`canvas-deck` shell). |
 | `-o, --out-dir <dir>` | Output directory (default: beside input). |
 | `--presentation <name>` | `slidedeck`, `poster`, `readout`, `cover-letter`, … |
 | `--format <name>` | `desktop`, `tablet`, `mobile`, `poster`, `cover-letter`, `video` |
