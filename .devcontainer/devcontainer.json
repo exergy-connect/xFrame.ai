@@ -1,0 +1,19 @@
+{
+  "name": "xFrame.ai",
+  "image": "ghcr.io/exergy-connect/experiments/xform:latest",
+  "remoteUser": "node",
+  "runArgs": ["--privileged"],
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
+  "forwardPorts": [42042],
+  "portsAttributes": {
+    "42042": {
+      "label": "Concept Lab UI",
+      "onAutoForward": "notify"
+    }
+  },
+  "containerEnv": {
+    "XFORM_WORKSPACE": "/tmp/xform-ws"
+  },
+  "postStartCommand": "sudo /usr/local/bin/docker-entrypoint.sh true && mkdir -p .cursor && echo '[xFrame.ai] refreshing skills' >&2 && /usr/local/bin/install-xFrame-ai-skills.sh >&2 && (curl -sf http://127.0.0.1:42042/ >/dev/null || (cd /app && nohup node server/index.js >/tmp/xform-server.log 2>&1 &))"
+}
