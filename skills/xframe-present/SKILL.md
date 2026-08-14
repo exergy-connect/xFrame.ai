@@ -21,7 +21,7 @@ Default outputs: IR + HTML. `.xp` must start with a closed YAML fence (`---` …
 | Option | Description |
 |--------|-------------|
 | `--ir` `--html` `--png` `--pptx` | Outputs. If omitted, writes IR and HTML. |
-| `--screenshots` | With `--pptx`: photograph each slide as a full-bleed PNG (`canvas-deck` shell). |
+| `--screenshots` | With `--pptx`: photograph each HTML slide as a full-bleed PNG (same canvas as `--html`). |
 | `-o, --out-dir <dir>` | Output directory (default: beside input). |
 | `--presentation <name>` | `slidedeck`, `poster`, `readout`, `cover-letter`, … |
 | `--format <name>` | `desktop`, `tablet`, `mobile`, `poster`, `cover-letter`, `video` |
@@ -97,4 +97,4 @@ data:
 
 Data paths are relative to the `.xp` file.
 
-`{{ topic | llm("prompts/….md", cache=true) }}` needs `--llm` at compile time. Dynamic: `evaluation='dynamic'` or `--evaluation dynamic`. TTS: `@narrative` / `text_to_speech`; `--skip-audio` to skip synthesis.
+`{{ topic | llm("prompts/….md", cache=true) }}` needs `--llm` at compile time. Dynamic: `evaluation='dynamic'` or `--evaluation dynamic`. TTS: `@narrative` / `text_to_speech`; `--skip-audio` to skip synthesis. Gemini-only director brief: front matter `narrative.direction` (`profile`, `scene`, `style`, `accent`, `pacing`, `notes`) and optional slide `@narrative` `direction` overlay.
