@@ -8,10 +8,11 @@ Public repository of **Cursor agent skills** for [xFrame](https://github.com/exe
 
 | Skill | Description |
 | --- | --- |
-| **xframe-model** | Model authoring and schema guidance for xFrame. |
-| **xframe-consolidate** | Normalize and consolidate JSON model and data into validated JSON Schema plus consolidated data (optional JS output). Run from the command line or let the agent consolidate when you ask to validate model/data. |
-| **xframe-present** | Compile a Markdown deck into a single self-contained HTML slideshow (offline-capable, printable to PDF). Supports consolidated-data graphs and click-to-zoom images. |
-| **xform** | Compile composable `.xp` semantic documents into deterministic materializations (compile-tree JSON or finalized artifacts). |
+| **xframe-model** | Create or edit model and data files for xFrame consolidation (entity schemas, model YAML/JSON, data JSON). |
+| **xframe-consolidate** | Normalize and consolidate JSON model and data into validated JSON Schema plus consolidated data (optional JS output, FK enum closure, data path filters). Run from the command line or let the agent consolidate when you ask to validate model/data. |
+| **xframe-present** | Compile `.xp` authoring documents through normalized IR into HTML, PNG, and/or PowerPoint. Supports presentations (slidedeck, poster, readout, cover-letter), themes/styles, layouts, graphs, Jinja, and consolidated xFrame data. |
+| **xform-author** | Author and edit xForm `.xp` / `.xpt` semantic documents (concepts, shapes, Jinja body segments, includes, templates, capability contracts). Compile with **xform-run**. |
+| **xform-run** | Compile composable `.xp` documents into deterministic outputs (compile-tree JSON, finalized HTML/YAML/text, multi-file artifacts). Also scaffolds an xForm Dev Container. Requires Node.js ≥24. |
 | **xframe-code** | Program-structure schema (packages, classes, methods, fields) using the xYang JSON Schema profile. Manual install only (see below). |
 
 ## Install (Cursor)
@@ -24,7 +25,7 @@ Run from your project root:
 bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh)
 ```
 
-Installs **xframe-model**, **xframe-consolidate**, **xframe-present**, and **xform** into `.cursor/skills/` and records the suite version.
+Installs **xframe-model**, **xframe-consolidate**, **xframe-present**, **xform-author**, and **xform-run** into `.cursor/skills/` and records the suite version.
 
 ### Check for updates
 
@@ -43,7 +44,8 @@ mkdir -p .cursor/skills
 cp -r path/to/xFrame.ai/skills/xframe-model .cursor/skills/
 cp -r path/to/xFrame.ai/skills/xframe-consolidate .cursor/skills/
 cp -r path/to/xFrame.ai/skills/xframe-present .cursor/skills/
-cp -r path/to/xFrame.ai/skills/xform .cursor/skills/
+cp -r path/to/xFrame.ai/skills/xform-author .cursor/skills/
+cp -r path/to/xFrame.ai/skills/xform-run .cursor/skills/
 # optional:
 cp -r path/to/xFrame.ai/skills/xframe-code .cursor/skills/
 ```
@@ -94,7 +96,7 @@ This repo publishes **composite** actions that wrap the bundled minified scripts
 | --- | --- | --- |
 | [**xFrame consolidate**](actions/consolidate/action.yml) | `exergy-connect/xFrame.ai/actions/consolidate@main` | `skills/xframe-consolidate/scripts/consolidate.min.js` |
 | [**xFrame present**](actions/present/action.yml) | `exergy-connect/xFrame.ai/actions/present@main` | `skills/xframe-present/scripts/present.min.js` |
-| [**xForm**](actions/xform/action.yml) | `exergy-connect/xFrame.ai/actions/xform@main` | `skills/xform/scripts/xform.min.js` |
+| [**xForm**](actions/xform/action.yml) | `exergy-connect/xFrame.ai/actions/xform@main` | `skills/xform-run/scripts/xform.min.js` |
 
 [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo composite actions (`./actions/consolidate`, `./actions/present`) and is intended as a copyable template. External workflows pin the published refs below.
 
@@ -138,7 +140,7 @@ jobs:
 
 ### xFrame present
 
-Compiles a Markdown deck into one **standalone HTML file** (same contract as the [xframe-present](skills/xframe-present/SKILL.md) skill). Pass **`data`** when the deck uses consolidated JSON for provenance footers or `xframe-graph` blocks.
+The published [present](actions/present/action.yml) action still compiles a Markdown deck into one **standalone HTML file**. The [xframe-present](skills/xframe-present/SKILL.md) skill compiles **`.xp`** sources to IR, HTML, PNG, and/or PowerPoint. Pass **`data`** when the deck uses consolidated JSON for provenance footers or graphs.
 
 ```yaml
 jobs:
@@ -172,6 +174,7 @@ The HTML file at **`output`** (or `<input>.html` when `output` is omitted).
 ## Requirements
 
 - **xframe-consolidate** / **xframe-present**: Node.js ≥18. Bundled scripts are self-contained; no `npm install` required.
+- **xform-run** / **xForm** action: Node.js ≥24.
 
 ## License
 
