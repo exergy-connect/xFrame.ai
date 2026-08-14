@@ -13,7 +13,13 @@
     }
   },
   "containerEnv": {
-    "XFORM_WORKSPACE": "/tmp/xform-ws"
+    "XFORM_WORKSPACE": "/tmp/xform-ws",
+    "GEMINI_API_KEY1": "${localEnv:GEMINI_API_KEY1}",
+    "GEMINI_API_KEY2": "${localEnv:GEMINI_API_KEY2}",
+    "GEMINI_API_KEY3": "${localEnv:GEMINI_API_KEY3}",
+    "OPENROUTER_API_KEY1": "${localEnv:OPENROUTER_API_KEY1}",
+    "OPENROUTER_API_KEY2": "${localEnv:OPENROUTER_API_KEY2}",
+    "OPENROUTER_API_KEY3": "${localEnv:OPENROUTER_API_KEY3}"
   },
   "postStartCommand": "sudo /usr/local/bin/docker-entrypoint.sh true && mkdir -p .cursor && echo '[xFrame.ai] refreshing skills' >&2 && /usr/local/bin/install-xFrame-ai-skills.sh >&2 && (curl -sf http://127.0.0.1:42042/ >/dev/null || (cd /app && nohup node server/index.js >/tmp/xform-server.log 2>&1 &))"
 }
