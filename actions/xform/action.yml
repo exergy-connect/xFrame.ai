@@ -77,9 +77,9 @@ runs:
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
       run: |
         set -euo pipefail
-        script="${ACTION_PATH}/../../skills/xform-run/scripts/xform.min.js"
+        script="${ACTION_PATH}/xform.min.js"
         if [[ ! -f "$script" ]]; then
-          echo "::error file=${script}::xForm script missing (expected bundled xform skill asset)."
+          echo "::error file=${script}::xform.min.js missing (expected next to action.yml)."
           exit 1
         fi
         if [[ -n "${WORKING_DIRECTORY}" ]]; then
