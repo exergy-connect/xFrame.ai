@@ -20,7 +20,7 @@ Normalize JSON model fragments and JSON data into a **JSON Schema** describing t
 
 ## How to run
 
-From the repo root, with Node (ESM, Node ≥18). The only path knob is **`--working-dir`** (default **`xframe`**, relative to cwd unless absolute). The consolidator always uses:
+Requires **Node.js ≥24**. The only path knob is **`--working-dir`** (default **`xframe`**, relative to cwd unless absolute). The consolidator always uses:
 
 | Path | Location |
 |------|----------|
@@ -28,17 +28,17 @@ From the repo root, with Node (ESM, Node ≥18). The only path knob is **`--work
 | Model | `<working-dir>/model` |
 | Output | `<working-dir>/output` |
 
-**xFrame layout (this repo):**
-
-```bash
-node skills/xframe-consolidate/scripts/consolidate.min.js --note "<note>" [options]
-# optional: --working-dir myproj   # uses myproj/data, myproj/model, myproj/output
-```
-
-**Cursor install layout** (skills under `.cursor/skills/`):
+The CLI is the published GitHub Action bundle. After `install-skills.sh`:
 
 ```bash
 node .cursor/skills/xframe-consolidate/scripts/consolidate.min.js --note "<note>" [options]
+# optional: --working-dir myproj   # uses myproj/data, myproj/model, myproj/output
+```
+
+In the xFrame.ai repository:
+
+```bash
+node actions/consolidate/consolidate.min.js --note "<note>" [options]
 ```
 
 **Required:**
@@ -71,6 +71,8 @@ bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh) 
 
 ## Directory layout
 
+- `skills/xframe-consolidate/SKILL.md` — this skill
+- `actions/consolidate/consolidate.min.js` — minified CLI bundle (published with the GitHub Action; copied into this skill on install)
 - **Model directory**: `<working-dir>/model` — one or more `.json` files; each file is a data-model document with `entities: [ … ]`. Merged into one **JSON Schema** (`$defs` per entity).
 - **Data directory**: `<working-dir>/data` — `.json` files; each top-level array key is a normalized entity name; elements are records (nested children are hoisted per parent/foreign-key rules).
 - **Output** (`<working-dir>/output/`):
@@ -81,17 +83,26 @@ bash <(curl -fsSL https://exergy-connect.github.io/xFrame.ai/install-skills.sh) 
 
 `output/` is created if missing.
 
+## GitHub Action
+
+```yaml
+- uses: exergy-connect/xFrame.ai/actions/consolidate@main
+  with:
+    working-dir: path/to/project
+    note: 'Reconsolidate after model or data change'
+```
+
 ## Example
 
 ```bash
-node skills/xframe-consolidate/scripts/consolidate.min.js --note "Add field_reserves composites; update lifecycle dates from source" \
+node actions/consolidate/consolidate.min.js --note "Add field_reserves composites; update lifecycle dates from source" \
   --author "ci" --git-commit-hash "$(git rev-parse HEAD)" --js
 ```
 
 **Example with FK enum closure** (schema enums on FK fields match primary keys in the loaded dataset; re-run after data changes):
 
 ```bash
-node skills/xframe-consolidate/scripts/consolidate.min.js --note "Reconsolidate with FK enums closed to PKs present in loaded data" \
+node actions/consolidate/consolidate.min.js --note "Reconsolidate with FK enums closed to PKs present in loaded data" \
   --author "ci" --git-commit-hash "$(git rev-parse HEAD)" --js --close-fk-enums
 ```
 

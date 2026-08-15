@@ -295,7 +295,7 @@ Use the **entity name** as the top-level key; value is a **list of records**. Ne
 
 ## After authoring
 
-Run **xframe-consolidate** (skill or `skills/xframe-consolidate/scripts/consolidate.min.js`) using **`--working-dir`** (default `xframe`): model and data live under `xframe/model` and `xframe/data`; output is `xframe/output`.
+Run **xframe-consolidate** (skill or `actions/consolidate/consolidate.min.js`) using **`--working-dir`** (default `xframe`): model and data live under `xframe/model` and `xframe/data`; output is `xframe/output`.
 
 ## References
 
