@@ -1,19 +1,32 @@
 {
   "name": "xFrame.ai",
-  "image": "ghcr.io/exergy-connect/experiments/xform:latest",
-  "remoteUser": "node",
-  "runArgs": ["--privileged"],
+  "build": {
+    "context": "..",
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "vscode",
+  "runArgs": ["--privileged", "--env-file", "${localEnv:HOME}/.devcontainer/devcontainer.env"],
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
-  "forwardPorts": [42042],
+  "forwardPorts": [
+    "${localEnv:XFORM_PORT:42042}"
+  ],
+  "appPort": [
+    "${localEnv:XFORM_PORT:42042}:${localEnv:XFORM_PORT:42042}"
+  ],
   "portsAttributes": {
-    "42042": {
-      "label": "Concept Lab UI",
+    "${localEnv:XFORM_PORT:42042}": {
+      "label": "xForm lab UI",
+      "onAutoForward": "notify"
+    },
+    "default": {
+      "label": "xForm lab UI",
       "onAutoForward": "notify"
     }
   },
   "containerEnv": {
     "XFORM_WORKSPACE": "/tmp/xform-ws",
+    "XFORM_PORT": "${localEnv:XFORM_PORT:42042}",
     "GEMINI_API_KEY1": "${localEnv:GEMINI_API_KEY1}",
     "GEMINI_API_KEY2": "${localEnv:GEMINI_API_KEY2}",
     "GEMINI_API_KEY3": "${localEnv:GEMINI_API_KEY3}",
@@ -21,5 +34,12 @@
     "OPENROUTER_API_KEY2": "${localEnv:OPENROUTER_API_KEY2}",
     "OPENROUTER_API_KEY3": "${localEnv:OPENROUTER_API_KEY3}"
   },
-  "postStartCommand": "sudo /usr/local/bin/docker-entrypoint.sh true && mkdir -p .cursor && echo '[xFrame.ai] refreshing skills' >&2 && /usr/local/bin/install-xFrame-ai-skills.sh >&2 && (curl -sf http://127.0.0.1:42042/ >/dev/null || (cd /app && nohup node server/index.js >/tmp/xform-server.log 2>&1 &))"
+  "postStartCommand": "mkdir -p .cursor && echo '[xFrame.ai] refreshing skills' >&2 && /usr/local/bin/install-xFrame-ai-skills.sh >&2",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ritwickdey.LiveServer"
+      ]
+    }
+  }
 }
