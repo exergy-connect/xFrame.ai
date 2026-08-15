@@ -98,15 +98,15 @@ npx wrangler secret put GEMINI_API_KEY
 
 ## GitHub Actions
 
-This repo publishes **composite** actions that wrap the bundled minified scripts under `skills/`. **Node.js ≥18** is required on the job runner (`ubuntu-latest` includes a suitable Node); **xForm** needs **Node.js ≥24**. Pin a branch, tag, or SHA (for example `@main`).
+This repo publishes **composite** GitHub Actions that wrap the bundled minified CLIs under `skills/`. The Cursor skill and GitHub Action for each tool are the same package. **Node.js ≥18** is required on the job runner for consolidate; **present** and **xForm** need **Node.js ≥24**. Pin a branch, tag, or SHA (for example `@main`).
 
-| Action | `uses` | Script |
+| Action | `uses` | Skill CLI |
 | --- | --- | --- |
 | [**xFrame consolidate**](actions/consolidate/action.yml) | `exergy-connect/xFrame.ai/actions/consolidate@main` | `skills/xframe-consolidate/scripts/consolidate.min.js` |
-| [**xFrame present**](actions/present/action.yml) | `exergy-connect/xFrame.ai/actions/present@main` | `skills/xframe-present/scripts/present.min.js` |
+| [**xFrame present**](actions/present/action.yml) | `exergy-connect/xFrame.ai/actions/present@main` | `actions/present/present.min.js` (copied into the skill on install) |
 | [**xForm**](actions/xform/action.yml) | `exergy-connect/xFrame.ai/actions/xform@main` | `skills/xform-run/scripts/xform.min.js` |
 
-[`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo composite actions (`./actions/consolidate`, `./actions/present`) and is intended as a copyable template. External workflows pin the published refs below.
+[`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo actions (`./actions/consolidate`, `./actions/present`) and is intended as a copyable template. External workflows pin the published refs below.
 
 ### xFrame consolidate
 
@@ -148,7 +148,7 @@ jobs:
 
 ### xFrame present
 
-The published [present](actions/present/action.yml) action still compiles a Markdown deck into one **standalone HTML file**. The [xframe-present](skills/xframe-present/SKILL.md) skill compiles **`.xp`** sources to IR, HTML, PNG, and/or PowerPoint. Pass **`data`** when the deck uses consolidated JSON for provenance footers or graphs.
+The published [present](actions/present/action.yml) action compiles a **`.xp`** or Markdown source to IR, HTML, PNG, and/or PowerPoint. The CLI bundle is `actions/present/present.min.js`. `install-skills.sh` copies that file into `.cursor/skills/xframe-present/scripts/` locally.
 
 ```yaml
 jobs:
@@ -158,31 +158,43 @@ jobs:
       - uses: actions/checkout@v6
       - uses: exergy-connect/xFrame.ai/actions/present@main
         with:
-          input: examples/present/example-deck.md
-          output: examples/present/output/example-deck.html
-          data: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
+          source: deck.xp
+          formats: ir,html
+          output_dir: dist
 ```
 
 #### Inputs
 
 | Input | Required | Description |
 | --- | --- | --- |
-| `input` | yes | Path to the Markdown deck file. |
-| `output` | no | Output HTML path (default: input path with `.html` extension). |
-| `title` | no | Deck title (overrides front matter). |
-| `author` | no | Author metadata (overrides front matter). |
-| `theme` | no | `light` or `dark` (overrides front matter). |
-| `data` | no | URL or path to consolidated xFrame JSON (overrides front matter). Local paths resolve relative to the deck directory unless absolute. |
-| `no-embed-images` | no | Set to `true` to keep original image URLs instead of inlining as base64. |
+| `source` | yes | Path to the `.xp` or Markdown source. |
+| `formats` | no | Comma-separated outputs: `ir`, `html`, `png`, `pptx` (default `ir,html`). |
+| `output_dir` | no | Output directory (default: the source file's directory). |
+| `presentation` | no | Active presentation template name. |
+| `format` | no | Format qualifier (`desktop`, `tablet`, `mobile`, `poster`, `cover-letter`, `video`). |
+| `theme` | no | Override themes (comma-separated). |
+| `style` | no | Override document styles (comma-separated). |
+| `evaluation` | no | `static` or `dynamic`. |
+| `positioning` | no | `static` or `dynamic`. |
+| `templates` | no | Custom templates directory. |
+| `content_plugin` | no | Content plugin modules (comma-separated). |
+| `embed_images` | no | Set to `true` to inline local images as data URIs. |
+| `llm` | no | Set to `true` to enable compile-time `llm()` evaluation. |
+| `llm_model` | no | Compile-time LLM model override. |
+| `screenshots` | no | Set to `true` with `pptx` to photograph each HTML slide. |
+| `snapshot_width` | no | PNG viewport width (default `1440`). |
+| `snapshot_height` | no | PNG viewport height (default `900`). |
+| `snapshot_canvas` | no | Set to `true` to size PNG to the canvas and strip chrome. |
+| `skip_audio` / `force_audio` / `combined_audio` | no | Narrative TTS flags (`true` / `false`). |
 
 #### Outputs
 
-The HTML file at **`output`** (or `<input>.html` when `output` is omitted).
+Action outputs `ir`, `html`, `png`, and `pptx` are absolute paths for the formats that were requested.
 
 ## Requirements
 
-- **xframe-consolidate** / **xframe-present**: Node.js ≥18. Bundled scripts are self-contained; no `npm install` required.
-- **xform-run** / **xForm** action: Node.js ≥24.
+- **xframe-consolidate**: Node.js ≥18. Bundled scripts are self-contained; no `npm install` required.
+- **xframe-present** / **present** action and **xform-run** / **xForm** action: Node.js ≥24.
 
 ## License
 

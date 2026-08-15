@@ -10,10 +10,16 @@ Compile `.xp` to IR, HTML, PNG, and/or PowerPoint. Edit the `.xp` source and rec
 
 ## Run
 
+The CLI is the published GitHub Action bundle. After `install-skills.sh`, that file is copied into this skill:
+
 ```bash
-node skill/scripts/present.min.js <input.xp> [options]
-# Cursor install:
 node .cursor/skills/xframe-present/scripts/present.min.js <input.xp> [options]
+```
+
+In the xFrame.ai repository:
+
+```bash
+node actions/present/present.min.js <input.xp> [options]
 ```
 
 Default outputs: IR + HTML. `.xp` must start with a closed YAML fence (`---` … `---`).
@@ -55,10 +61,19 @@ Outputs in `--out-dir` (basename = input without extension):
 Exit 0 success (`Wrote <path>` on stderr), 1 compile/I/O, 2 usage.
 
 ```bash
-node skill/scripts/present.min.js deck.xp --html
-node skill/scripts/present.min.js deck.xp --evaluation dynamic --theme dark --html
-node skill/scripts/present.min.js flyer.xp --presentation poster --format poster --html --png
-node skill/scripts/present.min.js deck.xp --pptx -o dist/
+node actions/present/present.min.js deck.xp --html
+node actions/present/present.min.js deck.xp --evaluation dynamic --theme dark --html
+node actions/present/present.min.js flyer.xp --presentation poster --format poster --html --png
+node actions/present/present.min.js deck.xp --pptx -o dist/
+```
+
+## GitHub Action
+
+```yaml
+- uses: exergy-connect/xFrame.ai/actions/present@main
+  with:
+    source: path/to/deck.xp
+    formats: ir,html
 ```
 
 ## Author `.xp`

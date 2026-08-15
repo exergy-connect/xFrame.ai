@@ -11,6 +11,7 @@ SKILLS=(
 )
 TARGET=".cursor/skills"
 VERSION_URL="https://exergy-connect.github.io/xFrame.ai/latest"
+PRESENT_ACTION="actions/present"
 
 if [ ! -d ".cursor" ]; then
   echo "No .cursor directory found. Run this from your project root."
@@ -29,7 +30,7 @@ fi
 TMP=$(mktemp -d)
 git clone --filter=blob:none --sparse "$REPO" "$TMP"
 cd "$TMP"
-git sparse-checkout set "${SKILLS[@]}"
+git sparse-checkout set "${SKILLS[@]}" "$PRESENT_ACTION"
 
 mkdir -p "$OLDPWD/$TARGET"
 for SKILL in "${SKILLS[@]}"; do
@@ -38,6 +39,19 @@ for SKILL in "${SKILLS[@]}"; do
   cp -r "$SKILL" "$OLDPWD/$TARGET/$SKILL_NAME"
   echo "Installed: $SKILL_NAME"
 done
+
+BUNDLE="$TMP/$PRESENT_ACTION/present.min.js"
+if [ ! -f "$BUNDLE" ]; then
+  echo "Present action bundle missing at $PRESENT_ACTION/present.min.js" >&2
+  exit 1
+fi
+SCRIPTS="$OLDPWD/$TARGET/xframe-present/scripts"
+mkdir -p "$SCRIPTS"
+cp "$BUNDLE" "$SCRIPTS/present.min.js"
+if [ -f "$TMP/$PRESENT_ACTION/package.json" ]; then
+  cp "$TMP/$PRESENT_ACTION/package.json" "$SCRIPTS/package.json"
+fi
+echo "Installed: xframe-present CLI from $PRESENT_ACTION"
 
 # Record installed version
 SUITE_VERSION=$(curl -fsSL "$VERSION_URL")
