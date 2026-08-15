@@ -73,16 +73,16 @@ Notes:
 xform <source>... [options]
 ```
 
-**xFrame.ai layout** (this repo after publish):
-
-```bash
-node skills/xform-run/scripts/xform.min.js <source>... [options]
-```
-
-**Cursor install layout** (skills under `.cursor/skills/`):
+The CLI is the published GitHub Action bundle. After `install-skills.sh`:
 
 ```bash
 node .cursor/skills/xform-run/scripts/xform.min.js <source>... [options]
+```
+
+In the xFrame.ai repository:
+
+```bash
+node actions/xform/xform.min.js <source>... [options]
 ```
 
 **Sources:** `*.xp` documents, `*.json` concept bindings, `*.js` filter modules,
@@ -116,20 +116,20 @@ directories, or `dir/*.ext` patterns (recursive filesystem order by default).
 ### Jinja-only compile
 
 ```bash
-node skills/xform-run/scripts/xform.min.js compile <template> [runtime.json ...] [filters.js ...] [--final] [-o output]
+node actions/xform/xform.min.js compile <template> [runtime.json ...] [filters.js ...] [--final] [-o output]
 ```
 
 ### Examples
 
 ```bash
 # Compile tree JSON
-node skills/xform-run/scripts/xform.min.js deck.xp
+node actions/xform/xform.min.js deck.xp
 
 # Final HTML
-node skills/xform-run/scripts/xform.min.js deck.xp --final html
+node actions/xform/xform.min.js deck.xp --final html
 
 # Bindings + filters
-node skills/xform-run/scripts/xform.min.js deck.xp runtime.json filters.js --final html -o out/deck.html
+node actions/xform/xform.min.js deck.xp runtime.json filters.js --final html -o out/deck.html
 ```
 
 ## GitHub Action
@@ -144,5 +144,5 @@ node skills/xform-run/scripts/xform.min.js deck.xp runtime.json filters.js --fin
 ## Directory layout
 
 - `skills/xform-run/SKILL.md` — this skill (compile / CLI)
-- `skills/xform-run/scripts/xform.min.js` — minified CLI bundle (Node ESM)
+- `actions/xform/xform.min.js` — minified CLI bundle (published with the GitHub Action; copied into this skill on install)
 - `skills/xform-author/SKILL.md` — authoring `.xp` documents

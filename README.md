@@ -104,7 +104,7 @@ This repo publishes **composite** GitHub Actions that wrap the bundled minified 
 | --- | --- | --- |
 | [**xFrame consolidate**](actions/consolidate/action.yml) | `exergy-connect/xFrame.ai/actions/consolidate@main` | `skills/xframe-consolidate/scripts/consolidate.min.js` |
 | [**xFrame present**](actions/present/action.yml) | `exergy-connect/xFrame.ai/actions/present@main` | `actions/present/present.min.js` (copied into the skill on install) |
-| [**xForm**](actions/xform/action.yml) | `exergy-connect/xFrame.ai/actions/xform@main` | `skills/xform-run/scripts/xform.min.js` |
+| [**xForm**](actions/xform/action.yml) | `exergy-connect/xFrame.ai/actions/xform@main` | `actions/xform/xform.min.js` (copied into the skill on install) |
 
 [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo actions (`./actions/consolidate`, `./actions/present`) and is intended as a copyable template. External workflows pin the published refs below.
 
