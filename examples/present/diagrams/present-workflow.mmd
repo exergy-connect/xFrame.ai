@@ -1,7 +1,0 @@
-flowchart LR
-  MD["Markdown deck"] --> Present["xframe-present"]
-  Shared["@include + data"] --> Present
-  Assets["PNG / SVG assets"] --> Present
-  Snap["npm run snapshot"] -.-> Assets
-  Mmd["npm run mermaid"] -.-> Assets
-  Present --> HTML["Standalone HTML"]

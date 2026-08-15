@@ -1,98 +1,62 @@
-name: 'xFrame present'
-description: >-
-  Compile a Markdown presentation deck into a single self-contained HTML file.
-  Optional consolidated xFrame JSON data for provenance footers and inline graphs.
-  Requires Node.js 18+ on the runner.
-
+name: xFrame Present
+description: Compile an xFrame .xp or Markdown presentation to IR, HTML, PNG, or PowerPoint
 inputs:
-  input:
-    description: Path to the Markdown deck file (relative to the workflow workspace unless absolute).
+  source:
+    description: Path to the .xp or Markdown source, relative to the consuming repository
     required: true
-  output:
-    description: >-
-      Output HTML path. If omitted, the input path with its extension replaced by `.html` is used.
+  formats:
+    description: Comma-separated outputs (ir, html, png, pptx)
     required: false
-    default: ''
-  title:
-    description: Deck title (overrides front matter).
+    default: ir,html
+  output_dir:
+    description: Output directory; defaults to the source directory
     required: false
-    default: ''
-  author:
-    description: Author metadata (overrides front matter).
+  snapshot_width:
+    description: PNG snapshot viewport width in pixels
     required: false
-    default: ''
+    default: "1440"
+  snapshot_height:
+    description: PNG snapshot viewport height in pixels
+    required: false
+    default: "900"
+  evaluation:
+    description: Override evaluation mode (static or dynamic)
+    required: false
+  presentation:
+    description: Active presentation template name (must be listed in document presentations when set)
+    required: false
   theme:
-    description: 'Visual theme: `light` or `dark` (overrides front matter).'
+    description: Override themes (comma-separated)
     required: false
-    default: ''
-  data:
-    description: >-
-      URL or path to consolidated xFrame JSON data (overrides front matter). Local paths
-      resolve relative to the deck file's directory unless absolute.
+  style:
+    description: Override document styles (comma-separated; layout styles still apply)
     required: false
-    default: ''
-  no-embed-images:
-    description: 'Set to `true` to pass `--no-embed-images` (keep original image URLs).'
+  templates:
+    description: Optional custom templates directory
     required: false
-    default: 'false'
-  skip-locales:
-    description: 'Set to `true` to pass `--skip-locales` (do not compile locale siblings).'
+  embed_images:
+    description: Embed local Media images as data URIs in HTML
     required: false
-    default: 'false'
-  generate-locales:
-    description: >-
-      Comma-separated locale codes to generate (`de,es,ja`), or `*` to regenerate all
-      existing locale siblings. Missing files are always created; existing files are
-      skipped unless overwrite is true or `*` is used.
+    default: "false"
+  llm:
+    description: Enable compile-time llm() evaluation
     required: false
-    default: ''
-  overwrite:
-    description: 'Set to `true` to pass `--overwrite` (force-regenerate listed locales that already exist).'
+    default: "false"
+  llm_model:
+    description: Optional compile-time LLM model override
     required: false
-    default: 'false'
-  openrouter-api-token:
-    description: OpenRouter API key (required when generate-locales is non-empty).
-    required: false
-    default: ''
-
+outputs:
+  ir:
+    description: Absolute path to the generated IR, when requested
+  html:
+    description: Absolute path to the generated HTML, when requested
+  png:
+    description: Absolute path to the generated HTML snapshot, when requested
+  pptx:
+    description: Absolute path to the generated PowerPoint, when requested
 runs:
-  using: composite
-  steps:
-    - name: Run present.min.js
-      shell: bash
-      env:
-        ACTION_PATH: ${{ github.action_path }}
-        INPUT: ${{ inputs.input }}
-        OUTPUT: ${{ inputs.output }}
-        TITLE: ${{ inputs.title }}
-        AUTHOR: ${{ inputs.author }}
-        THEME: ${{ inputs.theme }}
-        DATA: ${{ inputs.data }}
-        NO_EMBED: ${{ inputs.no-embed-images }}
-        SKIP_LOCALES: ${{ inputs.skip-locales }}
-        GENERATE_LOCALES: ${{ inputs.generate-locales }}
-        OVERWRITE: ${{ inputs.overwrite }}
-        OPENROUTER_TOKEN: ${{ inputs.openrouter-api-token }}
-      run: |
-        set -euo pipefail
-        script="${ACTION_PATH}/../../skills/xframe-present/scripts/present.min.js"
-        if [[ ! -f "$script" ]]; then
-          echo "::error file=${script}::Present script missing (expected bundled xframe-present asset)."
-          exit 1
-        fi
-        if [[ -n "${GENERATE_LOCALES}" && -z "${OPENROUTER_TOKEN}" ]]; then
-          echo "::error::openrouter-api-token is required when generate-locales is set"
-          exit 1
-        fi
-        cmd=(node "$script" "$INPUT")
-        [[ -n "${OUTPUT}" ]] && cmd+=(--output "$OUTPUT")
-        [[ -n "${TITLE}" ]] && cmd+=(--title "$TITLE")
-        [[ -n "${AUTHOR}" ]] && cmd+=(--author "$AUTHOR")
-        [[ -n "${THEME}" ]] && cmd+=(--theme "$THEME")
-        [[ -n "${DATA}" ]] && cmd+=(--data "$DATA")
-        [[ "${NO_EMBED}" == "true" ]] && cmd+=(--no-embed-images)
-        [[ "${SKIP_LOCALES}" == "true" ]] && cmd+=(--skip-locales)
-        [[ -n "${GENERATE_LOCALES}" ]] && cmd+=(--generate-locales "${GENERATE_LOCALES}")
-        [[ "${OVERWRITE}" == "true" ]] && cmd+=(--overwrite)
-        [[ -n "${OPENROUTER_TOKEN}" ]] && export OPENROUTER_API_KEY="${OPENROUTER_TOKEN}"
-        "${cmd[@]}"
+  using: node24
+  main: dist-action.cjs
+branding:
+  icon: monitor
+  color: blue
