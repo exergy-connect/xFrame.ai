@@ -26,10 +26,10 @@ hierarchical nesting already implies it.
 ## Run
 
 From the [xFrame.ai](https://github.com/exergy-connect/xFrame.ai) repo root, with
-Node.js ≥18:
+Node.js ≥24:
 
 ```bash
-node skills/xframe-consolidate/scripts/consolidate.min.js \
+node actions/consolidate/consolidate.min.js \
   --working-dir examples/consolidate \
   --clean \
   --note "Subsea tieback example"

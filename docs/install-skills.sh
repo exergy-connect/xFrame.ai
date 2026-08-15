@@ -12,6 +12,7 @@ SKILLS=(
 TARGET=".cursor/skills"
 VERSION_URL="https://exergy-connect.github.io/xFrame.ai/latest"
 ACTION_CLIS=(
+  "actions/consolidate|xframe-consolidate|consolidate.min.js"
   "actions/present|xframe-present|present.min.js"
   "actions/xform|xform-run|xform.min.js"
 )

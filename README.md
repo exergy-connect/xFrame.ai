@@ -98,11 +98,11 @@ npx wrangler secret put GEMINI_API_KEY
 
 ## GitHub Actions
 
-This repo publishes **composite** GitHub Actions that wrap the bundled minified CLIs under `skills/`. The Cursor skill and GitHub Action for each tool are the same package. **Node.js ≥18** is required on the job runner for consolidate; **present** and **xForm** need **Node.js ≥24**. Pin a branch, tag, or SHA (for example `@main`).
+This repo publishes **composite** GitHub Actions that wrap the bundled minified CLIs. The Cursor skill and GitHub Action for each tool are the same package. **Node.js ≥24** is required on the job runner. Pin a branch, tag, or SHA (for example `@main`).
 
 | Action | `uses` | Skill CLI |
 | --- | --- | --- |
-| [**xFrame consolidate**](actions/consolidate/action.yml) | `exergy-connect/xFrame.ai/actions/consolidate@main` | `skills/xframe-consolidate/scripts/consolidate.min.js` |
+| [**xFrame consolidate**](actions/consolidate/action.yml) | `exergy-connect/xFrame.ai/actions/consolidate@main` | `actions/consolidate/consolidate.min.js` (copied into the skill on install) |
 | [**xFrame present**](actions/present/action.yml) | `exergy-connect/xFrame.ai/actions/present@main` | `actions/present/present.min.js` (copied into the skill on install) |
 | [**xForm**](actions/xform/action.yml) | `exergy-connect/xFrame.ai/actions/xform@main` | `actions/xform/xform.min.js` (copied into the skill on install) |
 
@@ -110,7 +110,7 @@ This repo publishes **composite** GitHub Actions that wrap the bundled minified 
 
 ### xFrame consolidate
 
-Expects **JSON** model fragments and entity data under **`<working-dir>/data`** and **`<working-dir>/model`** (same contract as the [xframe-consolidate](skills/xframe-consolidate/SKILL.md) skill). Writes to **`<working-dir>/output`**.
+Expects **JSON** model fragments and entity data under **`<working-dir>/data`** and **`<working-dir>/model`** (same contract as the [xframe-consolidate](skills/xframe-consolidate/SKILL.md) skill). Writes to **`<working-dir>/output`**. The CLI bundle is `actions/consolidate/consolidate.min.js`. `install-skills.sh` copies that file into `.cursor/skills/xframe-consolidate/scripts/` locally.
 
 ```yaml
 on:
@@ -193,8 +193,7 @@ Action outputs `ir`, `html`, `png`, and `pptx` are absolute paths for the format
 
 ## Requirements
 
-- **xframe-consolidate**: Node.js ≥18. Bundled scripts are self-contained; no `npm install` required.
-- **xframe-present** / **present** action and **xform-run** / **xForm** action: Node.js ≥24.
+- **xframe-consolidate** / **consolidate** action, **xframe-present** / **present** action, and **xform-run** / **xForm** action: Node.js ≥24. Bundled scripts are self-contained; no `npm install` required.
 
 ## License
 

@@ -11,7 +11,7 @@ on:
       - "examples/consolidate/data/**"
       - "skills/xform/**"
       - "actions/present/action.yml"
-      - "actions/consolidate/action.yml"
+      - "actions/consolidate/**"
       - "actions/xform/action.yml"
       - ".github/workflows/examples-ci.yml"
   workflow_dispatch:
