@@ -100,6 +100,20 @@ npx wrangler secret put GEMINI_API_KEY
 
 This repo publishes **composite** GitHub Actions that wrap the bundled minified CLIs. The Cursor skill and GitHub Action for each tool are the same package. **Node.js ≥24** is required on the job runner. Pin a branch, tag, or SHA (for example `@main`).
 
+Source repositories (public or private) copy built actions and skills into this repo with [`.github/actions/publish-to-xframe-ai`](.github/actions/publish-to-xframe-ai/README.md):
+
+```yaml
+- uses: exergy-connect/xFrame.ai/.github/actions/publish-to-xframe-ai@main
+  with:
+    token: ${{ secrets.XFRAME_AI_TOKEN }}
+    dirs_mapping: |
+      action-dist|actions/my-tool
+      skill|skills/my-tool
+    commit_message: 'chore: sync my-tool from my-repo [skip ci]'
+```
+
+Store a token with push access to this repository as `XFRAME_AI_TOKEN` in the caller. Directory mappings replace the destination tree.
+
 | Action | `uses` | Skill CLI |
 | --- | --- | --- |
 | [**xFrame consolidate**](actions/consolidate/action.yml) | `exergy-connect/xFrame.ai/actions/consolidate@main` | `actions/consolidate/consolidate.min.js` (copied into the skill on install) |

@@ -1,0 +1,263 @@
+name: 'Publish to xFrame.ai'
+description: >-
+  Copy mapped files and directories from the caller workspace into a target
+  repository (default exergy-connect/xFrame.ai), then commit and push. Public
+  and private source repos can reuse this instead of vendoring a sync script.
+  Directory mappings replace the destination tree.
+
+inputs:
+  token:
+    description: >-
+      Token with contents write access to target_repo. Store as a repository
+      secret (typically XFRAME_AI_TOKEN) in the calling repo.
+    required: true
+  files_mapping:
+    description: >-
+      Newline-separated source|dest file pairs. Source is relative to the
+      caller workspace (or source_root). Dest is relative to the target repo
+      root. Dest defaults to source when omitted. Lines starting with # are ignored.
+    required: false
+    default: ''
+  dirs_mapping:
+    description: >-
+      Newline-separated source_dir|dest_dir pairs. Each destination directory
+      is replaced with the source tree (including hidden files). Dest defaults
+      to source when omitted. Lines starting with # are ignored.
+    required: false
+    default: ''
+  remove_paths:
+    description: >-
+      Newline-separated target-repository paths to delete before copying.
+      Use for leftover paths outside a replaced dest (renames). Paths must be
+      relative and may not contain `..`. Lines starting with # are ignored.
+    required: false
+    default: ''
+  source_root:
+    description: >-
+      Optional workspace-relative prefix prepended to every source path in
+      files_mapping and dirs_mapping.
+    required: false
+    default: ''
+  commit_message:
+    description: 'Commit message for the publish commit'
+    required: false
+    default: 'chore: sync from source [skip ci]'
+  target_repo:
+    description: 'Target repository (owner/repo)'
+    required: false
+    default: 'exergy-connect/xFrame.ai'
+  target_branch:
+    description: >-
+      Branch to update. When empty, uses the target repository default branch.
+    required: false
+    default: ''
+  user_name:
+    description: 'Commit author name'
+    required: false
+    default: 'GitHub Actions'
+  user_email:
+    description: 'Commit author email'
+    required: false
+    default: 'actions@github.com'
+
+outputs:
+  committed:
+    description: 'true when a commit was pushed; false when there was nothing to sync'
+    value: ${{ steps.publish.outputs.committed }}
+  commit_sha:
+    description: 'SHA of the publish commit, when one was created'
+    value: ${{ steps.publish.outputs.commit_sha }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Publish mapped paths
+      id: publish
+      shell: bash
+      env:
+        TOKEN: ${{ inputs.token }}
+        FILES_MAPPING: ${{ inputs.files_mapping }}
+        DIRS_MAPPING: ${{ inputs.dirs_mapping }}
+        REMOVE_PATHS: ${{ inputs.remove_paths }}
+        SOURCE_ROOT: ${{ inputs.source_root }}
+        COMMIT_MESSAGE: ${{ inputs.commit_message }}
+        TARGET_REPO: ${{ inputs.target_repo }}
+        TARGET_BRANCH: ${{ inputs.target_branch }}
+        USER_NAME: ${{ inputs.user_name }}
+        USER_EMAIL: ${{ inputs.user_email }}
+      run: |
+        set -euo pipefail
+
+        echo "committed=false" >> "$GITHUB_OUTPUT"
+        echo "commit_sha=" >> "$GITHUB_OUTPUT"
+
+        if [[ ! "$TARGET_REPO" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
+          echo "Invalid target_repo: $TARGET_REPO" >&2
+          exit 1
+        fi
+        if [[ -z "${TOKEN}" ]]; then
+          echo "token input is empty" >&2
+          exit 1
+        fi
+        if [[ -z "$FILES_MAPPING" && -z "$DIRS_MAPPING" && -z "$REMOVE_PATHS" ]]; then
+          echo "Provide files_mapping, dirs_mapping, and/or remove_paths" >&2
+          exit 1
+        fi
+
+        workspace="${GITHUB_WORKSPACE:-$(pwd)}"
+        src_root="$workspace"
+        if [[ -n "$SOURCE_ROOT" ]]; then
+          SOURCE_ROOT="${SOURCE_ROOT#./}"
+          if [[ "$SOURCE_ROOT" = /* || "$SOURCE_ROOT" = "." || "$SOURCE_ROOT" = *".."* ]]; then
+            echo "Invalid source_root: $SOURCE_ROOT" >&2
+            exit 1
+          fi
+          src_root="$workspace/$SOURCE_ROOT"
+        fi
+
+        is_safe_rel_path() {
+          local p="$1"
+          [[ -n "$p" && "$p" != /* && "$p" != "." && "$p" != *".."* ]]
+        }
+
+        read_pairs() {
+          local blob="$1"
+          local line source dest
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            line="${line#"${line%%[![:space:]]*}"}"
+            line="${line%"${line##*[![:space:]]}"}"
+            [[ -z "$line" || "$line" == \#* ]] && continue
+            source="${line%%|*}"
+            dest="${line#*|}"
+            [[ "$dest" == "$line" ]] && dest=""
+            source="${source#"${source%%[![:space:]]*}"}"
+            source="${source%"${source##*[![:space:]]}"}"
+            dest="${dest#"${dest%%[![:space:]]*}"}"
+            dest="${dest%"${dest##*[![:space:]]}"}"
+            [[ -z "$dest" ]] && dest="$source"
+            source="${source#./}"
+            dest="${dest#./}"
+            printf '%s\t%s\n' "$source" "$dest"
+          done <<< "$blob"
+        }
+
+        read_paths() {
+          local blob="$1"
+          local line
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            line="${line#"${line%%[![:space:]]*}"}"
+            line="${line%"${line##*[![:space:]]}"}"
+            [[ -z "$line" || "$line" == \#* ]] && continue
+            line="${line#./}"
+            printf '%s\n' "$line"
+          done <<< "$blob"
+        }
+
+        work="$(mktemp -d "${RUNNER_TEMP:-/tmp}/publish-xframe-ai.XXXXXX")"
+        trap 'rm -rf "$work"' EXIT
+        repo="$work/repo"
+        auth_header="Authorization: Bearer ${TOKEN}"
+
+        clone_args=(--depth 1)
+        if [[ -n "$TARGET_BRANCH" ]]; then
+          clone_args+=(--branch "$TARGET_BRANCH")
+        fi
+        git -c "http.extraHeader=${auth_header}" clone "${clone_args[@]}" \
+          "https://github.com/${TARGET_REPO}.git" "$repo"
+
+        if [[ -n "$REMOVE_PATHS" ]]; then
+          while IFS= read -r remove_path; do
+            [[ -z "$remove_path" ]] && continue
+            if ! is_safe_rel_path "$remove_path"; then
+              echo "Invalid remove_path: $remove_path" >&2
+              exit 1
+            fi
+            rm -rf -- "$repo/$remove_path"
+          done < <(read_paths "$REMOVE_PATHS")
+        fi
+
+        if [[ -n "$FILES_MAPPING" ]]; then
+          while IFS=$'\t' read -r source dest; do
+            [[ -z "$source" ]] && continue
+            if ! is_safe_rel_path "$source" || ! is_safe_rel_path "$dest"; then
+              echo "Invalid files_mapping pair: $source|$dest" >&2
+              exit 1
+            fi
+            if [[ ! -f "$src_root/$source" ]]; then
+              echo "Source file missing: $src_root/$source" >&2
+              exit 1
+            fi
+            mkdir -p "$repo/$(dirname "$dest")"
+            cp -a "$src_root/$source" "$repo/$dest"
+          done < <(read_pairs "$FILES_MAPPING")
+        fi
+
+        if [[ -n "$DIRS_MAPPING" ]]; then
+          while IFS=$'\t' read -r source_dir dest_dir; do
+            [[ -z "$source_dir" ]] && continue
+            if ! is_safe_rel_path "$source_dir" || ! is_safe_rel_path "$dest_dir"; then
+              echo "Invalid dirs_mapping pair: $source_dir|$dest_dir" >&2
+              exit 1
+            fi
+            if [[ ! -d "$src_root/$source_dir" ]]; then
+              echo "Source directory missing: $src_root/$source_dir" >&2
+              exit 1
+            fi
+            rm -rf -- "$repo/$dest_dir"
+            mkdir -p "$repo/$dest_dir"
+            cp -a "$src_root/$source_dir"/. "$repo/$dest_dir/"
+          done < <(read_pairs "$DIRS_MAPPING")
+        fi
+
+        cd "$repo"
+        git config user.name "$USER_NAME"
+        git config user.email "$USER_EMAIL"
+
+        if [[ -n "$REMOVE_PATHS" ]]; then
+          while IFS= read -r remove_path; do
+            [[ -z "$remove_path" ]] && continue
+            git add -A -- "$remove_path"
+          done < <(read_paths "$REMOVE_PATHS")
+        fi
+
+        if [[ -n "$FILES_MAPPING" ]]; then
+          while IFS=$'\t' read -r source dest; do
+            [[ -z "$dest" ]] && continue
+            git add -A -- "$dest"
+          done < <(read_pairs "$FILES_MAPPING")
+        fi
+
+        if [[ -n "$DIRS_MAPPING" ]]; then
+          while IFS=$'\t' read -r source_dir dest_dir; do
+            [[ -z "$dest_dir" ]] && continue
+            git add -A -- "$dest_dir"
+          done < <(read_pairs "$DIRS_MAPPING")
+        fi
+
+        if git diff --staged --quiet; then
+          echo "No mapped path changes to sync."
+          exit 0
+        fi
+
+        git commit -m "$COMMIT_MESSAGE"
+        branch="$(git rev-parse --abbrev-ref HEAD)"
+        max_attempts=5
+        for attempt in $(seq 1 "$max_attempts"); do
+          if git -c "http.extraHeader=${auth_header}" push origin "HEAD:${branch}"; then
+            echo "committed=true" >> "$GITHUB_OUTPUT"
+            echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$attempt" -eq "$max_attempts" ]]; then
+            echo "Failed to push after ${max_attempts} attempts" >&2
+            exit 1
+          fi
+          echo "Push rejected (attempt ${attempt}/${max_attempts}); rebasing onto origin/${branch}…"
+          git -c "http.extraHeader=${auth_header}" fetch --deepen=50 origin "${branch}" \
+            || git -c "http.extraHeader=${auth_header}" fetch origin "${branch}"
+          if ! git rebase "origin/${branch}"; then
+            echo "Rebase conflict while syncing; aborting." >&2
+            git rebase --abort 2>/dev/null || true
+            exit 1
+          fi
+        done
