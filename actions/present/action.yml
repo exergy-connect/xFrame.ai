@@ -1,0 +1,151 @@
+name: xFrame Present
+description: >-
+  Compile an xFrame .xp or Markdown presentation to IR, HTML, PNG, or PowerPoint.
+  Wraps the xframe-present skill CLI (present.min.js). Requires Node.js 24+ on the runner.
+inputs:
+  source:
+    description: Path to the .xp or Markdown source, relative to the consuming repository
+    required: true
+  formats:
+    description: Comma-separated outputs (ir, html, png, pptx)
+    required: false
+    default: ir,html
+  output_dir:
+    description: Output directory; defaults to the source directory
+    required: false
+    default: ''
+  evaluation:
+    description: Override evaluation mode (static or dynamic)
+    required: false
+    default: ''
+  positioning:
+    description: Override layout positioning strategy (static or dynamic)
+    required: false
+    default: ''
+  presentation:
+    description: Active presentation template name (must be listed in document presentations when set)
+    required: false
+    default: ''
+  format:
+    description: Format qualifier (desktop, tablet, mobile, poster, cover-letter, or video)
+    required: false
+    default: ''
+  theme:
+    description: Override themes (comma-separated)
+    required: false
+    default: ''
+  style:
+    description: Override document styles (comma-separated; layout styles still apply)
+    required: false
+    default: ''
+  templates:
+    description: Optional custom templates directory
+    required: false
+    default: ''
+  content_plugin:
+    description: Content plugin modules (comma-separated); passed as repeatable --content-plugin
+    required: false
+    default: ''
+  force_content_plugins:
+    description: Set to `true` to pass `--force-content-plugins`
+    required: false
+    default: 'false'
+  screenshots:
+    description: Set to `true` to pass `--screenshots` (with pptx, photograph each HTML slide)
+    required: false
+    default: 'false'
+  snapshot_width:
+    description: PNG snapshot viewport width in pixels
+    required: false
+    default: '1440'
+  snapshot_height:
+    description: PNG snapshot viewport height in pixels
+    required: false
+    default: '900'
+  snapshot_canvas:
+    description: Set to `true` to pass `--snapshot-canvas`
+    required: false
+    default: 'false'
+  embed_images:
+    description: Embed local Media images as data URIs in HTML
+    required: false
+    default: 'false'
+  llm:
+    description: Enable compile-time llm() evaluation
+    required: false
+    default: 'false'
+  llm_model:
+    description: Optional compile-time LLM model override
+    required: false
+    default: ''
+  skip_audio:
+    description: Set to `true` to pass `--skip-audio`
+    required: false
+    default: 'false'
+  force_audio:
+    description: Set to `true` to pass `--force-audio`
+    required: false
+    default: 'false'
+  combined_audio:
+    description: Set to `true` to pass `--combined-audio`
+    required: false
+    default: 'false'
+  combined_pause:
+    description: Silence between combined-track slides in seconds
+    required: false
+    default: ''
+outputs:
+  ir:
+    description: Absolute path to the generated IR, when requested
+    value: ${{ steps.present.outputs.ir }}
+  html:
+    description: Absolute path to the generated HTML, when requested
+    value: ${{ steps.present.outputs.html }}
+  png:
+    description: Absolute path to the generated HTML snapshot, when requested
+    value: ${{ steps.present.outputs.png }}
+  pptx:
+    description: Absolute path to the generated PowerPoint, when requested
+    value: ${{ steps.present.outputs.pptx }}
+runs:
+  using: composite
+  steps:
+    - name: Run present.min.js
+      id: present
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        INPUT_SOURCE: ${{ inputs.source }}
+        INPUT_FORMATS: ${{ inputs.formats }}
+        INPUT_OUTPUT_DIR: ${{ inputs.output_dir }}
+        INPUT_EVALUATION: ${{ inputs.evaluation }}
+        INPUT_POSITIONING: ${{ inputs.positioning }}
+        INPUT_PRESENTATION: ${{ inputs.presentation }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_THEME: ${{ inputs.theme }}
+        INPUT_STYLE: ${{ inputs.style }}
+        INPUT_TEMPLATES: ${{ inputs.templates }}
+        INPUT_CONTENT_PLUGIN: ${{ inputs.content_plugin }}
+        INPUT_FORCE_CONTENT_PLUGINS: ${{ inputs.force_content_plugins }}
+        INPUT_SCREENSHOTS: ${{ inputs.screenshots }}
+        INPUT_SNAPSHOT_WIDTH: ${{ inputs.snapshot_width }}
+        INPUT_SNAPSHOT_HEIGHT: ${{ inputs.snapshot_height }}
+        INPUT_SNAPSHOT_CANVAS: ${{ inputs.snapshot_canvas }}
+        INPUT_EMBED_IMAGES: ${{ inputs.embed_images }}
+        INPUT_LLM: ${{ inputs.llm }}
+        INPUT_LLM_MODEL: ${{ inputs.llm_model }}
+        INPUT_SKIP_AUDIO: ${{ inputs.skip_audio }}
+        INPUT_FORCE_AUDIO: ${{ inputs.force_audio }}
+        INPUT_COMBINED_AUDIO: ${{ inputs.combined_audio }}
+        INPUT_COMBINED_PAUSE: ${{ inputs.combined_pause }}
+      run: |
+        set -euo pipefail
+        script="${ACTION_PATH}/present.min.js"
+        if [[ ! -f "$script" ]]; then
+          echo "::error file=${script}::present.min.js missing (expected next to action.yml)."
+          exit 1
+        fi
+        node "$script"
+branding:
+  icon: monitor
+  color: blue
