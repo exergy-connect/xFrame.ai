@@ -1,0 +1,5292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>fabric-from-image · lab UI</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css">
+  <style>
+    :root {
+      --bg: #070b12;
+      --bg-elevated: #0c121c;
+      --panel: rgba(14, 20, 32, 0.92);
+      --panel-solid: #101826;
+      --fg: #e8eef8;
+      --muted: #8494ad;
+      --accent: #2dd4bf;
+      --accent-soft: rgba(45, 212, 191, 0.14);
+      --accent-strong: #5eead4;
+      --border: rgba(148, 163, 184, 0.12);
+      --border-strong: rgba(148, 163, 184, 0.22);
+      --active: rgba(45, 212, 191, 0.12);
+      --node-fill: #152033;
+      --node-stroke: #3d516c;
+      --node-up: #34d399;
+      --node-booting: #fbbf24;
+      --node-down: #64748b;
+      --node-err: #f87171;
+      --level-0-fill: #0f1830;
+      --level-0-stroke: #5b8def;
+      --level-1-fill: #132238;
+      --level-1-stroke: #38bdf8;
+      --level-2-fill: #152818;
+      --level-2-stroke: #86efac;
+      --link: #4b6280;
+      --link-label: #94a3b8;
+      --danger: #fca5a5;
+      --danger-border: #7f1d1d;
+      --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
+      --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.4);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --font: "Sora", "Segoe UI", sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font);
+      font-feature-settings: "ss01" on, "cv01" on;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 232px 1fr;
+      height: 100%;
+      max-height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse 80% 50% at 70% -10%, rgba(45, 212, 191, 0.07), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 10% 100%, rgba(56, 189, 248, 0.05), transparent 50%),
+        var(--bg);
+    }
+    aside {
+      position: relative;
+      background:
+        linear-gradient(180deg, rgba(16, 24, 38, 0.98), rgba(10, 14, 22, 0.96));
+      border-right: 1px solid var(--border);
+      padding: 1.1rem 0.85rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      min-height: 0;
+      backdrop-filter: blur(12px);
+      box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.03);
+    }
+    aside::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--accent), transparent 42%, rgba(56, 189, 248, 0.35) 100%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    aside .brand {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding-bottom: 0.15rem;
+    }
+    aside .brand-logo {
+      display: block;
+      width: 48px;
+      max-width: 48px;
+      height: auto;
+      flex-shrink: 0;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      animation: brand-in 0.7s var(--ease) both;
+    }
+    aside .brand-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      animation: brand-in 0.7s var(--ease) 0.08s both;
+    }
+    aside .brand-kicker {
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent-strong);
+    }
+    aside h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+    aside .meta {
+      color: var(--muted);
+      font-size: 0.72rem;
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+    }
+    .nodes-label {
+      margin: 0.15rem 0 -0.25rem;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .modes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.3rem;
+      padding: 0.25rem;
+      border-radius: var(--radius-md);
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid var(--border);
+    }
+    .modes button,
+    .nodes button {
+      font: inherit;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      border-radius: var(--radius-sm);
+      padding: 0.45rem 0.55rem;
+      cursor: pointer;
+      text-align: left;
+      transition:
+        color 0.18s var(--ease),
+        background 0.18s var(--ease),
+        border-color 0.18s var(--ease),
+        box-shadow 0.18s var(--ease),
+        transform 0.18s var(--ease);
+    }
+    .modes button {
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .nodes button .node-id {
+      display: block;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .nodes button .node-lo {
+      display: block;
+      margin-top: 0.15rem;
+      color: var(--muted);
+      font-size: 0.7rem;
+      font-family: var(--mono);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+    }
+    .nodes button .node-state {
+      display: block;
+      margin-top: 0.22rem;
+      font-size: 0.64rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .nodes button.level-0 {
+      border-top: 2px solid var(--level-0-stroke);
+      background: color-mix(in srgb, var(--level-0-fill) 75%, transparent);
+    }
+    .nodes button.level-1 {
+      border-top: 2px solid var(--level-1-stroke);
+      background: color-mix(in srgb, var(--level-1-fill) 75%, transparent);
+    }
+    .nodes button.level-2 {
+      border-top: 2px solid var(--level-2-stroke);
+      background: color-mix(in srgb, var(--level-2-fill) 75%, transparent);
+    }
+    .nodes button.node-up {
+      border-color: rgba(52, 211, 153, 0.35);
+      box-shadow: inset 3px 0 0 var(--node-up);
+    }
+    .nodes button.node-up .node-id { color: var(--node-up); }
+    .nodes button.node-up .node-state { color: var(--node-up); }
+    .nodes button.node-booting {
+      border-color: rgba(251, 191, 36, 0.45);
+      box-shadow: inset 3px 0 0 var(--node-booting);
+      cursor: wait;
+    }
+    .nodes button.node-booting .node-id { color: var(--node-booting); }
+    .nodes button.node-booting .node-state { color: var(--node-booting); }
+    .nodes button.node-down,
+    .nodes button.node-unknown {
+      opacity: 0.45;
+      color: var(--muted);
+      border-color: var(--border);
+      cursor: not-allowed;
+      box-shadow: inset 3px 0 0 var(--node-down);
+    }
+    .nodes button.node-down .node-id,
+    .nodes button.node-unknown .node-id {
+      color: var(--muted);
+    }
+    .nodes button.node-down .node-state,
+    .nodes button.node-unknown .node-state {
+      color: var(--muted);
+    }
+    .nodes button.node-down:hover,
+    .nodes button.node-unknown:hover {
+      border-color: var(--border);
+      transform: none;
+    }
+    .nodes button:disabled {
+      pointer-events: none;
+    }
+    .modes button.active,
+    .nodes button.active {
+      background: var(--active);
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      color: #fff;
+      box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.12);
+    }
+    .nodes button.active.node-up {
+      border-color: var(--node-up);
+      box-shadow: inset 3px 0 0 var(--node-up);
+    }
+    .nodes button.active.node-up .node-id { color: #fff; }
+    .nodes {
+      display: grid;
+      gap: 0.4rem;
+      overflow: auto;
+      padding-right: 0.15rem;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+    }
+    .nodes button:hover,
+    .modes button:hover {
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+      color: var(--fg);
+    }
+    .nodes button:hover:not(:disabled):not(.node-down):not(.node-unknown) {
+      transform: translateX(2px);
+    }
+    main {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto minmax(11rem, 36%);
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    .topo-wrap {
+      position: relative;
+      min-height: 0;
+      border-bottom: 1px solid var(--border);
+      background:
+        linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+        radial-gradient(ellipse 70% 55% at 55% 40%, rgba(45, 212, 191, 0.06), transparent 60%),
+        radial-gradient(ellipse 50% 40% at 15% 80%, rgba(56, 189, 248, 0.04), transparent 55%),
+        var(--bg-elevated);
+      background-size: 28px 28px, 28px 28px, auto, auto, auto;
+      animation: topo-fade 0.8s var(--ease) both;
+    }
+    .deploy-progress {
+      position: absolute;
+      z-index: 6;
+      left: 0.85rem;
+      right: 0.85rem;
+      bottom: 0.75rem;
+      padding: 0.65rem 0.8rem 0.75rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong);
+      background: rgba(8, 12, 20, 0.88);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow-md);
+      pointer-events: none;
+      animation: panel-rise 0.35s var(--ease) both;
+    }
+    .deploy-progress[hidden] { display: none !important; }
+    .deploy-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 0.45rem;
+      font-size: 0.78rem;
+    }
+    .deploy-progress-label { color: var(--fg); font-weight: 550; }
+    .deploy-progress-pct {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+    }
+    .deploy-progress-track {
+      position: relative;
+      height: 5px;
+      border-radius: 2px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .deploy-progress-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #0d9488, var(--accent), #67e8f9);
+      background-size: 200% 100%;
+      transition: width 0.35s var(--ease);
+      animation: deploy-bar-sheen 1.4s linear infinite;
+    }
+    .deploy-progress.indeterminate .deploy-progress-bar {
+      width: 40% !important;
+      animation:
+        deploy-bar-sheen 1.4s linear infinite,
+        deploy-bar-slide 1.6s ease-in-out infinite;
+    }
+    .deploy-progress.done .deploy-progress-bar {
+      width: 100% !important;
+      background: var(--node-up);
+      animation: none;
+      transition: width 0.25s ease;
+    }
+    .deploy-progress.failed .deploy-progress-bar {
+      background: var(--node-err);
+      animation: none;
+    }
+    @keyframes deploy-bar-sheen {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+    @keyframes deploy-bar-slide {
+      0% { transform: translateX(-30%); }
+      50% { transform: translateX(160%); }
+      100% { transform: translateX(-30%); }
+    }
+    @keyframes brand-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes topo-fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes panel-rise {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes panel-in {
+      from { opacity: 0; transform: translateY(12px) scale(0.97); }
+      to { opacity: 1; transform: none; }
+    }
+    .ctrl button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    #topology {
+      width: 100%;
+      height: 100%;
+      display: block;
+      user-select: none;
+    }
+    #topology.dragging { cursor: grabbing; }
+    .topo-node { cursor: grab; }
+    .topo-node rect {
+      fill: var(--node-fill);
+      stroke: var(--node-stroke);
+      stroke-width: 1.5;
+      transition: fill 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease, filter 0.2s ease;
+    }
+    .topo-node.level-0 rect {
+      fill: var(--level-0-fill);
+      stroke: var(--level-0-stroke);
+    }
+    .topo-node.level-1 rect {
+      fill: var(--level-1-fill);
+      stroke: var(--level-1-stroke);
+    }
+    .topo-node.level-2 rect {
+      fill: var(--level-2-fill);
+      stroke: var(--level-2-stroke);
+    }
+    .topo-node.sidecar rect {
+      stroke-dasharray: 4 3;
+      fill: #1c2838;
+    }
+    .topo-node.active rect {
+      stroke: var(--accent);
+      stroke-width: 2.5;
+      fill: #1a2e36;
+      filter: drop-shadow(0 0 6px rgba(45, 212, 191, 0.25));
+    }
+    .topo-node.selected rect {
+      stroke: var(--accent);
+      stroke-width: 2;
+      stroke-dasharray: 5 3;
+    }
+    .topo-node.selected.active rect {
+      stroke-dasharray: none;
+      stroke-width: 2.5;
+    }
+    .nodes button.selected {
+      outline: 1px dashed var(--accent);
+      outline-offset: -1px;
+    }
+    .nodes button.selected.active {
+      outline-style: solid;
+    }
+    .topo-node.node-up rect {
+      stroke: var(--node-up);
+      stroke-width: 2;
+    }
+    .topo-node.node-booting rect {
+      stroke: var(--node-booting);
+      stroke-width: 2;
+      fill: #2a2418;
+    }
+    .topo-node.node-booting {
+      cursor: wait;
+    }
+    .topo-node.node-booting text {
+      fill: var(--node-booting);
+    }
+    .topo-node.node-down rect,
+    .topo-node.node-unknown rect {
+      fill: #161c26;
+      stroke: var(--node-down);
+      opacity: 0.55;
+    }
+    .topo-node.node-down,
+    .topo-node.node-unknown {
+      cursor: not-allowed;
+    }
+    .topo-node.node-down text,
+    .topo-node.node-unknown text {
+      fill: var(--muted);
+    }
+    .topo-node text {
+      fill: var(--fg);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font);
+      pointer-events: none;
+    }
+    .topo-node .sub {
+      fill: var(--muted);
+      font-size: 10px;
+      font-weight: 400;
+    }
+    .ctx-menu {
+      position: fixed;
+      z-index: 40;
+      min-width: 11rem;
+      margin: 0;
+      padding: 0.35rem 0;
+      list-style: none;
+      background: var(--panel-solid);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      display: none;
+      animation: panel-rise 0.18s var(--ease) both;
+    }
+    .ctx-menu.open { display: block; }
+    .ctx-menu .ctx-label {
+      padding: 0.25rem 0.75rem 0.4rem;
+      color: var(--muted);
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .ctx-menu button {
+      display: block;
+      width: 100%;
+      font: inherit;
+      font-size: 0.82rem;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      color: var(--fg);
+      padding: 0.42rem 0.75rem;
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+    .ctx-menu button:hover:not(:disabled) {
+      background: var(--active);
+    }
+    .ctx-menu button:disabled {
+      color: var(--muted);
+      cursor: default;
+    }
+    .ctx-menu button.current::after {
+      content: " ✓";
+      color: var(--accent);
+    }
+    .topo-link .link-wire {
+      stroke: var(--link);
+      stroke-width: 2;
+      fill: none;
+      transition: stroke 0.25s ease, stroke-width 0.25s ease, opacity 0.2s ease;
+    }
+    .topo-link.up .link-wire {
+      stroke: var(--node-up);
+      stroke-width: 2.75;
+    }
+    .topo-link.down .link-wire {
+      stroke: var(--node-err);
+      stroke-width: 2.5;
+      stroke-dasharray: 6 4;
+    }
+    .topo-link.unknown .link-wire {
+      stroke: var(--link);
+      stroke-width: 2;
+    }
+    /* Dense Clos meshes: quiet the wire field until a node/link is focused. */
+    .topo-wrap.dense-links:not(.focus-links) .topo-link .link-wire {
+      opacity: 0.18;
+      stroke-width: 1.25;
+    }
+    .topo-wrap.dense-links.focus-links .topo-link:not(.incident) .link-wire {
+      opacity: 0.08;
+      stroke-width: 1;
+    }
+    .topo-wrap.dense-links.focus-links .topo-link.incident .link-wire {
+      opacity: 1;
+      stroke-width: 2.5;
+      stroke: var(--accent);
+    }
+    /* Single-link iface selection (any layout): emphasize only that wire. */
+    .topo-wrap.focus-links:not(.dense-links) .topo-link:not(.incident) .link-wire {
+      opacity: 0.22;
+    }
+    .topo-wrap.focus-links:not(.dense-links) .topo-link.incident .link-wire {
+      stroke: var(--accent);
+      stroke-width: 2.5;
+    }
+    .topo-wrap.dense-links:not(.focus-links) .topo-link text {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .topo-wrap.dense-links.focus-links .topo-link:not(.incident) text {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .topo-wrap.dense-links.focus-links .topo-link.incident text {
+      opacity: 1;
+    }
+    /* Interface bulbs: hide the Clos pin-cushion until a node/link is focused. */
+    .topo-wrap.dense-links:not(.focus-links) .ifaces .ep-sel {
+      opacity: 0.06;
+    }
+    .topo-wrap.dense-links.focus-links .ifaces .ep-sel:not(.incident):not(.active) {
+      opacity: 0.04;
+    }
+    .topo-wrap.dense-links.focus-links .ifaces .ep-sel.incident,
+    .topo-wrap.dense-links.focus-links .ifaces .ep-sel.active {
+      opacity: 1;
+    }
+    .topo-link text {
+      fill: var(--link-label);
+      font-size: 10px;
+      pointer-events: none;
+    }
+    .ifaces .ep-sel {
+      pointer-events: auto;
+      cursor: pointer;
+    }
+    .ifaces .ep-hit {
+      fill: transparent;
+      stroke: none;
+    }
+    .ifaces .ep-dot {
+      fill: var(--iface-color, var(--panel-solid));
+      stroke: color-mix(in srgb, var(--iface-color, var(--link-label)) 65%, var(--link-label));
+      stroke-width: 1.5;
+      pointer-events: none;
+      transition: fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease;
+    }
+    .ifaces .ep-sel:hover .ep-dot {
+      stroke: var(--accent);
+      stroke-width: 2;
+    }
+    .ifaces .ep-sel.active .ep-dot {
+      fill: var(--iface-color, var(--accent));
+      stroke: var(--accent);
+      stroke-width: 2.5;
+    }
+    .topo-link .ip-label {
+      fill: var(--muted);
+      font-size: 9px;
+      font-family: var(--mono);
+    }
+    .topo-wrap.hide-link-ips .topo-link .ip-label {
+      display: none;
+    }
+    .topo-link .rts-label {
+      fill: var(--muted);
+      font-size: 9px;
+      font-family: var(--mono);
+      pointer-events: none;
+    }
+    .topo-link .rts-label .rts-af-tag {
+      fill: var(--link-label);
+      font-weight: 600;
+    }
+    .topo-link .rts-label .rts-num {
+      fill: var(--fg);
+    }
+    .topo-link .rts-label .rts-delta {
+      font-weight: 700;
+    }
+    .topo-link .rts-label .rts-delta.up {
+      fill: var(--node-up);
+    }
+    .topo-link .rts-label .rts-delta.down {
+      fill: var(--node-err);
+    }
+    .topo-wrap.hide-link-v4 .topo-link .rts-af.rts-v4 {
+      display: none;
+    }
+    .topo-wrap.hide-link-v6 .topo-link .rts-af.rts-v6 {
+      display: none;
+    }
+    .topo-wrap.hide-link-routes .topo-link .rts-label {
+      display: none;
+    }
+    .topo-link .sess-label {
+      fill: var(--node-up);
+      font-size: 9px;
+      font-weight: 600;
+    }
+    .topo-link.down .sess-label { fill: var(--node-err); }
+    .topo-link.unknown .sess-label { fill: var(--muted); }
+    .topo-hint {
+      position: absolute;
+      left: 0.85rem;
+      bottom: 0.6rem;
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+      opacity: 0.85;
+    }
+    .topo-controls {
+      position: absolute;
+      left: 0.85rem;
+      top: 0.65rem;
+      display: flex;
+      gap: 0.3rem;
+      z-index: 1;
+      padding: 0.22rem;
+      border-radius: var(--radius-md);
+      background: rgba(8, 12, 20, 0.72);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+    }
+    .topo-controls button {
+      font: inherit;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      border-radius: var(--radius-sm);
+      padding: 0.28rem 0.55rem;
+      cursor: pointer;
+      transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+    .topo-controls button.active {
+      color: var(--fg);
+      border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+      background: var(--accent-soft);
+    }
+    .topo-controls button:hover {
+      border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+      color: var(--fg);
+    }
+    .topo-legend {
+      position: absolute;
+      right: 0.85rem;
+      bottom: 0.6rem;
+      display: flex;
+      gap: 0.75rem;
+      color: var(--muted);
+      font-size: 0.68rem;
+      pointer-events: none;
+      padding: 0.35rem 0.55rem;
+      border-radius: var(--radius-sm);
+      background: rgba(8, 12, 20, 0.55);
+      backdrop-filter: blur(6px);
+    }
+    .topo-legend:empty,
+    .topo-legend[hidden] {
+      display: none;
+    }
+    .topo-legend span::before {
+      content: "";
+      display: inline-block;
+      width: 0.7rem;
+      height: 0.18rem;
+      margin-right: 0.28rem;
+      vertical-align: middle;
+      border-radius: 1px;
+      background: var(--link);
+    }
+    .topo-legend .up::before { background: var(--node-up); }
+    .topo-legend .down::before { background: var(--node-err); }
+    .topo-legend .vrf-swatch::before {
+      width: 0.55rem;
+      height: 0.55rem;
+      border-radius: 50%;
+      background: var(--swatch-color, var(--link));
+      vertical-align: -0.05rem;
+    }
+    .status {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 0.45rem 0.65rem;
+      padding: 0.45rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-variant-numeric: tabular-nums;
+      background: linear-gradient(180deg, rgba(16, 24, 38, 0.98), rgba(12, 18, 28, 0.98));
+      min-height: 2.35rem;
+      max-height: 2.85rem;
+      overflow: hidden;
+    }
+    .status strong { color: var(--fg); font-weight: 600; }
+    .status-text {
+      flex: 0 1 auto;
+      min-width: 8rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .status-cmds {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0.3rem;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+    .status-cmds button {
+      font: inherit;
+      font-size: 0.7rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--fg);
+      border-radius: var(--radius-sm);
+      padding: 0.24rem 0.5rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+    .status-cmds button[data-kind="action"] {
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      color: var(--accent-strong);
+      background: var(--accent-soft);
+    }
+    .status-cmds button:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: #fff;
+      background: rgba(45, 212, 191, 0.18);
+    }
+    .status-cmds button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .terminal-dock {
+      position: relative;
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    #terminal {
+      padding: 0.55rem 0.65rem;
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(45, 212, 191, 0.03), transparent 45%),
+        var(--bg);
+    }
+    .xterm, .xterm-viewport { height: 100%; }
+
+    .status-stack {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: var(--panel-solid);
+    }
+    .rebuild-error {
+      margin: 0;
+      padding: 0.55rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      background: #2a1518;
+      color: #f5a8ae;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: min(40vh, 18rem);
+      overflow: auto;
+    }
+    .rebuild-error[hidden] {
+      display: none;
+    }
+    #tooltip {
+      position: fixed;
+      z-index: 20;
+      display: none;
+      pointer-events: none;
+      background: rgba(12, 18, 28, 0.95);
+      border: 1px solid var(--border-strong);
+      color: var(--fg);
+      font-size: 0.74rem;
+      line-height: 1.45;
+      padding: 0.5rem 0.6rem;
+      border-radius: var(--radius-sm);
+      max-width: 260px;
+      white-space: pre-line;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(8px);
+    }
+
+    .ctrl {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      padding-top: 0.55rem;
+      border-top: 1px solid var(--border);
+    }
+    .ctrl button {
+      font: inherit;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--fg);
+      border-radius: var(--radius-sm);
+      padding: 0.42rem 0.6rem;
+      cursor: pointer;
+      text-align: left;
+      font-size: 0.78rem;
+      font-weight: 500;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .ctrl button:hover {
+      background: var(--active);
+      border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+    }
+    .ctrl button.danger { color: var(--danger); }
+    .ctrl button.danger:hover {
+      border-color: color-mix(in srgb, var(--node-err) 50%, transparent);
+      background: rgba(248, 113, 113, 0.08);
+    }
+    .ctrl .ctrl-status {
+      color: var(--muted);
+      font-size: 0.68rem;
+      line-height: 1.35;
+      min-height: 2.2em;
+      letter-spacing: 0.01em;
+    }
+
+    dialog.destroy-dialog {
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 0;
+      background: var(--panel-solid);
+      color: var(--fg);
+      max-width: min(26rem, calc(100vw - 2rem));
+      box-shadow: var(--shadow-lg);
+      animation: panel-in 0.28s var(--ease) both;
+    }
+    dialog.destroy-dialog::backdrop {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(2px);
+    }
+    .destroy-dialog-body {
+      padding: 1.15rem 1.3rem 0.8rem;
+    }
+    .destroy-dialog-body h2 {
+      margin: 0 0 0.4rem;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+    .destroy-dialog-body p {
+      margin: 0 0 0.85rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.45;
+    }
+    .destroy-pos-choice {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 0.85rem;
+    }
+    .destroy-pos-choice:last-of-type {
+      margin-bottom: 0;
+    }
+    .destroy-pos-opt {
+      font: inherit;
+      text-align: left;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: transparent;
+      color: var(--fg);
+      padding: 0.55rem 0.7rem;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .destroy-pos-opt code {
+      font-family: var(--mono);
+      font-size: 0.78em;
+      color: var(--muted);
+    }
+    .destroy-pos-opt.active code {
+      color: var(--fg);
+    }
+    .destroy-pos-opt:hover {
+      background: var(--active);
+    }
+    .destroy-pos-opt.active {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent);
+      background: var(--accent-soft);
+    }
+    .destroy-pos-opt.muted {
+      color: var(--muted);
+    }
+    .destroy-pos-opt.muted.active {
+      color: var(--fg);
+    }
+    .destroy-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 0.7rem 1.15rem 1.05rem;
+      border-top: 1px solid var(--border);
+    }
+    .destroy-dialog-actions button {
+      font: inherit;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--fg);
+      padding: 0.42rem 0.9rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .destroy-dialog-actions button:hover {
+      background: var(--active);
+    }
+    .destroy-dialog-actions .destroy-confirm {
+      color: var(--danger);
+      border-color: var(--danger-border);
+    }
+    .destroy-dialog-actions .destroy-cancel {
+      color: var(--muted);
+    }
+
+    dialog.target-dialog {
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 0;
+      background: var(--panel-solid);
+      color: var(--fg);
+      width: min(26rem, calc(100vw - 2rem));
+      max-width: min(26rem, calc(100vw - 2rem));
+      box-shadow: var(--shadow-lg);
+      animation: panel-in 0.28s var(--ease) both;
+    }
+    dialog.target-dialog::backdrop {
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(3px);
+    }
+    .target-dialog-body {
+      padding: 1.2rem 1.3rem 0.85rem;
+    }
+    .target-dialog-kicker {
+      margin: 0 0 0.35rem;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-strong);
+    }
+    .target-dialog-body h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.08rem;
+      letter-spacing: -0.02em;
+    }
+    .target-dialog-body p {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+    .target-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .target-field-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .target-field input {
+      font: inherit;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      color: var(--fg);
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      padding: 0.7rem 0.85rem;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    .target-field input::placeholder {
+      color: color-mix(in srgb, var(--muted) 75%, transparent);
+    }
+    .target-field input:hover {
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--border-strong));
+    }
+    .target-field input:focus {
+      border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+      background: rgba(0, 0, 0, 0.45);
+    }
+    .target-suggestions {
+      margin-top: 0.95rem;
+    }
+    .target-suggestions-label {
+      margin: 0 0 0.45rem;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .target-suggestions-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      max-height: 9.5rem;
+      overflow: auto;
+      scrollbar-width: thin;
+    }
+    .target-chip {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.12rem;
+      font: inherit;
+      text-align: left;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--fg);
+      padding: 0.45rem 0.6rem;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .target-chip:hover {
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+      background: var(--active);
+    }
+    .target-chip.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+    }
+    .target-chip-id {
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .target-chip-ip {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      color: var(--muted);
+    }
+    .target-chip.active .target-chip-ip {
+      color: var(--accent-strong);
+    }
+    .target-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      padding: 0.7rem 1.15rem 1.05rem;
+      border-top: 1px solid var(--border);
+    }
+    .target-dialog-actions button {
+      font: inherit;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--fg);
+      padding: 0.45rem 0.95rem;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .target-dialog-actions button:hover {
+      background: var(--active);
+    }
+    .target-dialog-actions .target-cancel {
+      color: var(--muted);
+    }
+    .target-dialog-actions .target-confirm {
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-weight: 600;
+    }
+    .target-dialog-actions .target-confirm:hover {
+      border-color: var(--accent);
+      color: #fff;
+      background: rgba(45, 212, 191, 0.22);
+    }
+    .json-panel {
+      display: none;
+      position: fixed;
+      inset: 8% 8%;
+      background: rgba(12, 18, 28, 0.96);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      z-index: 50;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(12px);
+      animation: panel-in 0.3s var(--ease) both;
+    }
+    .json-panel.open { display: flex; }
+    .json-panel header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.65rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      font-weight: 550;
+      letter-spacing: -0.01em;
+    }
+    .json-panel pre {
+      margin: 0;
+      padding: 0.9rem 1rem;
+      overflow: auto;
+      flex: 1;
+      font-size: 0.72rem;
+      font-family: var(--mono);
+      white-space: pre-wrap;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+    .json-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(3px);
+      z-index: 40;
+      animation: topo-fade 0.25s ease both;
+    }
+    .json-backdrop.open { display: block; }
+    .panel-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.75rem;
+      height: 1.75rem;
+      margin: 0;
+      padding: 0;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+    .panel-close:hover {
+      color: var(--fg);
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--border);
+    }
+    .panel-close:active {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .panel-close:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .viz-panel {
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      background: rgba(12, 18, 28, 0.96);
+      backdrop-filter: blur(12px);
+    }
+    .viz-panel.open { display: flex; }
+    .viz-panel.docked {
+      position: absolute;
+      inset: 0;
+      z-index: 6;
+      width: auto;
+      height: auto;
+      max-width: none;
+      max-height: none;
+      border: none;
+      border-top: 1px solid var(--border);
+      border-radius: 0;
+      box-shadow: none;
+      animation: none;
+    }
+    .viz-panel.floating {
+      position: fixed;
+      top: 6%;
+      left: 8%;
+      width: max-content;
+      height: max-content;
+      max-width: 90vw;
+      max-height: 80vh;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      z-index: 50;
+      box-shadow: var(--shadow-lg);
+      animation: panel-in 0.3s var(--ease) both;
+    }
+    .viz-panel header,
+    .viz-panel-drag {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      font-weight: 550;
+      letter-spacing: -0.01em;
+      user-select: none;
+      touch-action: none;
+      flex: 0 0 auto;
+      background: rgba(8, 12, 20, 0.55);
+    }
+    .viz-panel.docked .viz-panel-drag {
+      cursor: default;
+    }
+    .viz-panel.floating .viz-panel-drag {
+      cursor: grab;
+    }
+    .viz-panel.floating .viz-panel-drag.dragging {
+      cursor: grabbing;
+    }
+    .viz-panel-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      flex-shrink: 0;
+    }
+    .viz-dock-btn {
+      font: inherit;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      padding: 0.28rem 0.55rem;
+      cursor: pointer;
+      transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+    .viz-dock-btn:hover {
+      color: var(--fg);
+      border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+      background: var(--accent-soft);
+    }
+    .viz-dock-btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .viz-body {
+      margin: 0;
+      padding: 0.75rem 0.9rem 0.9rem;
+      overflow: hidden;
+      flex: 0 0 auto;
+      min-width: 0;
+    }
+    .viz-panel.docked .viz-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .viz-panel.floating .viz-body {
+      flex: 0 0 auto;
+    }
+    .viz-body svg {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      height: auto;
+    }
+    .viz-body .viz-error {
+      color: var(--danger);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      max-height: 40vh;
+      overflow: auto;
+      align-self: stretch;
+    }
+    .viz-panel.docked .viz-body .viz-error {
+      max-height: none;
+      flex: 1 1 auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <img
+          class="brand-logo"
+          src="/exergy_connect_logo.png"
+          width="50"
+          height="50"
+          alt="Exergy Connect"
+        >
+        <div class="brand-copy">
+          <div class="brand-kicker">Exergy Connect</div>
+          <h1 id="lab-name">Lab</h1>
+          <div class="meta">semantic-lab · live topology</div>
+        </div>
+      </div>
+      <div class="modes" role="group" aria-label="Terminal mode">
+        <button type="button" id="mode-cli" class="active">CLI</button>
+        <button type="button" id="mode-shell">Shell</button>
+      </div>
+      <div class="ctrl">
+        <button type="button" id="btn-deploy">Deploy</button>
+        <button type="button" id="btn-redeploy">Redeploy</button>
+        <button type="button" id="btn-destroy" class="danger">Destroy</button>
+        <button type="button" id="btn-tree">View JSON</button>
+        <div class="ctrl-status" id="ctrl-status">Framework UI</div>
+      </div>
+      <div class="nodes-label">Nodes</div>
+      <div class="nodes" id="nodes"></div>
+    </aside>
+    <div class="json-backdrop" id="json-backdrop"></div>
+    <div class="json-panel" id="json-panel">
+      <header>
+        <span>Compile tree JSON</span>
+        <button type="button" id="btn-tree-close" class="panel-close" aria-label="Close JSON" title="Close">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+            <path d="M3 3l8 8M11 3L3 11" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </header>
+      <pre id="json-body">{}</pre>
+    </div>
+    <main>
+      <div class="topo-wrap">
+        <div class="deploy-progress" id="deploy-progress" hidden aria-live="polite">
+          <div class="deploy-progress-meta">
+            <span class="deploy-progress-label" id="deploy-progress-label">Deploying…</span>
+            <span class="deploy-progress-pct" id="deploy-progress-pct"></span>
+          </div>
+          <div class="deploy-progress-track">
+            <div class="deploy-progress-bar" id="deploy-progress-bar"></div>
+          </div>
+        </div>
+        <div class="topo-controls">
+          <button type="button" id="toggle-link-ips" class="active" title="Show IP addresses on links">IPs</button>
+          <button type="button" id="toggle-link-v4" class="active" title="Show IPv4 BGP route counts (in↓ / out↑)">v4</button>
+          <button type="button" id="toggle-link-v6" class="active" title="Show IPv6 BGP route counts (in↓ / out↑)">v6</button>
+        </div>
+        <svg id="topology" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="topo-hint">Drag nodes · click node or interface · open terminal</div>
+        <div class="topo-legend" id="topo-legend" hidden></div>
+      </div>
+      <div class="status-stack">
+        <div class="status" id="status">
+          <div class="status-text" id="status-text">Select a node…</div>
+          <div class="status-cmds" id="status-cmds" hidden></div>
+        </div>
+        <pre class="rebuild-error" id="rebuild-error" hidden></pre>
+      </div>
+      <div class="terminal-dock" id="terminal-dock">
+        <div id="terminal"></div>
+        <div class="viz-panel docked" id="viz-panel">
+          <header class="viz-panel-drag" id="viz-panel-drag">
+            <span id="viz-title">Visualization</span>
+            <div class="viz-panel-actions">
+              <button type="button" id="btn-viz-undock" class="viz-dock-btn" aria-label="Undock visualization" title="Undock">
+                Undock
+              </button>
+              <button type="button" id="btn-viz-close" class="viz-close panel-close" aria-label="Close visualization" title="Close">
+                <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+                  <path d="M3 3l8 8M11 3L3 11" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </header>
+          <div class="viz-body" id="viz-body"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div id="tooltip"></div>
+  <div class="ctx-menu" id="ctx-menu" role="menu" hidden></div>
+  <dialog id="destroy-dialog" class="destroy-dialog" aria-labelledby="destroy-dialog-title">
+    <form method="dialog" id="destroy-dialog-form">
+      <div class="destroy-dialog-body">
+        <h2 id="destroy-dialog-title">Destroy lab?</h2>
+        <p id="destroy-dialog-desc">
+          This tears down the Containerlab topology. Saved node positions can be
+          cleared or kept for the next deploy.
+        </p>
+        <div class="destroy-pos-choice" role="radiogroup" aria-label="Destroy scope">
+          <button type="button" class="destroy-pos-opt active" data-scope="lab" id="destroy-scope-lab">
+            This lab
+          </button>
+          <button type="button" class="destroy-pos-opt muted" data-scope="all" id="destroy-scope-all">
+            All labs · <code>destroy --all --cleanup</code>
+          </button>
+        </div>
+        <div class="destroy-pos-choice" role="radiogroup" aria-label="Saved positions">
+          <button type="button" class="destroy-pos-opt active" data-pos="clear" id="destroy-pos-clear">
+            Clear saved positions
+          </button>
+          <button type="button" class="destroy-pos-opt muted" data-pos="preserve" id="destroy-pos-preserve">
+            Preserve positions
+          </button>
+        </div>
+      </div>
+      <div class="destroy-dialog-actions">
+        <button type="submit" value="cancel" class="destroy-cancel">Cancel</button>
+        <button type="submit" value="destroy" class="destroy-confirm" id="destroy-confirm-btn">Destroy</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="target-dialog" class="target-dialog" aria-labelledby="target-dialog-title">
+    <form method="dialog" id="target-dialog-form">
+      <div class="target-dialog-body">
+        <div class="target-dialog-kicker" id="target-dialog-kicker">Visualization</div>
+        <h2 id="target-dialog-title">Choose target</h2>
+        <p id="target-dialog-desc">Enter a destination host or IP address.</p>
+        <label class="target-field" for="target-input">
+          <span class="target-field-label">Target</span>
+          <input
+            id="target-input"
+            name="target"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="hostname or IP"
+          >
+        </label>
+        <div class="target-suggestions" id="target-suggestions" hidden></div>
+      </div>
+      <div class="target-dialog-actions">
+        <button type="submit" value="cancel" class="target-cancel">Cancel</button>
+        <button type="submit" value="ok" class="target-confirm" id="target-confirm-btn">Run</button>
+      </div>
+    </form>
+  </dialog>
+  <script type="module">
+    import { Terminal } from "https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/+esm";
+    import { FitAddon } from "https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/+esm";
+
+    const labNameEl = document.getElementById("lab-name");
+    const nodesEl = document.getElementById("nodes");
+    const statusTextEl = document.getElementById("status-text");
+    const statusCmdsEl = document.getElementById("status-cmds");
+    const rebuildErrorEl = document.getElementById("rebuild-error");
+    const modeCli = document.getElementById("mode-cli");
+    const modeShell = document.getElementById("mode-shell");
+    const svg = document.getElementById("topology");
+    const tooltip = document.getElementById("tooltip");
+    const topoWrap = document.querySelector(".topo-wrap");
+    const topoLegend = document.getElementById("topo-legend");
+    const toggleLinkIps = document.getElementById("toggle-link-ips");
+    const toggleLinkV4 = document.getElementById("toggle-link-v4");
+    const toggleLinkV6 = document.getElementById("toggle-link-v6");
+    const ctxMenu = document.getElementById("ctx-menu");
+    let rebuilding = false;
+    /** @type {Map<string, string>} nodeId → in-flight lifecycle action (stop/restart/…). */
+    const lifecycleBusy = new Map();
+
+    let mode = "cli";
+    let activeNode = null;
+    /** @type {Set<string>} Shift-click multi-select for context-menu actions. */
+    const selectedNodes = new Set();
+    /** Pending shift-click select (no drag). */
+    let pendingShiftSelect = null;
+    /**
+     * Selected topology endpoint used to scope CLI show/action buttons.
+     * @type {null | {
+     *   node: string,
+     *   ifname: string,
+     *   displayname: string,
+     *   ipv4: unknown,
+     *   ipv6: unknown,
+     *   peerNode: string|null,
+     *   peerIfname: string|null,
+     *   peerIpv4: string|null,
+     *   peerIpv6: string|null,
+     *   neighbor: string|null,
+     *   protocol: string|null,
+     * }}
+     */
+    let activeInterface = null;
+    let socket = null;
+    let labName = "lab";
+    let showLinkIps = true;
+    let showLinkV4 = true;
+    let showLinkV6 = true;
+    /** @type {Map<string, {value:number, delta:number, until:number}>} */
+    const routeFlash = new Map();
+    const ROUTE_FLASH_MS = 3500;
+    let routeFlashClearTimer = null;
+    /** Whether any enabled module contributes session status probes. */
+    let hasSessionStatus = false;
+    /** @type {Map<string, object>} */
+    const nodeMeta = new Map();
+    /** Global VLAN definitions from addressed topology (for VRF color resolution). */
+    let topoVlans = {};
+    /** Global VRF definitions from addressed topology. */
+    let topoVrfs = {};
+    /** Guard overlapping refreshShowCommands fetches. */
+    let showCmdsGen = 0;
+    /** @type {Map<string, { ws: WebSocket, buffer: string }>} */
+    const sessions = new Map();
+    const SESSION_BUFFER_MAX = 200_000;
+    /** @type {Map<string, {x:number,y:number, meta: object}>} */
+    const positions = new Map();
+    /** @type {Array<{a:object,b:object}>} */
+    let links = [];
+    /** @type {"circle"|"line"|"tree"} */
+    let topoLayout = "circle";
+    /** @type {object|null} */
+    let lastRuntime = null;
+    /** @type {null | {id:string,startX:number,startY:number,origX:number,origY:number,moved:boolean}} */
+    let dragState = null;
+
+    const NODE_W = 118;
+    const NODE_H = 64;
+    const NS = "http://www.w3.org/2000/svg";
+
+    function storageKey() {
+      // v7: tree layout ignores stale dragged coords that broke tier rows.
+      return `lab-topo-pos:v7:${labName}:${topoLayout}`;
+    }
+
+    function clearSavedPositions() {
+      try {
+        localStorage.removeItem(storageKey());
+      } catch {
+        // ignore
+      }
+    }
+
+    function linkIpsStorageKey() {
+      return `lab-topo-ips:v1:${labName}`;
+    }
+
+    function linkRoutesStorageKey(af) {
+      return `lab-topo-rts-${af}:v1:${labName}`;
+    }
+
+    function loadStorage(key, fallback = null) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw === null ? fallback : raw;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function saveStorage(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch {
+        // ignore
+      }
+    }
+
+    function loadJsonStorage(key, fallback) {
+      try {
+        return JSON.parse(localStorage.getItem(key) || "null") ?? fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function loadBoolFlag(key, defaultValue = true) {
+      const raw = loadStorage(key);
+      if (raw === null) return defaultValue;
+      return raw !== "0" && raw !== "false";
+    }
+
+    function loadShowLinkIps() {
+      return loadBoolFlag(linkIpsStorageKey(), true);
+    }
+
+    function saveShowLinkIps() {
+      saveStorage(linkIpsStorageKey(), showLinkIps ? "1" : "0");
+    }
+
+    function loadShowLinkRoutes(af) {
+      return loadBoolFlag(linkRoutesStorageKey(af), true);
+    }
+
+    function saveShowLinkRoutes(af, on) {
+      saveStorage(linkRoutesStorageKey(af), on ? "1" : "0");
+    }
+
+    function applyShowLinkIps() {
+      topoWrap.classList.toggle("hide-link-ips", !showLinkIps);
+      toggleLinkIps.classList.toggle("active", showLinkIps);
+      toggleLinkIps.setAttribute(
+        "aria-pressed",
+        showLinkIps ? "true" : "false",
+      );
+    }
+
+    function applyShowLinkRoutes() {
+      topoWrap.classList.toggle("hide-link-v4", !showLinkV4);
+      topoWrap.classList.toggle("hide-link-v6", !showLinkV6);
+      topoWrap.classList.toggle("hide-link-routes", !showLinkV4 && !showLinkV6);
+      toggleLinkV4.classList.toggle("active", showLinkV4);
+      toggleLinkV6.classList.toggle("active", showLinkV6);
+      toggleLinkV4.setAttribute("aria-pressed", showLinkV4 ? "true" : "false");
+      toggleLinkV6.setAttribute("aria-pressed", showLinkV6 ? "true" : "false");
+      if (lastRuntime) applyRuntimeStatus(lastRuntime);
+    }
+
+    function routeFlashKey(node, ifname, metric) {
+      return `${node}\0${ifname || ""}\0${metric}`;
+    }
+
+    function noteRouteValue(node, ifname, metric, nextVal) {
+      if (nextVal == null || !Number.isFinite(Number(nextVal))) return null;
+      const value = Number(nextVal);
+      const key = routeFlashKey(node, ifname, metric);
+      const prev = routeFlash.get(key);
+      if (!prev) {
+        routeFlash.set(key, { value, delta: 0, until: 0 });
+        return null;
+      }
+      if (prev.value === value) {
+        return Date.now() < prev.until ? prev.delta : null;
+      }
+      const delta = value - prev.value;
+      routeFlash.set(key, {
+        value,
+        delta,
+        until: Date.now() + ROUTE_FLASH_MS,
+      });
+      return delta;
+    }
+
+    function formatRouteDelta(delta) {
+      if (delta == null || delta === 0) return "";
+      return delta > 0 ? `(+${delta})` : `(${delta})`;
+    }
+
+    async function fetchLab() {
+      const res = await fetch("/api/lab", { cache: "no-store" });
+      if (!res.ok) throw new Error(res.statusText || `HTTP ${res.status}`);
+      return res.json();
+    }
+
+    async function postJson(path, options = {}) {
+      const init = { method: "POST", ...options };
+      if (options.body != null && !init.headers) {
+        init.headers = { "Content-Type": "application/json" };
+      } else if (options.body != null && init.headers && !init.headers["Content-Type"]) {
+        init.headers = { "Content-Type": "application/json", ...init.headers };
+      }
+      const res = await fetch(path, init);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || body.status === "error") {
+        throw new Error(body.error || res.statusText || "request failed");
+      }
+      return body;
+    }
+
+    function setStatus(text) {
+      statusTextEl.innerHTML = text;
+    }
+
+    function clearRebuildError() {
+      rebuildErrorEl.hidden = true;
+      rebuildErrorEl.textContent = "";
+    }
+
+    function showRebuildError(message) {
+      const msg = String(message || "rebuild failed");
+      rebuildErrorEl.textContent = msg;
+      rebuildErrorEl.hidden = false;
+      rebuildErrorEl.scrollTop = 0;
+    }
+
+    function nodeModules(meta) {
+      return meta?.module || meta?.modules || [];
+    }
+
+    function collectCommands(bucket, modules) {
+      if (!bucket) return [];
+      const out = [];
+      const seen = new Set();
+      const pushAll = (list) => {
+        for (const item of list || []) {
+          if (!item?.cmd || seen.has(item.cmd)) continue;
+          seen.add(item.cmd);
+          out.push(item);
+        }
+      };
+      if (Array.isArray(bucket)) {
+        pushAll(bucket);
+        return out;
+      }
+      pushAll(bucket.device);
+      for (const mod of modules || []) {
+        pushAll(bucket.modules?.[mod]);
+      }
+      return out;
+    }
+
+    /** Capability actions (or legacy cmd / html actions) from action_commands. */
+    function collectActions(bucket, modules) {
+      if (!bucket) return [];
+      const out = [];
+      const seen = new Set();
+      const pushAll = (list) => {
+        for (const item of list || []) {
+          if (!item) continue;
+          const key = item.id
+            ? `id:${item.id}`
+            : item.capability
+              ? `cap:${item.capability}:${JSON.stringify(item.with || {})}`
+              : item.cmd
+                ? `cmd:${item.cmd}`
+                : null;
+          if (!key || seen.has(key)) continue;
+          if (item.result === "html") {
+            if (!item.id || !item.viz) continue;
+          } else if (!item.capability && !item.cmd) {
+            continue;
+          }
+          seen.add(key);
+          out.push(item);
+        }
+      };
+      if (Array.isArray(bucket)) {
+        pushAll(bucket);
+        return out;
+      }
+      pushAll(bucket.device);
+      for (const mod of modules || []) {
+        pushAll(bucket.modules?.[mod]);
+      }
+      return out;
+    }
+
+    function defaultsFromParams(params) {
+      const out = {};
+      if (!params || typeof params !== "object") return out;
+      for (const [name, def] of Object.entries(params)) {
+        if (def && def.default !== undefined) out[name] = def.default;
+      }
+      return out;
+    }
+
+    /** Fill `` placeholders from action params / with-args. */
+    function fillCmdTemplate(template, values) {
+      return String(template || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key) =>
+        values[key] != null ? String(values[key]) : "",
+      );
+    }
+
+    function openVizPanel(title) {
+      const panel = document.getElementById("viz-panel");
+      const titleEl = document.getElementById("viz-title");
+      if (titleEl) titleEl.textContent = title || "Visualization";
+      // Clear prior drag sizing so the panel can grow with new content.
+      if (panel) {
+        panel.style.width = "";
+        panel.style.height = "";
+        if (panel.classList.contains("docked")) {
+          panel.style.left = "";
+          panel.style.top = "";
+        }
+      }
+      panel?.classList.add("open");
+    }
+
+    function scaleVizSvgToBody(body) {
+      if (!body) return;
+      const svg = body.querySelector("svg");
+      if (!svg) return;
+      const vb = svg.viewBox?.baseVal;
+      const vw = (vb && vb.width) || parseFloat(svg.getAttribute("width")) || 1;
+      const vh = (vb && vb.height) || parseFloat(svg.getAttribute("height")) || 1;
+      if (!(vw > 0) || !(vh > 0)) return;
+      const caption = body.querySelector(":scope > p");
+      const captionH = caption ? caption.getBoundingClientRect().height + 12 : 0;
+      const style = getComputedStyle(body);
+      const padX = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+      const padY = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+      const availW = Math.max(80, body.clientWidth - padX);
+      const availH = Math.max(80, body.clientHeight - padY - captionH);
+      const scale = Math.min(availW / vw, availH / vh);
+      svg.setAttribute("width", String(Math.max(1, Math.round(vw * scale))));
+      svg.setAttribute("height", String(Math.max(1, Math.round(vh * scale))));
+    }
+
+    function fitVizPanelToContent() {
+      const panel = document.getElementById("viz-panel");
+      const bodyEl = document.getElementById("viz-body");
+      if (!panel || !panel.classList.contains("open")) return;
+      if (panel.classList.contains("docked")) {
+        panel.style.width = "";
+        panel.style.height = "";
+        panel.style.left = "";
+        panel.style.top = "";
+        requestAnimationFrame(() => scaleVizSvgToBody(bodyEl));
+        return;
+      }
+      // Floating: restore SVG to a viewport-friendly size, then clamp the panel.
+      const svg = bodyEl?.querySelector("svg");
+      if (svg) {
+        const vb = svg.viewBox?.baseVal;
+        const vw = (vb && vb.width) || parseFloat(svg.getAttribute("width")) || 0;
+        const vh = (vb && vb.height) || parseFloat(svg.getAttribute("height")) || 0;
+        if (vw > 0 && vh > 0) {
+          const maxDispW = Math.max(320, Math.floor(window.innerWidth * 0.72));
+          const maxDispH = Math.max(200, Math.floor(window.innerHeight * 0.55));
+          const scale = Math.min(maxDispW / vw, maxDispH / vh);
+          svg.setAttribute("width", String(Math.max(1, Math.round(vw * scale))));
+          svg.setAttribute("height", String(Math.max(1, Math.round(vh * scale))));
+        }
+      }
+      panel.style.width = "";
+      panel.style.height = "";
+      const rect = panel.getBoundingClientRect();
+      const maxW = Math.floor(window.innerWidth * 0.9);
+      const maxH = Math.floor(window.innerHeight * 0.8);
+      if (rect.width > maxW) panel.style.width = `${maxW}px`;
+      if (rect.height > maxH) panel.style.height = `${maxH}px`;
+      if (panel.style.left) {
+        const left = Math.min(
+          parseFloat(panel.style.left) || rect.left,
+          window.innerWidth - Math.min(panel.offsetWidth, 80) - 8,
+        );
+        panel.style.left = `${Math.max(8, left)}px`;
+      }
+      if (panel.style.top) {
+        const top = Math.min(
+          parseFloat(panel.style.top) || rect.top,
+          window.innerHeight - Math.min(panel.offsetHeight, 48) - 8,
+        );
+        panel.style.top = `${Math.max(8, top)}px`;
+      }
+    }
+
+    function setVizDocked(docked) {
+      const panel = document.getElementById("viz-panel");
+      const btn = document.getElementById("btn-viz-undock");
+      if (!panel) return;
+      if (docked) {
+        panel.classList.add("docked");
+        panel.classList.remove("floating");
+        panel.style.left = "";
+        panel.style.top = "";
+        panel.style.width = "";
+        panel.style.height = "";
+        if (btn) {
+          btn.textContent = "Undock";
+          btn.title = "Undock";
+          btn.setAttribute("aria-label", "Undock visualization");
+        }
+      } else {
+        const rect = panel.getBoundingClientRect();
+        panel.classList.remove("docked");
+        panel.classList.add("floating");
+        const left = Math.min(
+          Math.max(8, rect.left || window.innerWidth * 0.08),
+          window.innerWidth - 120,
+        );
+        const top = Math.min(
+          Math.max(8, Math.min(rect.top || window.innerHeight * 0.06, window.innerHeight * 0.2)),
+          window.innerHeight - 80,
+        );
+        panel.style.left = `${left}px`;
+        panel.style.top = `${top}px`;
+        panel.style.right = "auto";
+        panel.style.bottom = "auto";
+        if (btn) {
+          btn.textContent = "Dock";
+          btn.title = "Dock over terminal";
+          btn.setAttribute("aria-label", "Dock visualization");
+        }
+      }
+      fitVizPanelToContent();
+    }
+
+    function promptTarget({
+      title = "Choose target",
+      kicker = "Visualization",
+      description = "Enter a destination host or IP address.",
+      initial = "",
+      sourceNode = null,
+      confirmLabel = "Run",
+    } = {}) {
+      const dlg = document.getElementById("target-dialog");
+      const form = document.getElementById("target-dialog-form");
+      const input = document.getElementById("target-input");
+      const titleEl = document.getElementById("target-dialog-title");
+      const kickerEl = document.getElementById("target-dialog-kicker");
+      const descEl = document.getElementById("target-dialog-desc");
+      const suggestions = document.getElementById("target-suggestions");
+      const confirmBtn = document.getElementById("target-confirm-btn");
+      if (!dlg || !form || !input) {
+        const fallback = window.prompt(title, initial);
+        return Promise.resolve(fallback === null ? null : String(fallback).trim());
+      }
+
+      if (kickerEl) kickerEl.textContent = kicker;
+      if (titleEl) titleEl.textContent = title;
+      if (descEl) descEl.textContent = description;
+      if (confirmBtn) confirmBtn.textContent = confirmLabel;
+      input.value = initial != null ? String(initial) : "";
+
+      if (suggestions) {
+        suggestions.innerHTML = "";
+        const picks = [];
+        for (const [id, meta] of nodeMeta) {
+          if (sourceNode && id === sourceNode) continue;
+          const ip = nodeSuggestIp(meta);
+          if (!ip) continue;
+          picks.push({ id, lo: ip, name: meta.name || id });
+        }
+        if (picks.length) {
+          suggestions.hidden = false;
+          const label = document.createElement("div");
+          label.className = "target-suggestions-label";
+          label.textContent = "Lab nodes";
+          suggestions.appendChild(label);
+          const row = document.createElement("div");
+          row.className = "target-suggestions-list";
+          for (const pick of picks) {
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = "target-chip";
+            if (String(input.value) === String(pick.lo)) chip.classList.add("active");
+            const idSpan = document.createElement("span");
+            idSpan.className = "target-chip-id";
+            idSpan.textContent = pick.name;
+            const ipSpan = document.createElement("span");
+            ipSpan.className = "target-chip-ip";
+            ipSpan.textContent = pick.lo;
+            chip.append(idSpan, ipSpan);
+            chip.addEventListener("click", () => {
+              input.value = pick.lo;
+              for (const other of row.querySelectorAll(".target-chip")) {
+                other.classList.toggle("active", other === chip);
+              }
+              input.focus();
+            });
+            row.appendChild(chip);
+          }
+          suggestions.appendChild(row);
+        } else {
+          suggestions.hidden = true;
+        }
+      }
+
+      return new Promise((resolve) => {
+        const onClose = () => {
+          dlg.removeEventListener("close", onClose);
+          if (dlg.returnValue === "ok") {
+            resolve(String(input.value || "").trim());
+          } else {
+            resolve(null);
+          }
+        };
+        dlg.addEventListener("close", onClose);
+        dlg.showModal();
+        requestAnimationFrame(() => {
+          input.focus();
+          input.select();
+        });
+      });
+    }
+
+    async function invokeHtmlAction(nodeId, item) {
+      const bodyEl = document.getElementById("viz-body");
+      if (!bodyEl) throw new Error("viz panel missing");
+      const withArgs = defaultsFromParams(item.params);
+      if (item.params?.target) {
+        const cur = withArgs.target != null ? String(withArgs.target) : "";
+        const next = await promptTarget({
+          kicker: item.label || item.id || "Visualization",
+          title: "Choose target",
+          description: `Destination host or IP for this run from ${nodeId}.`,
+          initial: cur,
+          sourceNode: nodeId,
+          confirmLabel: "Run",
+        });
+        if (next === null) return null;
+        if (next) withArgs.target = next;
+      }
+      openVizPanel(item.label || item.id || "Visualization");
+      bodyEl.innerHTML = "<p class=\"viz-error\">Running…</p>";
+      const res = await fetch("/api/lab/exec", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          node: nodeId,
+          action: item.id,
+          with: withArgs,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.status === "error") {
+        throw new Error(data.error || `exec failed (${res.status})`);
+      }
+      bodyEl.innerHTML = "";
+      try {
+        const render = new Function(`return (${item.viz});`)();
+        render(data.stdout || "", bodyEl);
+        fitVizPanelToContent();
+      } catch (err) {
+        bodyEl.innerHTML = "";
+        const pre = document.createElement("pre");
+        pre.className = "viz-error";
+        pre.textContent = `Render failed: ${err?.message || err}\n\n${String(data.stdout || "").slice(0, 4000)}`;
+        bodyEl.appendChild(pre);
+        fitVizPanelToContent();
+      }
+      return data;
+    }
+
+    async function invokeCapabilityAction(nodeId, item) {
+      const res = await fetch("/api/lab/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          node: nodeId,
+          capability: item.capability,
+          with: item.with || {},
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.status === "error") {
+        throw new Error(data.error || `action failed (${res.status})`);
+      }
+      return data;
+    }
+
+    function commandModules(meta, bucket) {
+      const fromMeta = nodeModules(meta);
+      if (fromMeta.length) return fromMeta;
+      return Object.keys(bucket?.modules || {});
+    }
+
+    function commandsForNode(meta) {
+      return collectCommands(meta?.show_commands, commandModules(meta, meta?.show_commands));
+    }
+
+    function actionCommandsForNode(meta) {
+      return collectActions(meta?.action_commands, commandModules(meta, meta?.action_commands));
+    }
+
+    function ifaceKey(node, ifname) {
+      return `${node}\0${ifname}`;
+    }
+
+    function stripHost(addr) {
+      if (typeof addr !== "string") return null;
+      const s = addr.trim();
+      if (!s) return null;
+      return s.split("/")[0];
+    }
+
+    function birdIfId(ifname) {
+      return String(ifname || "").replace(/[/.-]/g, "_");
+    }
+
+    function birdProtocolName(neighbor) {
+      if (!neighbor?.name) return null;
+      const peerId = String(neighbor.name).replace(/[-.]/g, "_");
+      const typ = neighbor.type || "ebgp";
+      if (
+        neighbor.local_if &&
+        (neighbor.ipv6 === true || neighbor.ipv4_rfc8950)
+      ) {
+        return `bgp_${peerId}_${typ}_lla`;
+      }
+      if (typeof neighbor.ipv4 === "string") {
+        return `bgp_${peerId}_${typ}_ipv4`;
+      }
+      if (typeof neighbor.ipv6 === "string") {
+        return `bgp_${peerId}_${typ}_ipv6`;
+      }
+      return null;
+    }
+
+    function neighborCliId(neighbor) {
+      if (!neighbor) return null;
+      if (
+        neighbor.local_if &&
+        (neighbor.ipv6 === true || neighbor.ipv4_rfc8950)
+      ) {
+        return neighbor.local_if;
+      }
+      if (typeof neighbor.ipv4 === "string") return neighbor.ipv4;
+      if (typeof neighbor.ipv6 === "string") return neighbor.ipv6;
+      if (neighbor.local_if) return neighbor.local_if;
+      return null;
+    }
+
+    function matchBgpNeighbor(meta, ep, peerEp) {
+      const neighbors = meta?.bgp?.neighbors;
+      if (!Array.isArray(neighbors) || !ep?.ifname) return null;
+      const peerV4 = stripHost(peerEp?.ipv4);
+      const peerV6 = stripHost(peerEp?.ipv6);
+      return (
+        neighbors.find((n) => peerEp?.node && n?.name === peerEp.node) ||
+        neighbors.find((n) => n?.local_if && n.local_if === ep.ifname) ||
+        neighbors.find(
+          (n) =>
+            (peerV4 && n?.ipv4 === peerV4) ||
+            (peerV6 && n?.ipv6 === peerV6),
+        ) ||
+        null
+      );
+    }
+
+    function buildInterfaceContext(ep, peerEp) {
+      if (!ep?.node || !ep?.ifname) return null;
+      const meta = nodeMeta.get(ep.node);
+      const neighbor = matchBgpNeighbor(meta, ep, peerEp);
+      return {
+        node: ep.node,
+        ifname: ep.ifname,
+        displayname: ep.displayname || ep.ifname,
+        ipv4: ep.ipv4,
+        ipv6: ep.ipv6,
+        peerNode: peerEp?.node || null,
+        peerIfname: peerEp?.ifname || null,
+        peerIpv4: stripHost(peerEp?.ipv4),
+        peerIpv6: stripHost(peerEp?.ipv6),
+        neighbor: neighborCliId(neighbor),
+        protocol: birdProtocolName(neighbor),
+      };
+    }
+
+    function interfaceVars(ctx) {
+      if (!ctx) return null;
+      return {
+        ifname: ctx.ifname || "",
+        if_id: birdIfId(ctx.ifname),
+        displayname: ctx.displayname || ctx.ifname || "",
+        neighbor: ctx.neighbor || "",
+        peer: ctx.neighbor || ctx.peerIpv4 || ctx.peerIpv6 || "",
+        protocol: ctx.protocol || "",
+        peer_ipv4: ctx.peerIpv4 || "",
+        peer_ipv6: ctx.peerIpv6 || "",
+      };
+    }
+
+    /**
+     * Prefer iface_cmd when an interface is selected; fall back to cmd if any
+     * placeholder cannot be filled. Placeholders use {name} (single braces).
+     */
+    function resolveCommand(item, ctx) {
+      const base = item?.cmd || "";
+      if (!ctx || !item?.iface_cmd) return base;
+      const vars = interfaceVars(ctx);
+      const template = item.iface_cmd;
+      const missing = [...template.matchAll(/\{(\w+)\}/g)].some(
+        ([, key]) => !vars[key],
+      );
+      if (missing) return base;
+      return template.replace(/\{(\w+)\}/g, (_, key) => vars[key] || "");
+    }
+
+    function clearActiveInterface() {
+      if (!activeInterface) return;
+      activeInterface = null;
+      highlightInterface(null);
+      // Restore node-wide incident links when an iface selection is cleared.
+      if (activeNode) highlightActive(activeNode);
+    }
+
+    function highlightInterface(ctx) {
+      for (const g of svg.querySelectorAll(".ep-sel")) {
+        let match = false;
+        if (ctx) {
+          if (ctx.linkIndex != null) {
+            match =
+              Number(g.dataset.link) === Number(ctx.linkIndex) &&
+              (ctx.side == null || g.dataset.side === ctx.side);
+          } else {
+            match =
+              ifaceKey(g.dataset.node || "", g.dataset.ifname || "") ===
+              ifaceKey(ctx.node, ctx.ifname);
+          }
+        }
+        g.classList.toggle("active", match);
+      }
+      // Single-link focus while an interface is selected.
+      if (ctx?.linkIndex != null) {
+        topoWrap?.classList.toggle("focus-links", true);
+        for (const g of svg.querySelectorAll(".topo-link")) {
+          g.classList.toggle(
+            "incident",
+            Number(g.dataset.link) === Number(ctx.linkIndex),
+          );
+        }
+        syncIfaceFocus(ctx.node, ctx.linkIndex);
+      }
+    }
+
+    function selectInterface(ep, peerEp, linkIndex, side) {
+      if (!ep?.node || !ep?.ifname) return;
+      const next = buildInterfaceContext(ep, peerEp);
+      if (!next) return;
+      if (linkIndex != null) next.linkIndex = linkIndex;
+      if (side != null) next.side = side;
+      const same =
+        activeInterface &&
+        ((activeInterface.linkIndex != null &&
+          next.linkIndex != null &&
+          activeInterface.linkIndex === next.linkIndex &&
+          activeInterface.side === next.side) ||
+          (activeInterface.linkIndex == null &&
+            ifaceKey(activeInterface.node, activeInterface.ifname) ===
+              ifaceKey(next.node, next.ifname)));
+      if (same) {
+        clearActiveInterface();
+        if (activeNode === next.node && nodeIsAvailable(next.node)) {
+          setStatus(`Connected · <strong>${next.node}</strong> · ${mode}`);
+        }
+        refreshShowCommands();
+        return;
+      }
+      activeInterface = next;
+      highlightInterface(activeInterface);
+      connect(next.node, { keepInterface: true });
+      if (nodeIsAvailable(next.node)) {
+        setStatus(
+          `Connected · <strong>${next.node}</strong> · <strong>${next.displayname}</strong> · ${mode}`,
+        );
+      } else {
+        setStatus(
+          `Interface <strong>${next.displayname}</strong> on <strong>${next.node}</strong>`,
+        );
+      }
+    }
+
+    function connectedStatus(node) {
+      const iface =
+        activeInterface?.node === node
+          ? activeInterface.displayname || activeInterface.ifname
+          : null;
+      return iface
+        ? `Connected · <strong>${node}</strong> · <strong>${iface}</strong> · ${mode}`
+        : `Connected · <strong>${node}</strong> · ${mode}`;
+    }
+
+    function nodeLoopback(meta) {
+      if (!meta) return null;
+      if (typeof meta.loopback === "string") return meta.loopback;
+      return meta.loopback?.ipv4 || null;
+    }
+
+    /**
+     * Prefer loopback IPv4 for target chips; else first non-mgmt data-plane
+     * address (Alpine hosts often have no loopback).
+     */
+    function nodeSuggestIp(meta) {
+      if (!meta) return null;
+      const lo = stripHost(nodeLoopback(meta));
+      if (lo) return lo;
+      const mgmtIf =
+        typeof meta.mgmt_if === "string" && meta.mgmt_if.trim()
+          ? meta.mgmt_if.trim()
+          : "eth0";
+      const ifaces = Array.isArray(meta.interfaces) ? meta.interfaces : [];
+      for (const iface of ifaces) {
+        if (!iface || typeof iface !== "object") continue;
+        if (iface.type === "loopback" || iface.ifname === "lo") continue;
+        if (iface.ifname === mgmtIf) continue;
+        const ip = stripHost(
+          typeof iface.ipv4 === "string" ? iface.ipv4 : null,
+        );
+        if (ip) return ip;
+      }
+      for (const iface of ifaces) {
+        const ip = stripHost(
+          typeof iface?.ipv4 === "string" ? iface.ipv4 : null,
+        );
+        if (ip) return ip;
+      }
+      return stripHost(nodeMgmt(meta));
+    }
+
+    function nodeMgmt(meta) {
+      if (!meta) return null;
+      if (typeof meta.mgmt === "string") return meta.mgmt;
+      return meta.mgmt?.ipv4 || null;
+    }
+
+    function nodeBgpAs(meta) {
+      if (meta?.bgp_as != null) return meta.bgp_as;
+      return meta?.bgp?.as ?? null;
+    }
+
+    /** addressed.links use interfaces[]; legacy used {a,b}. */
+    function normalizeLinks(raw) {
+      return (raw || []).map((link) => {
+        if (link?.a && link?.b) return link;
+        const ifaces = Array.isArray(link?.interfaces) ? link.interfaces : [];
+        return { a: ifaces[0] || {}, b: ifaces[1] || {}, ...link };
+      });
+    }
+
+    /** Clos `level` CSS class (`level-0` …); empty when unset. */
+    function levelClass(meta) {
+      const lv = meta?.level;
+      if (lv == null || lv === "") return "";
+      const n = Number(lv);
+      return Number.isFinite(n) ? `level-${n}` : "";
+    }
+
+    function addressedNodeList(topo) {
+      const nodes = topo?.nodes;
+      if (!nodes) return [];
+      if (Array.isArray(nodes)) {
+        return [...nodes]
+          .map((n) => ({
+            ...n,
+            id: n.name || n.id,
+          }))
+          .sort(compareNodesByLevel);
+      }
+      // Dict key is the node name. Do not let node.id (e.g. numeric BGP id)
+      // overwrite it when spreading.
+      return Object.keys(nodes)
+        .map((key) => ({ ...nodes[key], id: key, name: nodes[key].name || key }))
+        .sort(compareNodesByLevel);
+    }
+
+    /** Fabric `level` (superspine→leaf), then node name. Missing level sorts last. */
+    function compareNodesByLevel(a, b) {
+      const la = a?.level;
+      const lb = b?.level;
+      const na = la == null || la === "" ? Number.POSITIVE_INFINITY : Number(la);
+      const nb = lb == null || lb === "" ? Number.POSITIVE_INFINITY : Number(lb);
+      if (na !== nb) return na - nb;
+      return String(a?.id ?? a?.name ?? "").localeCompare(
+        String(b?.id ?? b?.name ?? ""),
+      );
+    }
+
+    function svgEl(tag, attrs = {}, text) {
+      const el = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v != null) el.setAttribute(k, String(v));
+      }
+      if (text != null) el.textContent = text;
+      return el;
+    }
+
+    function linkGeometry(a, b) {
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const ox = (-dy / len) * 10;
+      const oy = (dx / len) * 10;
+      return { dx, dy, len, ox, oy };
+    }
+
+    function applyNodeRuntimeClass(el, id, runtime) {
+      const nr = runtime?.nodes?.[id];
+      const up = Boolean(nr?.available);
+      const booting = Boolean(
+        nr && !up && (nr.running || nr.state === "booting" || nr.status === "booting"),
+      );
+      el.classList.remove("node-up", "node-down", "node-unknown", "node-booting");
+      if (up) el.classList.add("node-up");
+      else if (booting) el.classList.add("node-booting");
+      else if (nr) el.classList.add("node-down");
+      else el.classList.add("node-unknown");
+      return { nr, up, booting };
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      modeCli.classList.toggle("active", nextMode === "cli");
+      modeShell.classList.toggle("active", nextMode === "shell");
+      if (activeNode && nodeIsAvailable(activeNode)) connect(activeNode);
+      else refreshShowCommands();
+    }
+
+    async function refreshShowCommands() {
+      const gen = ++showCmdsGen;
+      statusCmdsEl.replaceChildren();
+      const available = mode === "cli" && activeNode && nodeIsAvailable(activeNode);
+      if (!available) {
+        statusCmdsEl.hidden = true;
+        return;
+      }
+      let meta = null;
+      try {
+        const lab = await fetchLab();
+        const nodes = lab.topology?.nodes;
+        if (nodes && typeof nodes === "object" && nodes[activeNode]) {
+          const node = nodes[activeNode];
+          meta = { ...node, id: activeNode, name: node.name || activeNode };
+        }
+      } catch {
+        meta = null;
+      }
+      if (gen !== showCmdsGen) return;
+      const ifaceCtx =
+        activeInterface?.node === activeNode ? activeInterface : null;
+      const cmds = commandsForNode(meta);
+      const actions = actionCommandsForNode(meta);
+      if (!cmds.length && !actions.length) {
+        statusCmdsEl.hidden = true;
+        return;
+      }
+      statusCmdsEl.hidden = false;
+      const ready = socket && socket.readyState === WebSocket.OPEN;
+      const appendShowBtns = (items) => {
+        for (const item of items) {
+          const cmd = resolveCommand(item, ifaceCtx);
+          if (!cmd) continue;
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.textContent = item.label || cmd;
+          btn.title = cmd;
+          btn.dataset.kind = "show";
+          btn.disabled = !ready;
+          btn.addEventListener("click", () => {
+            if (!socket || socket.readyState !== WebSocket.OPEN) return;
+            socket.send(`${cmd}\n`);
+          });
+          statusCmdsEl.appendChild(btn);
+        }
+      };
+      const appendActionBtns = (items) => {
+        for (const item of items) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.textContent = item.label || item.capability || item.cmd || "action";
+          btn.dataset.kind = "action";
+          if (item.result === "html" && item.id && item.viz) {
+            btn.title = item.id;
+            btn.disabled = !activeNode;
+            btn.addEventListener("click", async () => {
+              if (!activeNode) return;
+              btn.disabled = true;
+              try {
+                setStatus(`Running <strong>${item.label || item.id}</strong>…`);
+                const data = await invokeHtmlAction(activeNode, item);
+                if (data == null) {
+                  setStatus("Cancelled");
+                  return;
+                }
+                setStatus(
+                  `Done · <strong>${item.label || item.id}</strong> on <strong>${activeNode}</strong>`,
+                );
+              } catch (err) {
+                const bodyEl = document.getElementById("viz-body");
+                if (bodyEl) {
+                  openVizPanel(item.label || item.id || "Visualization");
+                  bodyEl.innerHTML = "";
+                  const pre = document.createElement("pre");
+                  pre.className = "viz-error";
+                  pre.textContent = String(err?.message || err);
+                  bodyEl.appendChild(pre);
+                }
+                setStatus(`Action failed: ${err?.message || err}`);
+              } finally {
+                btn.disabled = false;
+              }
+            });
+          } else {
+            // Prefer `cmd` → inject into the open terminal session (device shell).
+            // Fall back to /api/lab/action only when a capability has no cmd.
+            // `params.target` reuses the dublin-traceroute Choose-target dialog.
+            const rawCmd = item.cmd || resolveCommand(item, ifaceCtx);
+            if (rawCmd) {
+              btn.title = rawCmd;
+              btn.disabled = !ready;
+              btn.addEventListener("click", async () => {
+                if (!socket || socket.readyState !== WebSocket.OPEN) return;
+                let cmd = rawCmd;
+                if (item.params?.target) {
+                  const withArgs = defaultsFromParams(item.params);
+                  const cur =
+                    withArgs.target != null ? String(withArgs.target) : "";
+                  const next = await promptTarget({
+                    kicker: item.label || item.id || "Action",
+                    title: "Choose target",
+                    description: `Destination host or IP for this run from ${activeNode || "node"}.`,
+                    initial: cur,
+                    sourceNode: activeNode,
+                    confirmLabel: "Run",
+                  });
+                  if (next === null) return;
+                  if (next) withArgs.target = next;
+                  cmd = fillCmdTemplate(rawCmd, withArgs);
+                }
+                btn.title = cmd;
+                socket.send(`${cmd}\n`);
+              });
+            } else if (item.capability) {
+              btn.title = item.capability
+                ? `${item.capability}${item.with ? " " + JSON.stringify(item.with) : ""}`
+                : "";
+              btn.disabled = !activeNode;
+              btn.addEventListener("click", async () => {
+                if (!activeNode) return;
+                btn.disabled = true;
+                try {
+                  setStatus(`Running <strong>${item.label || item.capability}</strong>…`);
+                  await invokeCapabilityAction(activeNode, item);
+                  setStatus(
+                    `Done · <strong>${item.label || item.capability}</strong> on <strong>${activeNode}</strong>`,
+                  );
+                } catch (err) {
+                  setStatus(`Action failed: ${err?.message || err}`);
+                } finally {
+                  btn.disabled = false;
+                }
+              });
+            } else {
+              continue;
+            }
+          }
+          statusCmdsEl.appendChild(btn);
+        }
+      };
+      appendActionBtns(actions);
+      appendShowBtns(cmds);
+    }
+
+    function highlightActive(node) {
+      for (const btn of nodesEl.querySelectorAll("button")) {
+        btn.classList.toggle("active", btn.dataset.node === node);
+      }
+      for (const g of svg.querySelectorAll(".topo-node")) {
+        g.classList.toggle("active", g.dataset.node === node);
+      }
+      syncNodeSelectionHighlight();
+      const wrap = topoWrap;
+      const focus = Boolean(node);
+      wrap?.classList.toggle("focus-links", focus);
+      const linkIdx =
+        activeInterface?.node === node ? activeInterface.linkIndex : null;
+      for (const g of svg.querySelectorAll(".topo-link")) {
+        let hit = false;
+        if (focus) {
+          if (linkIdx != null) {
+            hit = Number(g.dataset.link) === Number(linkIdx);
+          } else if (selectedNodes.size > 1) {
+            hit =
+              selectedNodes.has(g.dataset.a) || selectedNodes.has(g.dataset.b);
+          } else {
+            hit = g.dataset.a === node || g.dataset.b === node;
+          }
+        }
+        g.classList.toggle("incident", Boolean(hit));
+      }
+      syncIfaceFocus(node, linkIdx);
+    }
+
+    /** Mark interface bulbs that belong to the focused node / link. */
+    function syncIfaceFocus(node, linkIdx) {
+      for (const g of svg.querySelectorAll(".ifaces .ep-sel")) {
+        let on = false;
+        if (linkIdx != null) {
+          on = Number(g.dataset.link) === Number(linkIdx);
+        } else if (selectedNodes.size > 1) {
+          on = selectedNodes.has(g.dataset.node || "");
+        } else if (node) {
+          on = g.dataset.node === node;
+        }
+        g.classList.toggle("incident", on);
+      }
+    }
+
+    function syncNodeSelectionHighlight() {
+      for (const btn of nodesEl.querySelectorAll("button[data-node]")) {
+        btn.classList.toggle(
+          "selected",
+          selectedNodes.has(btn.dataset.node || ""),
+        );
+      }
+      for (const g of svg.querySelectorAll(".topo-node")) {
+        g.classList.toggle(
+          "selected",
+          selectedNodes.has(g.dataset.node || ""),
+        );
+      }
+    }
+
+    function clearNodeSelection() {
+      if (selectedNodes.size === 0) return;
+      selectedNodes.clear();
+      syncNodeSelectionHighlight();
+    }
+
+    /** Plain click: selection is exactly this node (Shift+click extends it). */
+    function selectOnlyNode(nodeId) {
+      selectedNodes.clear();
+      if (nodeId) selectedNodes.add(nodeId);
+      syncNodeSelectionHighlight();
+    }
+
+    function toggleNodeSelection(nodeId) {
+      if (!nodeId) return;
+      if (selectedNodes.has(nodeId)) selectedNodes.delete(nodeId);
+      else selectedNodes.add(nodeId);
+      syncNodeSelectionHighlight();
+      if (selectedNodes.size > 0) {
+        setStatus(
+          `Selected <strong>${selectedNodes.size}</strong> node${selectedNodes.size === 1 ? "" : "s"} · Shift+click to toggle · right-click to act`,
+        );
+      }
+    }
+
+    /** Nodes the context menu should act on (multi-select if the target is in it). */
+    function ctxActionNodes(nodeId) {
+      if (selectedNodes.has(nodeId) && selectedNodes.size > 0) {
+        return [...selectedNodes];
+      }
+      return nodeId ? [nodeId] : [];
+    }
+
+    function nodeIsSwappable(nodeId) {
+      const meta = nodeMeta.get(nodeId);
+      return Boolean(meta) && meta.swappable !== false && meta.role !== "sidecar";
+    }
+
+    function applyLabPayload(payload) {
+      const topo = payload.topology;
+      const list = addressedNodeList(topo);
+      // Prefer topology order (level, then name) over alphabetized payload.nodes.
+      const nodeIds = list.length
+        ? list.map((n) => n.id)
+        : payload.nodes || [];
+      nodeMeta.clear();
+      positions.clear();
+      if (list.length) {
+        for (const n of list) {
+          nodeMeta.set(n.id, n);
+          positions.set(n.id, { x: 0, y: 0, meta: n });
+        }
+        links = normalizeLinks(topo.links);
+        topoLayout = String(topo.layout || "circle").toLowerCase();
+        topoVlans = topo.vlans && typeof topo.vlans === "object" ? topo.vlans : {};
+        topoVrfs = topo.vrfs && typeof topo.vrfs === "object" ? topo.vrfs : {};
+        layoutDefaults(list.map((n) => n.id));
+      } else {
+        for (const id of nodeIds) {
+          nodeMeta.set(id, { id });
+          positions.set(id, { x: 0, y: 0, meta: { id } });
+        }
+        links = [];
+        topoLayout = "circle";
+        topoVlans = {};
+        topoVrfs = {};
+        layoutDefaults(nodeIds);
+      }
+      if (activeInterface) {
+        const stillThere = links.some(
+          (link) =>
+            (link.a?.node === activeInterface.node &&
+              link.a?.ifname === activeInterface.ifname) ||
+            (link.b?.node === activeInterface.node &&
+              link.b?.ifname === activeInterface.ifname),
+        );
+        if (!stillThere) activeInterface = null;
+      }
+      for (const id of [...selectedNodes]) {
+        if (!nodeMeta.has(id)) selectedNodes.delete(id);
+      }
+      renderTopoLegend(sessionProtocolsFromTopo(topo));
+      nodesEl.innerHTML = "";
+      for (const node of nodeIds) {
+        nodesEl.appendChild(makeNodeButton(node));
+      }
+      renderTopology();
+      if (lastRuntime) applyRuntimeStatus(lastRuntime);
+    }
+
+    function makeNodeButton(node) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.dataset.node = node;
+      btn.classList.add("node-unknown");
+      const lv = levelClass(nodeMeta.get(node));
+      if (lv) btn.classList.add(lv);
+      const idSpan = document.createElement("span");
+      idSpan.className = "node-id";
+      idSpan.textContent = node;
+      btn.appendChild(idSpan);
+      const lo = nodeLoopback(nodeMeta.get(node));
+      if (lo) {
+        const loSpan = document.createElement("span");
+        loSpan.className = "node-lo";
+        loSpan.textContent = lo;
+        btn.appendChild(loSpan);
+      }
+      const stSpan = document.createElement("span");
+      stSpan.className = "node-state";
+      stSpan.textContent = "…";
+      btn.appendChild(stSpan);
+      btn.disabled = true;
+      btn.title = "Node not available";
+      btn.addEventListener("click", (ev) => {
+        if (ev.shiftKey) {
+          ev.preventDefault();
+          toggleNodeSelection(node);
+          return;
+        }
+        selectOnlyNode(node);
+        if (btn.disabled || !nodeIsAvailable(node)) return;
+        connect(node);
+      });
+      btn.addEventListener("contextmenu", (ev) => showCtxMenu(ev, node));
+      return btn;
+    }
+
+    function nodeIsAvailable(node) {
+      const nr = lastRuntime?.nodes?.[node];
+      return Boolean(nr?.available);
+    }
+
+    function nodeIsBooting(node) {
+      const nr = lastRuntime?.nodes?.[node];
+      if (!nr || nr.available) return false;
+      return Boolean(nr.running || nr.state === "booting" || nr.status === "booting");
+    }
+
+    /** Container exists but is not running (e.g. docker stop → exited). */
+    function nodeIsStopped(node) {
+      const nr = lastRuntime?.nodes?.[node];
+      if (!nr || nr.available || nr.running) return false;
+      if (nodeIsBooting(node)) return false;
+      const status = String(nr.status || "").toLowerCase();
+      if (
+        !status ||
+        status === "not found" ||
+        status === "error" ||
+        status === "unknown"
+      ) {
+        return false;
+      }
+      return true;
+    }
+
+    function nodeRuntimeLabel(node) {
+      const nr = lastRuntime?.nodes?.[node];
+      if (!nr) return "unknown";
+      if (nr.available) return "running";
+      if (nodeIsBooting(node)) return "booting";
+      return nr.status || "down";
+    }
+    const term = new Terminal({
+      cursorBlink: true,
+      fontFamily: '"IBM Plex Mono", ui-monospace, monospace',
+      fontSize: 14,
+      theme: {
+        background: "#0f1419",
+        foreground: "#e7ecf3",
+        cursor: "#3d8bfd",
+        selectionBackground: "#3d8bfd55",
+      },
+    });
+    const fit = new FitAddon();
+    term.loadAddon(fit);
+    term.open(document.getElementById("terminal"));
+    fit.fit();
+
+    function sessionKey(node, sessionMode = mode) {
+      return `${node}:${sessionMode}`;
+    }
+
+    function appendSessionBuffer(session, data) {
+      session.buffer += data;
+      if (session.buffer.length > SESSION_BUFFER_MAX) {
+        session.buffer = session.buffer.slice(-Math.floor(SESSION_BUFFER_MAX * 0.75));
+      }
+    }
+
+    function parkActiveSession() {
+      // Keep the WebSocket alive; just stop writing to the shared terminal.
+      socket = null;
+    }
+
+    function closeAllSessions() {
+      for (const session of sessions.values()) {
+        try {
+          session.ws.onclose = null;
+          session.ws.close();
+        } catch {
+          // ignore
+        }
+      }
+      sessions.clear();
+      socket = null;
+    }
+
+    function connect(node, opts = {}) {
+      if (!opts.keepInterface) clearActiveInterface();
+      if (!nodeIsAvailable(node)) {
+        setStatus(`Node <strong>${node}</strong> is down or unavailable`);
+        highlightActive(node);
+        refreshShowCommands();
+        return;
+      }
+      const key = sessionKey(node);
+      const existing = sessions.get(key);
+
+      // Already viewing this live session — no reset.
+      if (activeNode === node && socket && existing && socket === existing.ws
+          && existing.ws.readyState === WebSocket.OPEN) {
+        highlightActive(node);
+        setStatus(connectedStatus(node));
+        refreshShowCommands();
+        return;
+      }
+
+      parkActiveSession();
+      activeNode = node;
+      highlightActive(node);
+
+      if (existing && (existing.ws.readyState === WebSocket.OPEN
+          || existing.ws.readyState === WebSocket.CONNECTING)) {
+        socket = existing.ws;
+        term.reset();
+        if (existing.buffer) term.write(existing.buffer);
+        if (existing.ws.readyState === WebSocket.OPEN) {
+          setStatus(connectedStatus(node));
+          existing.ws.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
+        } else {
+          setStatus(`Connecting to <strong>${node}</strong> (${mode})…`);
+        }
+        refreshShowCommands();
+        return;
+      }
+
+      term.reset();
+      setStatus(`Connecting to <strong>${node}</strong> (${mode})…`);
+      refreshShowCommands();
+
+      const proto = location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${proto}//${location.host}/ws?node=${encodeURIComponent(node)}&mode=${encodeURIComponent(mode)}`;
+      const ws = new WebSocket(wsUrl);
+      ws.binaryType = "arraybuffer";
+      const session = { ws, buffer: "" };
+      sessions.set(key, session);
+      socket = ws;
+
+      ws.addEventListener("open", () => {
+        if (sessions.get(key)?.ws !== ws) return;
+        if (socket === ws) {
+          setStatus(connectedStatus(node));
+          ws.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
+          refreshShowCommands();
+        }
+      });
+      ws.addEventListener("message", (ev) => {
+        if (sessions.get(key)?.ws !== ws) return;
+        const data = typeof ev.data === "string" ? ev.data : new TextDecoder().decode(ev.data);
+        appendSessionBuffer(session, data);
+        if (socket === ws) {
+          term.write(data);
+        }
+      });
+      ws.addEventListener("close", () => {
+        if (sessions.get(key)?.ws === ws) {
+          sessions.delete(key);
+        }
+        if (socket === ws) {
+          setStatus(`Disconnected · <strong>${node}</strong>`);
+          socket = null;
+          refreshShowCommands();
+        }
+      });
+      ws.addEventListener("error", () => {
+        if (socket === ws) {
+          setStatus(`Connection error · <strong>${node}</strong>`);
+        }
+      });
+    }
+
+    term.onData((data) => {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(data);
+      }
+    });
+
+    window.addEventListener("beforeunload", () => {
+      closeAllSessions();
+    });
+
+    window.addEventListener("resize", () => {
+      fit.fit();
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
+      }
+    });
+    function savePositions() {
+      const out = {};
+      for (const [id, p] of positions) {
+        out[id] = { x: p.x, y: p.y };
+      }
+      saveStorage(storageKey(), JSON.stringify(out));
+    }
+
+    function loadSavedPositions() {
+      return loadJsonStorage(storageKey(), {}) || {};
+    }
+
+    /**
+     * Order nodes by DFS from a leaf so neighbors sit together on a circle
+     * (fewer crossed links than alphabetical / dictsort order).
+     */
+    function layoutOrder(nodeIds, linkList) {
+      const idSet = new Set(nodeIds);
+      const adj = new Map(nodeIds.map((id) => [id, []]));
+      for (const L of linkList || []) {
+        const a = L.a?.node;
+        const b = L.b?.node;
+        if (!idSet.has(a) || !idSet.has(b) || a === b) continue;
+        adj.get(a).push(b);
+        adj.get(b).push(a);
+      }
+      // Stable neighbor order for deterministic layout
+      for (const [id, nbrs] of adj) {
+        nbrs.sort();
+        adj.set(id, nbrs);
+      }
+      let start = nodeIds.find((id) => (adj.get(id) || []).length === 1);
+      if (!start) start = nodeIds[0];
+      const order = [];
+      const seen = new Set();
+      function dfs(u, parent) {
+        if (seen.has(u)) return;
+        seen.add(u);
+        order.push(u);
+        for (const v of adj.get(u) || []) {
+          if (v !== parent) dfs(v, u);
+        }
+      }
+      if (start) dfs(start, null);
+      for (const id of nodeIds) {
+        if (!seen.has(id)) dfs(id, null);
+      }
+      return order;
+    }
+
+    function fabricSortKey(id) {
+      const m = nodeMeta.get(id) || {};
+      return [
+        Number(m.fabric_pod ?? 0),
+        Number(m.fabric_rack ?? 0),
+        Number(m.fabric_count ?? 0),
+        String(id),
+      ];
+    }
+
+    function compareFabricIds(a, b) {
+      const ka = fabricSortKey(a);
+      const kb = fabricSortKey(b);
+      for (let i = 0; i < ka.length; i++) {
+        if (ka[i] < kb[i]) return -1;
+        if (ka[i] > kb[i]) return 1;
+      }
+      return 0;
+    }
+
+    /** Minimum horizontal gap between node *boxes* (not centers). */
+    const NODE_GAP_X = Math.max(28, NODE_W * 0.35);
+    /** Minimum vertical gap between tier rows (room for orthogonal link lanes). */
+    const NODE_GAP_Y = Math.max(72, NODE_H * 0.9);
+
+    /** Width of a packed row of `n` node boxes with {@link NODE_GAP_X}. */
+    function rowPackedWidth(n) {
+      if (n <= 0) return 0;
+      if (n === 1) return NODE_W;
+      return n * NODE_W + (n - 1) * NODE_GAP_X;
+    }
+
+    /**
+     * Place `ids` in a horizontal row starting at `left`, centered in `width`
+     * when there is slack. Step is always ≥ NODE_W + NODE_GAP_X so boxes never
+     * overlap. Returns the right edge used (left + packed width).
+     * `forceY`: keep the tier row flat even when restoring saved X.
+     */
+    function placePackedRow(ids, yCenter, left, width, saved, forceY = false) {
+      const n = ids.length;
+      if (!n) return left;
+      const packed = rowPackedWidth(n);
+      const startX = left + Math.max(0, (width - packed) / 2);
+      const step = NODE_W + NODE_GAP_X;
+      const y = yCenter - NODE_H / 2;
+      ids.forEach((id, i) => {
+        const meta = positions.get(id)?.meta || nodeMeta.get(id) || {};
+        const x = n === 1 ? left + width / 2 - NODE_W / 2 : startX + i * step;
+        if (
+          !forceY &&
+          saved[id] &&
+          Number.isFinite(saved[id].x) &&
+          Number.isFinite(saved[id].y)
+        ) {
+          positions.set(id, { x: saved[id].x, y: saved[id].y, meta });
+          return;
+        }
+        if (
+          forceY &&
+          saved[id] &&
+          Number.isFinite(saved[id].x)
+        ) {
+          // Keep dragged X, but snap to this tier's Y so rows stay level.
+          positions.set(id, { x: saved[id].x, y, meta });
+          return;
+        }
+        positions.set(id, { x, y, meta });
+      });
+      return left + Math.max(width, packed);
+    }
+
+    /**
+     * Pack nodes in a centered horizontal cluster. Never compresses below
+     * NODE_W + NODE_GAP_X — callers must pass a `w` wide enough for the row.
+     */
+    function placeCenteredRow(ids, yCenter, w, saved, forceY = false) {
+      const margin = Math.max(48, w * 0.06);
+      placePackedRow(
+        ids,
+        yCenter,
+        margin,
+        Math.max(w - 2 * margin, rowPackedWidth(ids.length)),
+        saved,
+        forceY,
+      );
+    }
+
+    /** Spread node boxes evenly, but never closer than NODE_W + NODE_GAP_X. */
+    function placeEvenRow(ids, yCenter, w, saved) {
+      const n = ids.length;
+      if (!n) return;
+      const margin = Math.max(48, w * 0.06);
+      const usable = Math.max(w - 2 * margin, rowPackedWidth(n));
+      placePackedRow(ids, yCenter, margin, usable, saved);
+    }
+
+    /**
+     * After layout (including restored drag positions), nudge any colliding
+     * boxes apart so no two nodes share a point or overlap on a shared row.
+     */
+    function separateOverlappingNodes() {
+      const entries = [...positions.entries()].sort(
+        (a, b) =>
+          a[1].y - b[1].y ||
+          a[1].x - b[1].x ||
+          String(a[0]).localeCompare(String(b[0])),
+      );
+      const minStep = NODE_W + NODE_GAP_X;
+      for (let i = 1; i < entries.length; i++) {
+        const [id, p] = entries[i];
+        const prev = entries[i - 1][1];
+        const sameRow = Math.abs(p.y - prev.y) < NODE_H * 0.5;
+        if (!sameRow) continue;
+        const minX = prev.x + minStep;
+        if (p.x < minX - 0.5) {
+          const next = { ...p, x: minX };
+          positions.set(id, next);
+          entries[i] = [id, next];
+        }
+      }
+      const seen = new Map();
+      for (const [id, p] of positions) {
+        const key = `${Math.round(p.x)}:${Math.round(p.y)}`;
+        const count = seen.get(key) || 0;
+        if (count > 0) {
+          positions.set(id, { ...p, x: p.x + count * minStep });
+        }
+        seen.set(key, count + 1);
+      }
+    }
+
+    /** Size the SVG viewBox to the laid-out content so wide fabrics still fit. */
+    function fitSvgToPositions(fallbackW, fallbackH) {
+      let maxX = 0;
+      let maxY = 0;
+      for (const p of positions.values()) {
+        maxX = Math.max(maxX, p.x + NODE_W);
+        maxY = Math.max(maxY, p.y + NODE_H);
+      }
+      const pad = 48;
+      const vbW = Math.max(fallbackW, maxX + pad);
+      const vbH = Math.max(fallbackH, maxY + pad);
+      svg.setAttribute("viewBox", `0 0 ${vbW} ${vbH}`);
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    }
+
+    /**
+     * Tree / Clos tier layout: superspine → spine → leaf (top to bottom).
+     * Spines and leaves share pod columns when fabric_pod is set. Layout width
+     * grows so every row can pack without overlapping boxes.
+     */
+    function layoutTree(primary, sidecars, viewportW, viewportH, saved) {
+      const byRole = { superspine: [], spine: [], leaf: [], other: [] };
+      for (const id of primary) {
+        const role = String(nodeMeta.get(id)?.role || "").toLowerCase();
+        if (role === "superspine" || role === "spine" || role === "leaf") {
+          byRole[role].push(id);
+        } else {
+          byRole.other.push(id);
+        }
+      }
+      for (const ids of Object.values(byRole)) ids.sort(compareFabricIds);
+      sidecars.sort(compareFabricIds);
+
+      const pods = [
+        ...new Set(
+          [...byRole.spine, ...byRole.leaf]
+            .map((id) => nodeMeta.get(id)?.fabric_pod)
+            .filter((p) => p != null),
+        ),
+      ].sort((a, b) => Number(a) - Number(b));
+
+      const tiers = [];
+      if (byRole.superspine.length) {
+        tiers.push({ kind: "row", ids: byRole.superspine });
+      }
+      if (byRole.spine.length) {
+        tiers.push(
+          pods.length
+            ? { kind: "pods", ids: byRole.spine }
+            : { kind: "row", ids: byRole.spine },
+        );
+      }
+      if (byRole.leaf.length) {
+        tiers.push(
+          pods.length
+            ? { kind: "pods", ids: byRole.leaf }
+            : { kind: "row", ids: byRole.leaf },
+        );
+      }
+      if (byRole.other.length) tiers.push({ kind: "row", ids: byRole.other });
+      if (sidecars.length) tiers.push({ kind: "row", ids: sidecars });
+      if (!tiers.length) return;
+
+      const marginX = 48;
+      const podPad = NODE_GAP_X * 2;
+      let needW = viewportW;
+      for (const tier of tiers) {
+        if (tier.kind === "row") {
+          needW = Math.max(
+            needW,
+            rowPackedWidth(tier.ids.length) + 2 * marginX,
+          );
+          continue;
+        }
+        let podSum = 0;
+        for (const pod of pods) {
+          const podIds = tier.ids.filter(
+            (id) => Number(nodeMeta.get(id)?.fabric_pod) === Number(pod),
+          );
+          podSum += rowPackedWidth(Math.max(podIds.length, 1)) + podPad;
+        }
+        needW = Math.max(needW, podSum + 2 * marginX);
+      }
+
+      const marginY = Math.max(48, viewportH * 0.08);
+      const needH = Math.max(
+        viewportH,
+        tiers.length * (NODE_H + NODE_GAP_Y) + 2 * marginY,
+      );
+      const w = needW;
+      const h = needH;
+
+      const yFirst = marginY + NODE_H / 2;
+      const yLast = Math.max(yFirst, h - marginY - NODE_H / 2);
+      const tierYs = tiers.map((_, i) => {
+        if (tiers.length === 1) return h / 2;
+        return yFirst + (i * (yLast - yFirst)) / (tiers.length - 1);
+      });
+
+      let maxPodPacked = NODE_W;
+      for (const tier of tiers) {
+        if (tier.kind !== "pods") continue;
+        for (const pod of pods) {
+          const podIds = tier.ids.filter(
+            (id) => Number(nodeMeta.get(id)?.fabric_pod) === Number(pod),
+          );
+          maxPodPacked = Math.max(
+            maxPodPacked,
+            rowPackedWidth(Math.max(podIds.length, 1)),
+          );
+        }
+      }
+      const podSpan =
+        pods.length > 0
+          ? Math.max(maxPodPacked + podPad, (w - 2 * marginX) / pods.length)
+          : 0;
+
+      tiers.forEach((tier, ti) => {
+        const y = tierYs[ti];
+        if (tier.kind === "row") {
+          placeCenteredRow(tier.ids, y, w, saved, true);
+          return;
+        }
+        for (let pi = 0; pi < pods.length; pi++) {
+          const podIds = tier.ids.filter(
+            (id) => Number(nodeMeta.get(id)?.fabric_pod) === Number(pods[pi]),
+          );
+          if (!podIds.length) continue;
+          const colLeft = marginX + pi * podSpan + podPad / 2;
+          const colWidth = Math.max(
+            podSpan - podPad,
+            rowPackedWidth(podIds.length),
+          );
+          placePackedRow(podIds, y, colLeft, colWidth, saved, true);
+        }
+      });
+    }
+
+    function layoutDefaults(nodeIds) {
+      const rect = svg.getBoundingClientRect();
+      const viewportW = Math.max(rect.width || 640, 320);
+      const viewportH = Math.max(rect.height || 320, 220);
+      const mode = String(topoLayout || "circle").toLowerCase();
+      const primary = [];
+      const sidecars = [];
+      for (const id of layoutOrder(nodeIds, links)) {
+        if (nodeMeta.get(id)?.role === "sidecar") sidecars.push(id);
+        else primary.push(id);
+      }
+      const seen = new Set([...primary, ...sidecars]);
+      for (const id of nodeIds) {
+        if (!seen.has(id)) {
+          if (nodeMeta.get(id)?.role === "sidecar") sidecars.push(id);
+          else primary.push(id);
+        }
+      }
+      // Tree: always recompute a clean tier grid (ignore stale localStorage).
+      // Dragged positions are still saved for non-tree layouts.
+      const saved = mode === "tree" ? {} : loadSavedPositions();
+      if (mode === "tree") {
+        layoutTree(primary, sidecars, viewportW, viewportH, saved);
+        separateOverlappingNodes();
+        // Re-assert tier Y after separation so horizontal nudges can't stagger rows.
+        const byY = new Map();
+        for (const [id, p] of positions) {
+          const yKey = Math.round(p.y / Math.max(NODE_H * 0.25, 1));
+          if (!byY.has(yKey)) byY.set(yKey, []);
+          byY.get(yKey).push(id);
+        }
+        for (const ids of byY.values()) {
+          if (ids.length < 2) continue;
+          const ys = ids.map((id) => positions.get(id).y);
+          const y = ys.reduce((a, b) => a + b, 0) / ys.length;
+          for (const id of ids) {
+            const p = positions.get(id);
+            positions.set(id, { ...p, y });
+          }
+        }
+        fitSvgToPositions(viewportW, viewportH);
+        return;
+      }
+      const margin = Math.max(48, viewportW * 0.08);
+      const lineW = Math.max(
+        viewportW,
+        rowPackedWidth(primary.length) + 2 * margin,
+        rowPackedWidth(sidecars.length) + 2 * margin,
+      );
+      const cx = lineW / 2;
+      const cy = viewportH / 2;
+      const placeRow = (ids, yCenter) => {
+        const n = Math.max(ids.length, 1);
+        if (mode === "line" || (ids === sidecars && sidecars.length && mode === "circle")) {
+          placePackedRow(ids, yCenter, margin, lineW - 2 * margin, saved);
+          return;
+        }
+        // Circle: grow radius so neighbor chord ≥ NODE_W + NODE_GAP_X.
+        const pad = Math.max(48, Math.min(lineW, viewportH) * 0.08);
+        const minChord = NODE_W + NODE_GAP_X;
+        const minR =
+          n <= 1 ? 0 : minChord / (2 * Math.sin(Math.PI / Math.max(n, 2)));
+        const fitR = Math.max(
+          0,
+          Math.min(
+            lineW / 2 - pad - NODE_W / 2,
+            viewportH / 2 - pad - NODE_H / 2,
+          ),
+        );
+        const r = Math.max(minR, fitR);
+        ids.forEach((id, i) => {
+          const meta = positions.get(id)?.meta || nodeMeta.get(id) || {};
+          if (
+            saved[id] &&
+            Number.isFinite(saved[id].x) &&
+            Number.isFinite(saved[id].y)
+          ) {
+            positions.set(id, { x: saved[id].x, y: saved[id].y, meta });
+            return;
+          }
+          const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+          const x = cx + r * Math.cos(angle) - NODE_W / 2;
+          const y = cy + r * Math.sin(angle) - NODE_H / 2;
+          positions.set(id, { x, y, meta });
+        });
+      };
+      if (mode === "line" && sidecars.length) {
+        const gap = Math.max(56, NODE_H + NODE_GAP_Y);
+        placeRow(primary, cy - gap / 2);
+        placeRow(sidecars, cy + gap / 2);
+      } else if (mode === "circle" && sidecars.length) {
+        const pad = Math.max(48, Math.min(lineW, viewportH) * 0.08);
+        placeRow(primary, cy);
+        const sideY =
+          cy +
+          Math.min(viewportH / 2 - pad - NODE_H / 2, viewportH * 0.35);
+        placeRow(sidecars, sideY);
+      } else {
+        placeRow(primary, cy);
+        if (sidecars.length) placeRow(sidecars, cy);
+      }
+      separateOverlappingNodes();
+      fitSvgToPositions(viewportW, viewportH);
+    }
+
+    function endpointLabel(ep) {
+      return ep?.displayname || ep?.ifname || "";
+    }
+
+    /** True when `name` is a usable CSS color keyword (e.g. red, green, blue). */
+    function isCssNamedColor(name) {
+      if (typeof name !== "string" || !name.trim()) return false;
+      const n = name.trim().toLowerCase();
+      if (n === "transparent" || n === "currentcolor" || n === "inherit") {
+        return false;
+      }
+      try {
+        if (typeof CSS !== "undefined" && CSS.supports) {
+          return CSS.supports("color", n);
+        }
+      } catch (_) {
+        /* fall through */
+      }
+      const known = new Set([
+        "red", "green", "blue", "yellow", "orange", "purple", "pink",
+        "cyan", "magenta", "lime", "teal", "navy", "maroon", "olive",
+        "aqua", "fuchsia", "gray", "grey", "silver", "white", "black",
+        "coral", "crimson", "gold", "indigo", "violet", "brown", "tan",
+      ]);
+      return known.has(n);
+    }
+
+    /**
+     * Resolve interface bulb color: VLAN name if CSS color, else VRF name if
+     * CSS color, else a VLAN bound to this VRF whose name is a CSS color.
+     */
+    function ifaceDomainColor(ep) {
+      if (!ep) return null;
+      const vlanName = ep.vlan?.access || ep.vlan?.name || null;
+      if (vlanName && isCssNamedColor(vlanName)) {
+        return vlanName.trim().toLowerCase();
+      }
+      const vrf = typeof ep.vrf === "string" && ep.vrf.trim() ? ep.vrf.trim() : null;
+      if (vrf && isCssNamedColor(vrf)) {
+        return vrf.toLowerCase();
+      }
+      if (vrf && topoVlans && typeof topoVlans === "object") {
+        for (const [name, vlan] of Object.entries(topoVlans)) {
+          if (vlan?.vrf === vrf && isCssNamedColor(name)) {
+            return name.trim().toLowerCase();
+          }
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Compress IPv6 hextet runs of zeros (`2001:db8:0:0:0:0:0:1` → `2001:db8::1`).
+     * Preserves an optional `/prefix`. Leaves IPv4 and non-address strings alone.
+     */
+    function compressIpv6(addr) {
+      if (typeof addr !== "string") return addr;
+      const raw = addr.trim();
+      if (!raw || !raw.includes(":")) return raw;
+      const slash = raw.indexOf("/");
+      const host = slash >= 0 ? raw.slice(0, slash) : raw;
+      const suffix = slash >= 0 ? raw.slice(slash) : "";
+      if (host.includes(".")) return raw; // IPv4-mapped / zone leftovers — keep as-is
+
+      let hextets;
+      if (host.includes("::")) {
+        const [left, right = ""] = host.split("::");
+        const L = left === "" ? [] : left.split(":");
+        const R = right === "" ? [] : right.split(":");
+        const missing = 8 - L.length - R.length;
+        if (missing < 0) return raw;
+        hextets = [...L, ...Array(missing).fill("0"), ...R];
+      } else {
+        hextets = host.split(":");
+        if (hextets.length !== 8) return raw;
+      }
+
+      const norm = hextets.map((h) => {
+        const hex = h.replace(/^0+(?=\w)/, "") || "0";
+        return hex.toLowerCase();
+      });
+
+      let bestStart = -1;
+      let bestLen = 0;
+      let i = 0;
+      while (i < 8) {
+        if (norm[i] !== "0") {
+          i += 1;
+          continue;
+        }
+        let j = i;
+        while (j < 8 && norm[j] === "0") j += 1;
+        const len = j - i;
+        if (len > bestLen) {
+          bestStart = i;
+          bestLen = len;
+        }
+        i = j;
+      }
+
+      let out;
+      if (bestLen >= 2) {
+        const head = norm.slice(0, bestStart).join(":");
+        const tail = norm.slice(bestStart + bestLen).join(":");
+        out = `${head}::${tail}`;
+      } else {
+        out = norm.join(":");
+      }
+      return out + suffix;
+    }
+
+    function endpointAddressLines(ep) {
+      const v4 = ep?.ipv4;
+      const v6 = ep?.ipv6;
+      const v4Unnum = v4 === true;
+      const v6Unnum = v6 === true;
+      if (v4Unnum && v6Unnum) return ["v4/6:1"];
+      const lines = [];
+      if (typeof v4 === "string" && v4.trim() !== "") lines.push(v4);
+      else if (v4Unnum) lines.push("v4:1");
+      if (typeof v6 === "string" && v6.trim() !== "") lines.push(compressIpv6(v6));
+      else if (v6Unnum) lines.push("v6:1");
+      return lines;
+    }
+
+    function endpointTitle(ep) {
+      const parts = [];
+      if (ep?.ifname) parts.push(ep.ifname);
+      parts.push(...endpointAddressLines(ep));
+      if (ep?.vrf) parts.push(`vrf:${ep.vrf}`);
+      const vlanName = ep?.vlan?.access || ep?.vlan?.name;
+      if (vlanName) parts.push(`vlan:${vlanName}`);
+      return parts.join(" ");
+    }
+
+    function nodeCenter(id) {
+      const p = positions.get(id);
+      if (!p) return { x: 0, y: 0 };
+      return { x: p.x + NODE_W / 2, y: p.y + NODE_H / 2 };
+    }
+
+    /**
+     * Orthogonal (HVH) wire between tier rows. Spreads parallel links across
+     * the vertical gap so a Clos mesh is readable instead of a straight-line
+     * spaghetti ball.
+     */
+    function linkLanePlan() {
+      const groups = new Map();
+      links.forEach((link, i) => {
+        const a = nodeCenter(link.a.node);
+        const b = nodeCenter(link.b.node);
+        const top = a.y <= b.y ? a : b;
+        const bot = a.y <= b.y ? b : a;
+        const key =
+          Math.abs(bot.y - top.y) < NODE_H * 0.75
+            ? `h:${Math.round((a.y + b.y) / 2)}`
+            : `v:${Math.round(top.y)}:${Math.round(bot.y)}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push({ i, ax: a.x, bx: b.x });
+      });
+      const plan = new Array(links.length);
+      for (const members of groups.values()) {
+        members.sort((u, v) => u.ax + u.bx - (v.ax + v.bx) || u.i - v.i);
+        members.forEach((m, lane) => {
+          plan[m.i] = { lane, count: members.length };
+        });
+      }
+      return plan;
+    }
+
+    /**
+     * Evenly space interface exits along each node edge among links leaving
+     * that side. Returns `[{ a: {x,y,side,fan,out,tan}, b: … }, …]`.
+     * `fan` is 0 for a lone stub, else ±1 toward the nearer edge end so
+     * sibling labels mirror. `out`/`tan` are unit vectors (edge normal /
+     * sort-order tangent) shared by label placement.
+     */
+    function ifaceExitPlan() {
+      const pad = 8;
+      const inset = 12;
+      const OUT = {
+        n: { x: 0, y: -1 },
+        s: { x: 0, y: 1 },
+        e: { x: 1, y: 0 },
+        w: { x: -1, y: 0 },
+      };
+      // Tangent in bucket sort order (n/s: west→east, e/w: north→south).
+      const TAN = {
+        n: { x: 1, y: 0 },
+        s: { x: 1, y: 0 },
+        e: { x: 0, y: 1 },
+        w: { x: 0, y: 1 },
+      };
+      /** @type {Map<string, Array<{ linkIdx: number, end: "a"|"b", from: {x:number,y:number}, to: {x:number,y:number}, side: string }>>} */
+      const buckets = new Map();
+      links.forEach((link, i) => {
+        const a = nodeCenter(link.a?.node);
+        const b = nodeCenter(link.b?.node);
+        const push = (end, from, to) => {
+          const node = link[end]?.node;
+          if (!node) return;
+          const dy = to.y - from.y;
+          const dx = to.x - from.x;
+          const side =
+            Math.abs(dy) >= NODE_H * 0.75
+              ? dy > 0
+                ? "s"
+                : "n"
+              : dx >= 0
+                ? "e"
+                : "w";
+          const key = `${node}:${side}`;
+          if (!buckets.has(key)) buckets.set(key, []);
+          buckets.get(key).push({ linkIdx: i, end, from, to, side });
+        };
+        push("a", a, b);
+        push("b", b, a);
+      });
+
+      const plan = links.map(() => ({ a: null, b: null }));
+      for (const members of buckets.values()) {
+        members.sort((u, v) => {
+          if (u.side === "n" || u.side === "s") {
+            return u.to.x - v.to.x || u.linkIdx - v.linkIdx;
+          }
+          return u.to.y - v.to.y || u.linkIdx - v.linkIdx;
+        });
+        const n = members.length;
+        members.forEach((m, i) => {
+          const { from, side } = m;
+          let x;
+          let y;
+          if (side === "n" || side === "s") {
+            const usable = Math.max(NODE_W - 2 * inset, 8);
+            x = from.x - usable / 2 + ((i + 0.5) / n) * usable;
+            y = from.y + (side === "s" ? 1 : -1) * (NODE_H / 2 + pad);
+          } else {
+            const usable = Math.max(NODE_H - 2 * inset, 8);
+            x = from.x + (side === "e" ? 1 : -1) * (NODE_W / 2 + pad);
+            y = from.y - usable / 2 + ((i + 0.5) / n) * usable;
+          }
+          // Lone stub: no lateral bias. Else mirror about the edge midpoint.
+          const fan = n === 1 ? 0 : (i + 0.5) / n < 0.5 ? -1 : 1;
+          plan[m.linkIdx][m.end] = {
+            x,
+            y,
+            side,
+            fan,
+            out: OUT[side],
+            tan: TAN[side],
+          };
+        });
+      }
+      return plan;
+    }
+
+    function linkWireD(a, b, lane = 0, count = 1, exitA = null, exitB = null) {
+      const start = exitA || a;
+      const end = exitB || b;
+      const dy = b.y - a.y;
+      const dx = b.x - a.x;
+      // Same row / nearly horizontal: keep a short bow so parallels don't stack.
+      if (Math.abs(dy) < NODE_H * 0.75) {
+        const bow =
+          (count <= 1 ? 0 : (lane / Math.max(count - 1, 1) - 0.5) * 18) +
+          Math.sign(dx || 1) * 8;
+        const mx = (start.x + end.x) / 2;
+        const my = (start.y + end.y) / 2 + bow;
+        return `M ${start.x} ${start.y} Q ${mx} ${my} ${end.x} ${end.y}`;
+      }
+      const top = dy > 0 ? a : b;
+      const bot = dy > 0 ? b : a;
+      const gap = Math.abs(dy) - NODE_H;
+      const spread = Math.min(Math.max(gap * 0.55, 12), Math.max(count * 4, 24));
+      const t = count <= 1 ? 0.5 : lane / Math.max(count - 1, 1);
+      const midY = (top.y + bot.y) / 2 + (t - 0.5) * spread;
+      const topEdge = top.y + NODE_H / 2;
+      const botEdge = bot.y - NODE_H / 2;
+      const runY = Math.min(Math.max(midY, topEdge + 6), botEdge - 6);
+      // Stubs leave from the evenly spaced edge exits (bulbs sit on the wire).
+      return `M ${start.x} ${start.y} L ${start.x} ${runY} L ${end.x} ${runY} L ${end.x} ${end.y}`;
+    }
+
+    /**
+     * Label anchors — same recipe on every edge:
+     *   point = exit + out * along + tan * fan * sideOff
+     * ifname nearer the bulb; IP block further out. Address lines always
+     * stack in screen-Y (readable column) — never along a horizontal out.
+     */
+    function linkLabelSites(a, b, exitA, exitB, lane = 0, count = 1) {
+      const fallbackBasis = (from, to) => {
+        const dy = to.y - from.y;
+        const dx = to.x - from.x;
+        const side =
+          Math.abs(dy) >= NODE_H * 0.75
+            ? dy > 0
+              ? "s"
+              : "n"
+            : dx >= 0
+              ? "e"
+              : "w";
+        const out =
+          side === "n"
+            ? { x: 0, y: -1 }
+            : side === "s"
+              ? { x: 0, y: 1 }
+              : side === "e"
+                ? { x: 1, y: 0 }
+                : { x: -1, y: 0 };
+        const tan =
+          side === "n" || side === "s" ? { x: 1, y: 0 } : { x: 0, y: 1 };
+        return { side, out, tan, fan: 0 };
+      };
+
+      const endSites = (exit, fallbackFrom, fallbackTo) => {
+        const from = exit || fallbackFrom;
+        const basis = exit?.out
+          ? {
+              side: exit.side,
+              out: exit.out,
+              tan: exit.tan,
+              fan: exit.fan ?? 0,
+            }
+          : fallbackBasis(from, fallbackTo);
+        const { out, tan, fan, side } = basis;
+        const sideOff = 16;
+        const epAlong = 14;
+        const ipAlong = 36;
+        const rtsAlong = 14;
+        // Sibling stubs: both labels on the outer side. Lone stub: ifname and
+        // IPs on opposite sides of the wire so text is never painted on it.
+        const epLat = fan === 0 ? -sideOff : fan * sideOff;
+        const ipLat = fan === 0 ? sideOff : fan * sideOff;
+        const at = (along, lateral) => ({
+          x: from.x + out.x * along + tan.x * lateral,
+          y: from.y + out.y * along + tan.y * lateral,
+        });
+        return {
+          side,
+          fan,
+          out,
+          tan,
+          ep: at(epAlong, epLat),
+          ip: at(ipAlong, ipLat),
+          rts: at(rtsAlong, -ipLat),
+        };
+      };
+
+      const start = exitA || a;
+      const end = exitB || b;
+      const sitesA = endSites(exitA, start, end);
+      const sitesB = endSites(exitB, end, start);
+
+      const dy = b.y - a.y;
+      let sess;
+      if (Math.abs(dy) >= NODE_H * 0.75) {
+        const top = dy > 0 ? a : b;
+        const bot = dy > 0 ? b : a;
+        const gap = Math.abs(dy) - NODE_H;
+        const spread = Math.min(
+          Math.max(gap * 0.55, 12),
+          Math.max(count * 4, 24),
+        );
+        const t = count <= 1 ? 0.5 : lane / Math.max(count - 1, 1);
+        const midY = (top.y + bot.y) / 2 + (t - 0.5) * spread;
+        const runY = Math.min(
+          Math.max(midY, top.y + NODE_H / 2 + 6),
+          bot.y - NODE_H / 2 - 6,
+        );
+        sess = { x: (start.x + end.x) / 2, y: runY - 8 };
+      } else {
+        const { dx, dy: cdy, ox, oy } = linkGeometry(a, b);
+        sess = {
+          x: a.x + dx * 0.5 - ox * 0.6,
+          y: a.y + cdy * 0.5 - oy * 0.6,
+        };
+      }
+
+      return { a: sitesA, b: sitesB, sess };
+    }
+
+    function placeTextAt(el, pt, yExtra = 0) {
+      if (!el || !pt) return;
+      const x = pt.x;
+      const y = pt.y + yExtra;
+      el.setAttribute("x", String(x));
+      el.setAttribute("y", String(y));
+      el.querySelectorAll("tspan").forEach((ts) => {
+        ts.setAttribute("x", String(x));
+      });
+    }
+
+    /** Place dual-stack IP tspans as a vertical column centered on site.ip. */
+    function placeIpLabelAt(el, site) {
+      if (!el || !site?.ip) return;
+      const lineH = 11;
+      const spans = [...el.querySelectorAll("tspan")];
+      const n = spans.length;
+      spans.forEach((ts, i) => {
+        const ly = site.ip.y + (i - (n - 1) / 2) * lineH;
+        ts.setAttribute("x", String(site.ip.x));
+        ts.setAttribute("y", String(ly));
+      });
+    }
+
+    function updateLinkGeometry() {
+      const linkGroups = svg.querySelectorAll(".topo-link");
+      const ifaceLayer = svg.querySelector(".ifaces");
+      const plan = linkLanePlan();
+      const exits = ifaceExitPlan();
+      links.forEach((link, i) => {
+        const g = linkGroups[i];
+        if (!g) return;
+        const a = nodeCenter(link.a.node);
+        const b = nodeCenter(link.b.node);
+        const lane = plan[i] || { lane: 0, count: 1 };
+        const exit = exits[i] || {};
+        const wire = g.querySelector(".link-wire");
+        if (wire) {
+          if (wire.tagName === "path") {
+            wire.setAttribute(
+              "d",
+              linkWireD(a, b, lane.lane, lane.count, exit.a, exit.b),
+            );
+          } else {
+            wire.setAttribute("x1", String(a.x));
+            wire.setAttribute("y1", String(a.y));
+            wire.setAttribute("x2", String(b.x));
+            wire.setAttribute("y2", String(b.y));
+          }
+        }
+        const sites = linkLabelSites(
+          a,
+          b,
+          exit.a,
+          exit.b,
+          lane.lane,
+          lane.count,
+        );
+        const placeSel = (el, pt) => {
+          if (!el || !pt) return;
+          el.querySelectorAll("circle").forEach((c) => {
+            c.setAttribute("cx", String(pt.x));
+            c.setAttribute("cy", String(pt.y));
+          });
+        };
+        placeTextAt(g.querySelector(".ep-a"), sites.a.ep);
+        placeIpLabelAt(g.querySelector(".ip-a"), sites.a);
+        placeTextAt(g.querySelector(".ep-b"), sites.b.ep);
+        placeIpLabelAt(g.querySelector(".ip-b"), sites.b);
+        placeTextAt(g.querySelector(".rts-a"), sites.a.rts);
+        placeTextAt(g.querySelector(".rts-b"), sites.b.rts);
+        const selA = ifaceLayer?.querySelector(
+          `.ep-sel[data-link="${i}"][data-side="a"]`,
+        );
+        const selB = ifaceLayer?.querySelector(
+          `.ep-sel[data-link="${i}"][data-side="b"]`,
+        );
+        placeSel(selA || g.querySelector(".ep-sel.ep-a"), exit.a);
+        placeSel(selB || g.querySelector(".ep-sel.ep-b"), exit.b);
+        placeTextAt(g.querySelector(".sess-label"), sites.sess);
+      });
+    }
+
+    /** @deprecated Prefer {@link ifaceExitPlan}; kept for any residual callers. */
+    function pointOutsideNode(from, to, pad = 8, lane = 0, count = 1) {
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const hx = NODE_W / 2;
+      const hy = NODE_H / 2;
+      const t = count <= 1 ? 0.5 : lane / Math.max(count - 1, 1);
+      if (Math.abs(dy) >= NODE_H * 0.75) {
+        const dir = dy > 0 ? 1 : -1;
+        const spread = count <= 1 ? 0 : Math.min(hx - 10, (count - 1) * 5);
+        return {
+          x: from.x + (t - 0.5) * 2 * spread,
+          y: from.y + dir * (hy + pad),
+        };
+      }
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len;
+      const uy = dy / len;
+      const tx = Math.abs(ux) < 1e-9 ? Infinity : hx / Math.abs(ux);
+      const ty = Math.abs(uy) < 1e-9 ? Infinity : hy / Math.abs(uy);
+      const dist = Math.min(tx, ty) + pad;
+      const capped = Math.min(dist, len * 0.42);
+      return { x: from.x + ux * capped, y: from.y + uy * capped };
+    }
+
+    function appendRouteMetric(parent, node, ifname, metric, value, x) {
+      if (value == null || !Number.isFinite(Number(value))) return;
+      const n = Number(value);
+      const arrow = metric.endsWith("in_v4") || metric.endsWith("in_v6") ? "↓" : "↑";
+      parent.appendChild(svgEl("tspan", { class: "rts-num" }, `${n}${arrow}`));
+      const delta = noteRouteValue(node, ifname, metric, n);
+      const flash = formatRouteDelta(delta);
+      if (flash) {
+        parent.appendChild(
+          svgEl(
+            "tspan",
+            { class: delta > 0 ? "rts-delta up" : "rts-delta down" },
+            flash,
+          ),
+        );
+      }
+    }
+
+    function fillRouteLabel(el, node, ifname, routes) {
+      if (!el) return;
+      while (el.firstChild) el.removeChild(el.firstChild);
+      if (!routes) return;
+      const x = el.getAttribute("x") || "0";
+      let line = 0;
+      const addAf = (af, inKey, outKey) => {
+        if (af === "v4" && !showLinkV4) return;
+        if (af === "v6" && !showLinkV6) return;
+        const inn = routes[inKey];
+        const out = routes[outKey];
+        if (inn == null && out == null) return;
+        const row = svgEl("tspan", {
+          class: `rts-af rts-${af}`,
+          x,
+          dy: line === 0 ? "0" : "1.2em",
+        });
+        row.appendChild(svgEl("tspan", { class: "rts-af-tag" }, `${af} `));
+        appendRouteMetric(row, node, ifname, inKey, inn, x);
+        row.appendChild(document.createTextNode(" "));
+        appendRouteMetric(row, node, ifname, outKey, out, x);
+        el.appendChild(row);
+        line += 1;
+      };
+      addAf("v4", "pfx_in_v4", "pfx_out_v4");
+      addAf("v6", "pfx_in_v6", "pfx_out_v6");
+    }
+
+    function routesForEndpoint(runtime, nodeId, ifname, peerNode) {
+      if (!runtime || !nodeId) return null;
+      const nr = runtime.nodes?.[nodeId];
+      if (!nr?.sessions?.length) return null;
+      let s =
+        (ifname && nr.sessions.find((x) => x.peer === ifname)) ||
+        null;
+      if (!s && peerNode) {
+        // Numbered peers: session peer is remote address; fall back via link record.
+        s = null;
+      }
+      if (!s) return null;
+      if (
+        s.pfx_in_v4 == null &&
+        s.pfx_out_v4 == null &&
+        s.pfx_in_v6 == null &&
+        s.pfx_out_v6 == null
+      ) {
+        return null;
+      }
+      return {
+        pfx_in_v4: s.pfx_in_v4,
+        pfx_out_v4: s.pfx_out_v4,
+        pfx_in_v6: s.pfx_in_v6,
+        pfx_out_v6: s.pfx_out_v6,
+      };
+    }
+
+    /**
+     * Protocols from enabled modules' session probes (kind "sessions" or unset).
+     * Legend / link coloring only apply when this is non-empty.
+     */
+    function sessionProtocolsFromTopo(topo) {
+      const protocols = new Set();
+      for (const node of addressedNodeList(topo)) {
+        const rp = node.runtime_probes;
+        if (!rp) continue;
+        const lists = [];
+        if (Array.isArray(rp.device)) lists.push(rp.device);
+        for (const mod of nodeModules(node)) {
+          const modProbes = rp.modules?.[mod];
+          if (Array.isArray(modProbes)) lists.push(modProbes);
+        }
+        for (const list of lists) {
+          for (const probe of list) {
+            const kind = probe?.kind || "sessions";
+            if (kind !== "sessions") continue;
+            protocols.add(probe.protocol || "session");
+          }
+        }
+      }
+      return [...protocols].sort();
+    }
+
+    function collectVrfLegendEntries() {
+      /** @type {Map<string, string>} color → label */
+      const entries = new Map();
+      const consider = (ep) => {
+        const color = ifaceDomainColor(ep);
+        if (!color) return;
+        const label = ep?.vrf || ep?.vlan?.access || ep?.vlan?.name || color;
+        if (!entries.has(color)) entries.set(color, label);
+      };
+      for (const link of links) {
+        consider(link.a);
+        consider(link.b);
+      }
+      return [...entries.entries()].sort((a, b) =>
+        String(a[1]).localeCompare(String(b[1])),
+      );
+    }
+
+    function renderTopoLegend(protocols) {
+      topoLegend.replaceChildren();
+      hasSessionStatus = protocols.length > 0;
+      const vrfEntries = collectVrfLegendEntries();
+      if (!hasSessionStatus && vrfEntries.length === 0) {
+        topoLegend.hidden = true;
+        return;
+      }
+      topoLegend.hidden = false;
+      const add = (cls, text, style) => {
+        const span = document.createElement("span");
+        if (cls) span.className = cls;
+        span.textContent = text;
+        if (style) {
+          for (const [k, v] of Object.entries(style)) {
+            span.style.setProperty(k, v);
+          }
+        }
+        topoLegend.appendChild(span);
+      };
+      if (hasSessionStatus) {
+        const label =
+          protocols.length === 1 ? protocols[0] : "session";
+        add("up", `${label} up`);
+        add("down", `${label} down`);
+        add("", "unknown");
+      }
+      for (const [color, label] of vrfEntries) {
+        add("vrf-swatch", `vrf ${label}`, { "--swatch-color": color });
+      }
+    }
+
+    function applyRuntimeStatus(runtime) {
+      lastRuntime = runtime;
+
+      for (const btn of nodesEl.querySelectorAll("button[data-node]")) {
+        const id = btn.dataset.node;
+        const { nr, up, booting } = applyNodeRuntimeClass(btn, id, runtime);
+        btn.disabled = !up;
+        btn.title = up
+          ? `Open CLI · ${nr.status || "running"}`
+          : booting
+            ? `CLI booting · waiting for device CLI`
+            : `CLI unavailable · ${nr?.status || "not available"}`;
+        const st = btn.querySelector(".node-state");
+        if (st) st.textContent = nodeRuntimeLabel(id);
+      }
+
+      for (const g of svg.querySelectorAll(".topo-node")) {
+        applyNodeRuntimeClass(g, g.dataset.node, runtime);
+      }
+
+      if (activeNode && !nodeIsAvailable(activeNode)) {
+        if (activeInterface?.node === activeNode) clearActiveInterface();
+        parkActiveSession();
+        if (nodeIsBooting(activeNode)) {
+          setStatus(
+            `Node <strong>${activeNode}</strong> is booting — waiting for CLI`,
+          );
+        } else {
+          setStatus(`Node <strong>${activeNode}</strong> is down or unavailable`);
+        }
+        refreshShowCommands();
+      }
+
+      if (!hasSessionStatus) return;
+      const byPair = new Map();
+      for (const ls of runtime?.links || []) {
+        byPair.set(`${ls.a}|${ls.b}`, ls);
+        byPair.set(`${ls.b}|${ls.a}`, ls);
+      }
+      let needFlashClear = false;
+      for (const g of svg.querySelectorAll(".topo-link")) {
+        const a = g.dataset.a;
+        const b = g.dataset.b;
+        const ls = byPair.get(`${a}|${b}`);
+        const state = ls?.state || "unknown";
+        g.classList.remove("up", "down", "unknown");
+        g.classList.add(state);
+        const sess = g.querySelector(".sess-label");
+        if (sess) {
+          if (ls?.protocol && state !== "unknown") {
+            sess.textContent = `${ls.protocol} ${state}`;
+          } else {
+            sess.textContent = "";
+          }
+        }
+        const aRoutes =
+          (ls?.a === a ? ls?.a_routes : ls?.b === a ? ls?.b_routes : null) ||
+          routesForEndpoint(
+            runtime,
+            a,
+            (ls?.a === a ? ls?.a_ifname : ls?.b === a ? ls?.b_ifname : null) ||
+              g.querySelector(".rts-a")?.dataset.ifname,
+            b,
+          );
+        const bRoutes =
+          (ls?.b === b ? ls?.b_routes : ls?.a === b ? ls?.a_routes : null) ||
+          routesForEndpoint(
+            runtime,
+            b,
+            (ls?.b === b ? ls?.b_ifname : ls?.a === b ? ls?.a_ifname : null) ||
+              g.querySelector(".rts-b")?.dataset.ifname,
+            a,
+          );
+        const rtsA = g.querySelector(".rts-a");
+        const rtsB = g.querySelector(".rts-b");
+        if (rtsA) {
+          const ifn =
+            rtsA.dataset.ifname ||
+            (ls?.a === a ? ls?.a_ifname : ls?.b === a ? ls?.b_ifname : "") ||
+            "";
+          fillRouteLabel(rtsA, a, ifn, aRoutes);
+          if ([...rtsA.querySelectorAll(".rts-delta")].length) needFlashClear = true;
+        }
+        if (rtsB) {
+          const ifn =
+            rtsB.dataset.ifname ||
+            (ls?.b === b ? ls?.b_ifname : ls?.a === b ? ls?.a_ifname : "") ||
+            "";
+          fillRouteLabel(rtsB, b, ifn, bRoutes);
+          if ([...rtsB.querySelectorAll(".rts-delta")].length) needFlashClear = true;
+        }
+      }
+      if (needFlashClear) {
+        if (routeFlashClearTimer) window.clearTimeout(routeFlashClearTimer);
+        routeFlashClearTimer = window.setTimeout(() => {
+          routeFlashClearTimer = null;
+          if (lastRuntime) applyRuntimeStatus(lastRuntime);
+        }, ROUTE_FLASH_MS + 50);
+      }
+    }
+
+    async function pollRuntime() {
+      try {
+        const runtime = await fetch("/api/runtime").then((r) => r.json());
+        applyRuntimeStatus(runtime);
+      } catch {
+        // keep last known
+      }
+    }
+
+    function renderTopology() {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+      const linkLayer = svgEl("g", { class: "links" });
+      svg.appendChild(linkLayer);
+      // Interface bulbs sit above nodes so they stay clickable/visible.
+      const ifaceLayer = svgEl("g", { class: "ifaces" });
+      const lanePlan = linkLanePlan();
+      const exitPlan = ifaceExitPlan();
+      const dense = links.length >= 24;
+      svg.classList.toggle("dense-links", dense);
+      topoWrap?.classList.toggle("dense-links", dense);
+
+      for (const [linkIdx, link] of links.entries()) {
+        const a = nodeCenter(link.a.node);
+        const b = nodeCenter(link.b.node);
+        const g = svgEl("g", { class: "topo-link unknown" });
+        g.dataset.a = link.a.node;
+        g.dataset.b = link.b.node;
+        g.dataset.link = String(linkIdx);
+        const lane = lanePlan[linkIdx] || { lane: 0, count: 1 };
+        const exit = exitPlan[linkIdx] || {};
+
+        g.appendChild(
+          svgEl("path", {
+            class: "link-wire",
+            d: linkWireD(a, b, lane.lane, lane.count, exit.a, exit.b),
+            fill: "none",
+          }),
+        );
+
+        const sites = linkLabelSites(
+          a,
+          b,
+          exit.a,
+          exit.b,
+          lane.lane,
+          lane.count,
+        );
+
+        const addEndpointLabels = (ep, peerEp, side) => {
+          const site = side === "a" ? sites.a : sites.b;
+          const la = svgEl("text", {
+            class: `ep-label ep-${side}`,
+            x: site.ep.x,
+            y: site.ep.y,
+            "text-anchor": "middle",
+          }, endpointLabel(ep));
+          if (endpointTitle(ep)) {
+            la.appendChild(svgEl("title", {}, endpointTitle(ep)));
+          }
+          g.appendChild(la);
+
+          const lines = endpointAddressLines(ep);
+          const lineH = 11;
+          // Always a vertical column (screen-Y), centered on the outward anchor.
+          const ipText = svgEl("text", {
+            class: `ip-label ip-${side}`,
+            "text-anchor": "middle",
+          });
+          lines.forEach((line, i) => {
+            const ly = site.ip.y + (i - (lines.length - 1) / 2) * lineH;
+            ipText.appendChild(
+              svgEl("tspan", { x: site.ip.x, y: ly }, line),
+            );
+          });
+          g.appendChild(ipText);
+
+          const rts = svgEl("text", {
+            class: `rts-label rts-${side}`,
+            x: site.rts.x,
+            y: site.rts.y,
+            "text-anchor": "middle",
+          });
+          if (ep?.ifname) rts.dataset.ifname = ep.ifname;
+          if (ep?.node) rts.dataset.node = ep.node;
+          g.appendChild(rts);
+
+          if (ep?.node && ep?.ifname) {
+            const pt =
+              (side === "a" ? exit.a : exit.b) ||
+              pointOutsideNode(
+                side === "a" ? a : b,
+                side === "a" ? b : a,
+                8,
+                lane.lane,
+                lane.count,
+              );
+            const sel = svgEl("g", {
+              class: `ep-sel ep-${side}`,
+            });
+            sel.dataset.node = ep.node;
+            sel.dataset.ifname = ep.ifname;
+            sel.dataset.link = String(linkIdx);
+            sel.dataset.side = side;
+            const color = ifaceDomainColor(ep);
+            if (color) {
+              sel.style.setProperty("--iface-color", color);
+              sel.dataset.vrf = ep.vrf || "";
+            }
+            const hit = svgEl("circle", {
+              class: "ep-hit",
+              cx: pt.x,
+              cy: pt.y,
+              r: 9,
+            });
+            const dot = svgEl("circle", {
+              class: "ep-dot",
+              cx: pt.x,
+              cy: pt.y,
+              r: 4.5,
+            });
+            const tip = endpointTitle(ep) || ep.ifname;
+            sel.appendChild(svgEl("title", {}, `Select ${tip}`));
+            sel.appendChild(hit);
+            sel.appendChild(dot);
+            if (
+              activeInterface &&
+              ((activeInterface.linkIndex != null &&
+                activeInterface.linkIndex === linkIdx &&
+                activeInterface.side === side) ||
+                (activeInterface.linkIndex == null &&
+                  activeInterface.node === ep.node &&
+                  activeInterface.ifname === ep.ifname))
+            ) {
+              sel.classList.add("active");
+            }
+            sel.addEventListener("click", (ev) => {
+              ev.stopPropagation();
+              ev.preventDefault();
+              selectInterface(ep, peerEp, linkIdx, side);
+            });
+            sel.addEventListener("pointerdown", (ev) => {
+              ev.stopPropagation();
+            });
+            ifaceLayer.appendChild(sel);
+          }
+        };
+
+        addEndpointLabels(link.a, link.b, "a");
+        addEndpointLabels(link.b, link.a, "b");
+
+        g.appendChild(svgEl("text", {
+          class: "sess-label",
+          x: sites.sess.x,
+          y: sites.sess.y,
+          "text-anchor": "middle",
+        }, ""));
+
+
+        linkLayer.appendChild(g);
+      }
+
+      for (const [id, p] of positions) {
+        const meta = p.meta || {};
+        const isSidecar = meta.role === "sidecar";
+        const lv = levelClass(meta);
+        const g = svgEl("g", {
+          class:
+            "topo-node" +
+            (id === activeNode ? " active" : "") +
+            (selectedNodes.has(id) ? " selected" : "") +
+            (isSidecar ? " sidecar" : "") +
+            (lv ? ` ${lv}` : ""),
+          transform: `translate(${p.x},${p.y})`,
+        });
+        g.dataset.node = id;
+
+        g.appendChild(svgEl("rect", {
+          width: NODE_W,
+          height: NODE_H,
+          rx: 8,
+          ry: 8,
+        }));
+
+        g.appendChild(svgEl("text", {
+          x: NODE_W / 2,
+          y: 18,
+          "text-anchor": "middle",
+        }, id));
+
+        const bits = [];
+        if (meta.role === "sidecar") bits.push("sidecar");
+        if (nodeBgpAs(meta) != null) bits.push(`AS ${nodeBgpAs(meta)}`);
+        if (meta.device) bits.push(meta.device);
+        g.appendChild(svgEl("text", {
+          class: "sub",
+          x: NODE_W / 2,
+          y: 34,
+          "text-anchor": "middle",
+        }, bits.join(" · ") || "node"));
+
+        if (nodeLoopback(meta)) {
+          g.appendChild(svgEl("text", {
+            class: "sub",
+            x: NODE_W / 2,
+            y: 50,
+            "text-anchor": "middle",
+          }, nodeLoopback(meta)));
+        }
+
+        g.addEventListener("pointerdown", (ev) => {
+          if (ev.button !== 0) return;
+          if (ev.shiftKey) {
+            pendingShiftSelect = id;
+            ev.preventDefault();
+            return;
+          }
+          dragState = {
+            id,
+            startX: ev.clientX,
+            startY: ev.clientY,
+            origX: p.x,
+            origY: p.y,
+            moved: false,
+          };
+          svg.classList.add("dragging");
+          g.setPointerCapture(ev.pointerId);
+          ev.preventDefault();
+        });
+
+        g.addEventListener("pointerenter", (ev) => {
+          const meta = p.meta || {};
+          const lines = [id];
+          if (meta.device) lines.push(`device: ${meta.device}`);
+          const imageRef =
+            typeof meta.image_ref === "string"
+              ? meta.image_ref
+              : meta.image?.versions?.[meta.image?.default ?? 0]?.image;
+          if (imageRef) lines.push(`image: ${imageRef}`);
+          if (nodeBgpAs(meta) != null) lines.push(`BGP AS: ${nodeBgpAs(meta)}`);
+          if (nodeLoopback(meta)) lines.push(`loopback: ${nodeLoopback(meta)}`);
+          if (nodeMgmt(meta)) lines.push(`mgmt: ${nodeMgmt(meta)}`);
+          tooltip.textContent = lines.join("\n");
+          tooltip.style.display = "block";
+          tooltip.style.left = `${ev.clientX + 12}px`;
+          tooltip.style.top = `${ev.clientY + 12}px`;
+        });
+        g.addEventListener("pointermove", (ev) => {
+          if (tooltip.style.display === "block" && !dragState) {
+            tooltip.style.left = `${ev.clientX + 12}px`;
+            tooltip.style.top = `${ev.clientY + 12}px`;
+          }
+        });
+        g.addEventListener("pointerleave", () => {
+          if (!dragState) tooltip.style.display = "none";
+        });
+        g.addEventListener("contextmenu", (ev) => showCtxMenu(ev, id));
+
+        svg.appendChild(g);
+      }
+
+      svg.appendChild(ifaceLayer);
+      if (lastRuntime) applyRuntimeStatus(lastRuntime);
+      syncNodeSelectionHighlight();
+    }
+
+    svg.addEventListener("pointermove", (ev) => {
+      if (!dragState) return;
+      const p = positions.get(dragState.id);
+      if (!p) return;
+      const dx = ev.clientX - dragState.startX;
+      const dy = ev.clientY - dragState.startY;
+      if (Math.hypot(dx, dy) > 3) dragState.moved = true;
+      p.x = dragState.origX + dx;
+      p.y = dragState.origY + dy;
+      const g = svg.querySelector(`.topo-node[data-node="${CSS.escape(dragState.id)}"]`);
+      if (g) g.setAttribute("transform", `translate(${p.x},${p.y})`);
+      updateLinkGeometry();
+      tooltip.style.display = "none";
+    });
+
+    svg.addEventListener("pointerup", (ev) => {
+      if (pendingShiftSelect) {
+        const id = pendingShiftSelect;
+        pendingShiftSelect = null;
+        toggleNodeSelection(id);
+        return;
+      }
+      if (!dragState) return;
+      const id = dragState.id;
+      const moved = dragState.moved;
+      dragState = null;
+      svg.classList.remove("dragging");
+      savePositions();
+      if (!moved) {
+        selectOnlyNode(id);
+        if (nodeIsAvailable(id)) connect(id);
+        else {
+          clearActiveInterface();
+          highlightActive(id);
+          setStatus(
+            nodeIsBooting(id)
+              ? `Node <strong>${id}</strong> is booting — waiting for CLI`
+              : `Node <strong>${id}</strong> is down or unavailable`,
+          );
+          refreshShowCommands();
+        }
+      } else highlightActive(activeNode);
+    });
+    svg.addEventListener("pointercancel", () => {
+      pendingShiftSelect = null;
+    });
+    function hideCtxMenu() {
+      ctxMenu.classList.remove("open");
+      ctxMenu.hidden = true;
+      ctxMenu.innerHTML = "";
+    }
+
+    function intersectLists(lists) {
+      if (!lists.length) return [];
+      let out = null;
+      for (const list of lists) {
+        const set = new Set(list);
+        out = out
+          ? new Set([...out].filter((x) => set.has(x)))
+          : set;
+      }
+      return out ? [...out] : [];
+    }
+
+    function showCtxMenu(ev, nodeId) {
+      const targets = ctxActionNodes(nodeId).filter((id) => {
+        const meta = nodeMeta.get(id);
+        return Boolean(meta) && meta.role !== "sidecar";
+      });
+      if (!targets.length) return;
+
+      const swapTargets = targets.filter(nodeIsSwappable);
+      const deviceLists = swapTargets.map((id) => {
+        const meta = nodeMeta.get(id);
+        return Array.isArray(meta?.compatible_devices)
+          ? meta.compatible_devices
+          : [];
+      });
+      const devices = intersectLists(deviceLists);
+
+      const devicesEqual =
+        swapTargets.length > 0 &&
+        swapTargets.every(
+          (id) =>
+            nodeMeta.get(id)?.device === nodeMeta.get(swapTargets[0])?.device,
+        );
+      const primary = swapTargets.length
+        ? nodeMeta.get(swapTargets[0])
+        : null;
+      const versions = devicesEqual
+        ? Array.isArray(primary?.image?.versions)
+          ? primary.image.versions
+          : Array.isArray(primary?.available_images)
+            ? primary.available_images
+            : []
+        : [];
+
+      const runningTargets = targets.filter((id) => nodeIsAvailable(id));
+      const lifecycleTargets = targets.filter(
+        (id) => nodeIsAvailable(id) || nodeIsStopped(id),
+      );
+      const hasLifecycle = lifecycleTargets.length > 0;
+      if (!devices.length && !versions.length && !hasLifecycle) return;
+
+      ev.preventDefault();
+      hideCtxMenu();
+
+      const scopeLabel =
+        targets.length === 1 ? targets[0] : `${targets.length} nodes`;
+
+      if (hasLifecycle) {
+        const lifeLabel = document.createElement("div");
+        lifeLabel.className = "ctx-label";
+        lifeLabel.textContent = `Containerlab · ${scopeLabel}`;
+        ctxMenu.appendChild(lifeLabel);
+
+        const targetsBusy = lifecycleTargets.some((id) =>
+          lifecycleBusy.has(id),
+        );
+        const addLife = (label, action, enabled, targets) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.role = "menuitem";
+          btn.textContent =
+            targets.length === 1 ? label : `${label} (${targets.length})`;
+          btn.disabled = rebuilding || targetsBusy || !enabled;
+          btn.addEventListener("click", () => {
+            hideCtxMenu();
+            powerNodes(targets, action);
+          });
+          ctxMenu.appendChild(btn);
+        };
+
+        addLife("Stop", "stop", runningTargets.length > 0, runningTargets);
+        addLife("Restart", "restart", true, lifecycleTargets);
+        addLife("Destroy", "destroy", true, lifecycleTargets);
+        addLife("Reconfigure", "reconfigure", true, lifecycleTargets);
+      }
+
+      if (devices.length) {
+        const label = document.createElement("div");
+        label.className = "ctx-label";
+        label.textContent = `Device · ${
+          swapTargets.length === 1
+            ? swapTargets[0]
+            : `${swapTargets.length} nodes`
+        }`;
+        ctxMenu.appendChild(label);
+        const currentDevice =
+          swapTargets.length === 1 ? primary?.device : null;
+        const allSameDevice = swapTargets.every(
+          (id) => nodeMeta.get(id)?.device === currentDevice,
+        );
+        for (const device of devices) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.role = "menuitem";
+          btn.textContent = device;
+          if (allSameDevice && device === currentDevice) {
+            btn.classList.add("current");
+          }
+          btn.disabled =
+            rebuilding || (allSameDevice && device === currentDevice);
+          btn.addEventListener("click", () => {
+            hideCtxMenu();
+            swapNodeDevice(swapTargets, device);
+          });
+          ctxMenu.appendChild(btn);
+        }
+      }
+      if (versions.length) {
+        const imgLabel = document.createElement("div");
+        imgLabel.className = "ctx-label";
+        imgLabel.textContent = `Image · ${
+          swapTargets.length === 1
+            ? swapTargets[0]
+            : `${swapTargets.length} nodes`
+        }`;
+        ctxMenu.appendChild(imgLabel);
+        const currentRefs = new Set(
+          swapTargets.map((id) => {
+            const meta = nodeMeta.get(id);
+            return typeof meta?.image_ref === "string"
+              ? meta.image_ref
+              : versions[meta?.image?.default ?? 0]?.image;
+          }),
+        );
+        const singleCurrent =
+          currentRefs.size === 1 ? [...currentRefs][0] : null;
+        for (const entry of versions) {
+          const ref = typeof entry === "string" ? entry : entry?.image;
+          if (!ref) continue;
+          const labelText =
+            typeof entry === "string" ? entry : entry.label || ref;
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.role = "menuitem";
+          btn.textContent = labelText;
+          if (singleCurrent && ref === singleCurrent) {
+            btn.classList.add("current");
+          }
+          btn.disabled =
+            rebuilding || (singleCurrent != null && ref === singleCurrent);
+          btn.addEventListener("click", () => {
+            hideCtxMenu();
+            swapNodeImage(swapTargets, ref, { build: entry?.build === true });
+          });
+          ctxMenu.appendChild(btn);
+        }
+      }
+      ctxMenu.hidden = false;
+      ctxMenu.classList.add("open");
+      const x = Math.min(ev.clientX, window.innerWidth - 180);
+      const y = Math.min(
+        ev.clientY,
+        window.innerHeight - 8 - ctxMenu.offsetHeight,
+      );
+      ctxMenu.style.left = `${Math.max(8, x)}px`;
+      ctxMenu.style.top = `${Math.max(8, y)}px`;
+    }
+
+    async function powerNodes(nodeIds, action) {
+      const ids = (Array.isArray(nodeIds) ? nodeIds : [nodeIds]).filter(Boolean);
+      if (!ids.length || rebuilding) return;
+      if (ids.some((id) => lifecycleBusy.has(id))) return;
+      for (const id of ids) lifecycleBusy.set(id, action);
+      const labels = {
+        stop: { verb: "Stopping", done: "Stopped", fail: "Stop" },
+        restart: { verb: "Restarting", done: "Restarted", fail: "Restart" },
+        destroy: { verb: "Destroying", done: "Destroyed", fail: "Destroy" },
+        reconfigure: {
+          verb: "Reconfiguring",
+          done: "Reconfigured",
+          fail: "Reconfigure",
+        },
+      };
+      const copy = labels[action] || {
+        verb: action,
+        done: action,
+        fail: action,
+      };
+      const summary =
+        ids.length === 1
+          ? `<strong>${ids[0]}</strong>`
+          : `<strong>${ids.length} nodes</strong>`;
+      setStatus(`${copy.verb} · ${summary}…`);
+      try {
+        await postJson("/api/lab/nodes/power", {
+          body: JSON.stringify({ action, nodes: ids }),
+        });
+        dropSessionsForNodes(ids);
+        if (socket && ids.includes(activeNode)) socket = null;
+        await pollRuntime();
+        setStatus(`${copy.done} · ${summary}`);
+        if (
+          (action === "restart" || action === "reconfigure") &&
+          ids.includes(activeNode) &&
+          nodeIsAvailable(activeNode)
+        ) {
+          connect(activeNode);
+        } else {
+          refreshShowCommands();
+        }
+      } catch (err) {
+        setStatus(`${copy.fail} failed · ${summary}`);
+        showRebuildError(String(err?.message || err));
+        try {
+          await pollRuntime();
+        } catch {
+          /* ignore */
+        }
+      } finally {
+        for (const id of ids) lifecycleBusy.delete(id);
+      }
+    }
+
+    async function refreshLab({ retries = 0, delayMs = 2000 } = {}) {
+      let lastErr;
+      for (let i = 0; i <= retries; i++) {
+        try {
+          const lab = await fetchLab();
+          if (lab.name) {
+            labName = lab.name;
+            labNameEl.textContent = labName;
+            document.title = `${labName} · topology`;
+          }
+          applyLabPayload(lab);
+          return lab;
+        } catch (err) {
+          lastErr = err;
+          if (i < retries) {
+            await new Promise((r) => setTimeout(r, delayMs));
+          }
+        }
+      }
+      throw lastErr || new Error("failed to refresh lab");
+    }
+
+    /**
+     * Compile overlay for a device / image swap — same shape as
+     * templates/ui/device_override.xpt#overlay (example-owned).
+     * Uses a group so normalize applies `device` / `image` without replacing
+     * the fabric-generated node (neighbors, role, BGP stubs, …).
+     */
+    function deviceOverrideOverlay(lab, nodeIds, device, image) {
+      const ids = Array.isArray(nodeIds) ? nodeIds : [nodeIds];
+      const group =
+        ids.length === 1
+          ? `swap_${ids[0]}`
+          : `swap_${ids.length}_${ids[0]}`;
+      const lines = [
+        "---",
+        "# Generated by lab UI device / image swap — do not edit by hand.",
+        "topology:",
+        `  ${lab}:`,
+        "    groups:",
+        `      ${group}:`,
+        "        members:",
+        ...ids.map((id) => `          - ${id}`),
+        `        device: ${device}`,
+      ];
+      if (image) {
+        lines.push(`        image: ${image}`);
+      }
+      lines.push("---", "");
+      return lines.join("\n");
+    }
+
+    function dropSessionsForNodes(nodeIds) {
+      const ids = new Set(nodeIds);
+      for (const key of [...sessions.keys()]) {
+        const node = key.includes(":") ? key.slice(0, key.indexOf(":")) : key;
+        if (!ids.has(key) && !ids.has(node)) continue;
+        const session = sessions.get(key);
+        sessions.delete(key);
+        try {
+          if (session?.ws) {
+            session.ws.onclose = null;
+            session.ws.close();
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+
+    async function applyNodeSwap(nodeIds, summaryHtml, overrideBody) {
+      const ids = (Array.isArray(nodeIds) ? nodeIds : [nodeIds]).filter(Boolean);
+      if (!ids.length || rebuilding) return;
+      rebuilding = true;
+      clearRebuildError();
+      setStatus(overrideBody._buildingStatus || `Redeploying lab · ${summaryHtml}…`);
+      let appError = null;
+      try {
+        try {
+          const { _buildingStatus, ...body } = overrideBody;
+          await postJson("/api/overrides", {
+            body: JSON.stringify(body),
+          });
+        } catch (err) {
+          appError = err;
+          throw err;
+        }
+        // Prefer a fresh /api/lab read (host JSON), not only the swap response.
+        await refreshLab();
+        setStatus(`Lab redeployed · ${summaryHtml}`);
+        dropSessionsForNodes(ids);
+        if (socket && ids.includes(activeNode)) socket = null;
+        if (ids.includes(activeNode)) connect(activeNode);
+      } catch (err) {
+        if (!appError) {
+          // Full redeploy may restart lab-web mid-request — wait and refresh JSON.
+          setStatus(
+            `Waiting for lab after redeploy · <strong>${ids.join(", ")}</strong>…`,
+          );
+          try {
+            await refreshLab({ retries: 60, delayMs: 2000 });
+            clearRebuildError();
+            setStatus(`Lab redeployed · ${summaryHtml}`);
+            dropSessionsForNodes(ids);
+            if (socket && ids.includes(activeNode)) socket = null;
+            if (ids.includes(activeNode)) connect(activeNode);
+            return;
+          } catch {
+            /* fall through to error UI */
+          }
+        }
+        const detail = (appError || err)?.message || String(err);
+        setStatus(`Rebuild failed · ${summaryHtml}`);
+        showRebuildError(detail);
+      } finally {
+        rebuilding = false;
+      }
+    }
+
+    async function swapNodeDevice(nodeIds, device) {
+      const ids = Array.isArray(nodeIds) ? nodeIds : [nodeIds];
+      const summary =
+        ids.length === 1
+          ? `<strong>${ids[0]}</strong> → <strong>${device}</strong>`
+          : `<strong>${ids.length} nodes</strong> → <strong>${device}</strong>`;
+      await applyNodeSwap(ids, summary, {
+        name: `${labName}__${ids.length === 1 ? ids[0] : `batch_${ids.length}`}`,
+        content: deviceOverrideOverlay(labName, ids, device),
+        waitFor: ids,
+      });
+    }
+
+    async function swapNodeImage(nodeIds, imageRef, { build = false } = {}) {
+      const ids = Array.isArray(nodeIds) ? nodeIds : [nodeIds];
+      const device = nodeMeta.get(ids[0])?.device;
+      if (!device || !imageRef) return;
+      const summary =
+        ids.length === 1
+          ? `<strong>${ids[0]}</strong> · <strong>${imageRef}</strong>`
+          : `<strong>${ids.length} nodes</strong> · <strong>${imageRef}</strong>`;
+      await applyNodeSwap(ids, summary, {
+        name: `${labName}__${ids.length === 1 ? ids[0] : `batch_${ids.length}`}`,
+        content: deviceOverrideOverlay(labName, ids, device, imageRef),
+        waitFor: ids,
+        build: build === true,
+        image: imageRef,
+        _buildingStatus: build
+          ? `Building image · <strong>${imageRef}</strong>…`
+          : `Redeploying lab · ${summary}…`,
+      });
+    }
+
+    modeCli.addEventListener("click", () => setMode("cli"));
+    modeShell.addEventListener("click", () => setMode("shell"));
+
+    toggleLinkIps.addEventListener("click", () => {
+      showLinkIps = !showLinkIps;
+      saveShowLinkIps();
+      applyShowLinkIps();
+    });
+
+    toggleLinkV4.addEventListener("click", () => {
+      showLinkV4 = !showLinkV4;
+      saveShowLinkRoutes("v4", showLinkV4);
+      applyShowLinkRoutes();
+    });
+
+    toggleLinkV6.addEventListener("click", () => {
+      showLinkV6 = !showLinkV6;
+      saveShowLinkRoutes("v6", showLinkV6);
+      applyShowLinkRoutes();
+    });
+
+    document.addEventListener("click", () => hideCtxMenu());
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") {
+        if (document.getElementById("target-dialog")?.open) return;
+        hideCtxMenu();
+        clearNodeSelection();
+        document.getElementById("viz-panel")?.classList.remove("open");
+      }
+    });
+
+    const ctrlStatus = document.getElementById("ctrl-status");
+    const jsonPanel = document.getElementById("json-panel");
+    const jsonBackdrop = document.getElementById("json-backdrop");
+    const jsonBody = document.getElementById("json-body");
+    const deployProgress = document.getElementById("deploy-progress");
+    const deployProgressBar = document.getElementById("deploy-progress-bar");
+    const deployProgressLabel = document.getElementById("deploy-progress-label");
+    const deployProgressPct = document.getElementById("deploy-progress-pct");
+    const btnDeploy = document.getElementById("btn-deploy");
+    const btnRedeploy = document.getElementById("btn-redeploy");
+    const btnDestroy = document.getElementById("btn-destroy");
+    let deployBusy = false;
+    let deployPulseTimer = null;
+    let deployHideTimer = null;
+
+    function unlockControls() {
+      deployBusy = false;
+      if (deployPulseTimer) {
+        clearInterval(deployPulseTimer);
+        deployPulseTimer = null;
+      }
+      for (const btn of [btnDeploy, btnRedeploy, btnDestroy]) {
+        if (!btn) continue;
+        btn.disabled = false;
+        btn.removeAttribute("disabled");
+        btn.classList.remove("is-busy");
+        btn.setAttribute("aria-busy", "false");
+      }
+    }
+
+    function setCtrlBusy(busy) {
+      // Never use HTML disabled for deploy busy — hung requests trapped Destroy.
+      deployBusy = busy;
+      if (btnDeploy) {
+        btnDeploy.classList.toggle("is-busy", busy);
+        btnDeploy.setAttribute("aria-busy", busy ? "true" : "false");
+        btnDeploy.disabled = false;
+        btnDeploy.removeAttribute("disabled");
+      }
+      if (btnRedeploy) {
+        btnRedeploy.classList.toggle("is-busy", busy);
+        btnRedeploy.setAttribute("aria-busy", busy ? "true" : "false");
+        btnRedeploy.disabled = false;
+        btnRedeploy.removeAttribute("disabled");
+      }
+      if (btnDestroy) {
+        btnDestroy.disabled = false;
+        btnDestroy.removeAttribute("disabled");
+      }
+    }
+
+    function clearDeployTimers() {
+      if (deployPulseTimer) {
+        clearInterval(deployPulseTimer);
+        deployPulseTimer = null;
+      }
+      if (deployHideTimer) {
+        clearTimeout(deployHideTimer);
+        deployHideTimer = null;
+      }
+    }
+
+    function showDeployProgress(label, { indeterminate = true } = {}) {
+      if (!deployProgress) return;
+      clearDeployTimers();
+      deployProgress.hidden = false;
+      deployProgress.classList.remove("done", "failed", "determinate", "indeterminate");
+      deployProgress.classList.add(indeterminate ? "indeterminate" : "determinate");
+      deployProgressLabel.textContent = label;
+      deployProgressPct.textContent = indeterminate ? "" : "0%";
+      deployProgressBar.style.width = indeterminate ? "" : "0%";
+    }
+
+    function setDeployProgress(pct, label) {
+      if (!deployProgress) return;
+      const n = Math.max(0, Math.min(100, Math.round(pct)));
+      deployProgress.hidden = false;
+      deployProgress.classList.remove("indeterminate", "done", "failed");
+      deployProgress.classList.add("determinate");
+      deployProgressBar.style.width = `${n}%`;
+      deployProgressPct.textContent = `${n}%`;
+      if (label) deployProgressLabel.textContent = label;
+    }
+
+    function finishDeployProgress(label, { ok = true } = {}) {
+      if (!deployProgress) return;
+      clearDeployTimers();
+      deployProgress.hidden = false;
+      deployProgress.classList.remove("indeterminate", "determinate");
+      deployProgress.classList.add(ok ? "done" : "failed");
+      deployProgressBar.style.width = "100%";
+      deployProgressPct.textContent = ok ? "100%" : "";
+      deployProgressLabel.textContent = label;
+      deployHideTimer = setTimeout(() => {
+        deployProgress.hidden = true;
+        deployProgress.classList.remove("done", "failed", "determinate", "indeterminate");
+      }, ok ? 1600 : 4200);
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    async function refreshSessionMeta() {
+      try {
+        const s = await fetch("/api/session", { cache: "no-store" }).then((r) => r.json());
+        if (s.compiledAt) {
+          ctrlStatus.textContent = `Compiled ${new Date(s.compiledAt).toLocaleString()} · ${s.nodes?.length || 0} nodes`;
+        } else {
+          ctrlStatus.textContent = "Ready";
+        }
+      } catch (err) {
+        ctrlStatus.textContent = String(err.message || err);
+      }
+    }
+
+    async function waitForNodesReady(label, { timeoutMs = 90_000 } = {}) {
+      const deadline = Date.now() + timeoutMs;
+      let lastReady = 0;
+      let total = 0;
+      while (Date.now() < deadline) {
+        let runtime;
+        try {
+          runtime = await fetch("/api/runtime", { cache: "no-store" }).then((r) => r.json());
+        } catch {
+          await sleep(1000);
+          continue;
+        }
+        applyRuntimeStatus(runtime);
+        const ids = Object.keys(runtime.nodes || {}).filter((id) => {
+          const meta = nodeMeta.get(id);
+          return !meta || meta.role !== "sidecar";
+        });
+        total = ids.length;
+        if (!total) {
+          setDeployProgress(90, `${label} · no CLI nodes`);
+          return { ready: 0, total: 0, complete: true };
+        }
+        let score = 0;
+        let ready = 0;
+        for (const id of ids) {
+          const nr = runtime.nodes[id];
+          if (nr?.available) {
+            ready += 1;
+            score += 1;
+          } else if (nr?.running || nr?.state === "booting") {
+            score += 0.45;
+          }
+        }
+        lastReady = ready;
+        const pct = 45 + Math.round(55 * (score / total));
+        setDeployProgress(pct, `${label} · ${ready}/${total} CLI ready`);
+        if (ready === total) return { ready, total, complete: true };
+        await sleep(1500);
+      }
+      return { ready: lastReady, total, complete: false };
+    }
+
+    async function runCtrl(label, fn) {
+      ctrlStatus.textContent = `${label}…`;
+      try {
+        await fn();
+        await refreshSessionMeta();
+        applyLabPayload(await fetchLab());
+        ctrlStatus.textContent = `${label} ok · ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        ctrlStatus.textContent = `${label} failed: ${err.message || err}`;
+        showRebuildError(String(err.message || err));
+      } finally {
+        unlockControls();
+      }
+    }
+
+    async function runDeploy(label, fn) {
+      if (deployBusy || rebuilding) return;
+      clearRebuildError();
+      setCtrlBusy(true);
+      ctrlStatus.textContent = `${label}…`;
+      showDeployProgress(`${label}…`, { indeterminate: true });
+      let pulse = 8;
+      deployPulseTimer = setInterval(() => {
+        pulse = Math.min(42, pulse + 1.2 + Math.random() * 1.8);
+        setDeployProgress(pulse, `${label} · containerlab…`);
+      }, 450);
+      try {
+        await fn();
+        clearDeployTimers();
+        setDeployProgress(48, `${label} · starting nodes…`);
+        unlockControls();
+        await refreshSessionMeta();
+        applyLabPayload(await fetchLab());
+        const result = await waitForNodesReady(label);
+        if (result.complete) {
+          finishDeployProgress(`${label} complete · ${result.ready} nodes ready`);
+          ctrlStatus.textContent = `${label} ok · ${new Date().toLocaleTimeString()}`;
+          setStatus(`${label} complete · all nodes CLI ready`);
+        } else {
+          finishDeployProgress(
+            `${label} finished · ${result.ready}/${result.total || "?"} still booting`,
+            { ok: true },
+          );
+          ctrlStatus.textContent = `${label} ok · nodes still booting`;
+          setStatus(
+            `${label} finished — some nodes are still booting (orange)`,
+          );
+        }
+        await pollRuntime();
+      } catch (err) {
+        clearDeployTimers();
+        finishDeployProgress(`${label} failed`, { ok: false });
+        ctrlStatus.textContent = `${label} failed: ${err.message || err}`;
+        showRebuildError(String(err.message || err));
+      } finally {
+        unlockControls();
+      }
+    }
+
+    btnDeploy.addEventListener("click", () => {
+      if (deployBusy) return;
+      runDeploy("Deploy", () => postJson("/api/lab/deploy"));
+    });
+    btnRedeploy.addEventListener("click", () => {
+      if (deployBusy) return;
+      runDeploy("Redeploy", () => postJson("/api/lab/redeploy"));
+    });
+    const destroyDialog = document.getElementById("destroy-dialog");
+    const destroyForm = document.getElementById("destroy-dialog-form");
+    const destroyDialogTitle = document.getElementById("destroy-dialog-title");
+    const destroyDialogDesc = document.getElementById("destroy-dialog-desc");
+    const destroyConfirmBtn = document.getElementById("destroy-confirm-btn");
+    const destroyScopeLab = document.getElementById("destroy-scope-lab");
+    const destroyScopeAll = document.getElementById("destroy-scope-all");
+    const destroyPosClear = document.getElementById("destroy-pos-clear");
+    const destroyPosPreserve = document.getElementById("destroy-pos-preserve");
+    let destroyClearPositions = true;
+    let destroyAllLabs = false;
+
+    function setDestroyPosChoice(clear) {
+      destroyClearPositions = clear;
+      destroyPosClear?.classList.toggle("active", clear);
+      destroyPosClear?.classList.toggle("muted", !clear);
+      destroyPosPreserve?.classList.toggle("active", !clear);
+      destroyPosPreserve?.classList.toggle("muted", clear);
+    }
+
+    function setDestroyScope(all) {
+      destroyAllLabs = all === true;
+      destroyScopeLab?.classList.toggle("active", !destroyAllLabs);
+      destroyScopeLab?.classList.toggle("muted", destroyAllLabs);
+      destroyScopeAll?.classList.toggle("active", destroyAllLabs);
+      destroyScopeAll?.classList.toggle("muted", !destroyAllLabs);
+      if (destroyDialogTitle) {
+        destroyDialogTitle.textContent = destroyAllLabs
+          ? "Destroy all labs?"
+          : "Destroy lab?";
+      }
+      if (destroyDialogDesc) {
+        destroyDialogDesc.textContent = destroyAllLabs
+          ? "Runs sudo containerlab destroy --all --cleanup — removes every Containerlab lab and lab directories on this host."
+          : "This tears down the Containerlab topology. Saved node positions can be cleared or kept for the next deploy.";
+      }
+      if (destroyConfirmBtn) {
+        destroyConfirmBtn.textContent = destroyAllLabs
+          ? "Destroy all"
+          : "Destroy";
+      }
+    }
+
+    destroyPosClear?.addEventListener("click", () => setDestroyPosChoice(true));
+    destroyPosPreserve?.addEventListener("click", () => setDestroyPosChoice(false));
+    destroyScopeLab?.addEventListener("click", () => setDestroyScope(false));
+    destroyScopeAll?.addEventListener("click", () => setDestroyScope(true));
+
+    btnDestroy.addEventListener("click", () => {
+      if (!destroyDialog || typeof destroyDialog.showModal !== "function") {
+        // Fallback if <dialog> unsupported.
+        if (!confirm("Destroy lab?")) return;
+        runDestroy(true, { all: false });
+        return;
+      }
+      setDestroyPosChoice(true);
+      setDestroyScope(false);
+      destroyDialog.showModal();
+    });
+
+    destroyForm?.addEventListener("submit", (ev) => {
+      const submitter = ev.submitter;
+      const value = submitter?.value || "cancel";
+      if (value !== "destroy") return;
+      // method=dialog closes the dialog; run destroy after.
+      queueMicrotask(() =>
+        runDestroy(destroyClearPositions, { all: destroyAllLabs }),
+      );
+    });
+
+    async function runDestroy(clearPositions, { all = false } = {}) {
+      unlockControls();
+      clearRebuildError();
+      if (clearPositions) clearSavedPositions();
+      const label = all ? "Destroy all labs" : "Destroy";
+      ctrlStatus.textContent = `${label}…`;
+      showDeployProgress(
+        all ? "Destroying all labs (--all --cleanup)…" : "Destroying lab…",
+        { indeterminate: true },
+      );
+      try {
+        await postJson("/api/lab/destroy", {
+          body: JSON.stringify({ all: all === true }),
+        });
+        location.href = "/?destroyed=1";
+      } catch (err) {
+        unlockControls();
+        finishDeployProgress(`${label} failed`, { ok: false });
+        ctrlStatus.textContent = `${label} failed: ${err.message || err}`;
+        showRebuildError(String(err.message || err));
+      }
+    }
+
+    function closeJson() {
+      jsonPanel.classList.remove("open");
+      jsonBackdrop.classList.remove("open");
+    }
+    function closeViz() {
+      document.getElementById("viz-panel")?.classList.remove("open");
+    }
+    document.getElementById("btn-tree").addEventListener("click", async () => {
+      const res = await fetch("/api/tree", { cache: "no-store" });
+      const body = await res.json();
+      jsonBody.textContent = res.ok ? JSON.stringify(body, null, 2) : (body.error || "no tree");
+      jsonPanel.classList.add("open");
+      jsonBackdrop.classList.add("open");
+    });
+    document.getElementById("btn-tree-close").addEventListener("click", closeJson);
+    jsonBackdrop.addEventListener("click", closeJson);
+    document.getElementById("btn-viz-close")?.addEventListener("click", closeViz);
+    document.getElementById("btn-viz-undock")?.addEventListener("click", () => {
+      const panel = document.getElementById("viz-panel");
+      if (!panel) return;
+      setVizDocked(!panel.classList.contains("docked"));
+    });
+    window.addEventListener("resize", () => {
+      const panel = document.getElementById("viz-panel");
+      if (panel?.classList.contains("open")) fitVizPanelToContent();
+    });
+
+    (function enableVizPanelDrag() {
+      const panel = document.getElementById("viz-panel");
+      const handle = document.getElementById("viz-panel-drag");
+      if (!panel || !handle) return;
+      let dragging = false;
+      let startX = 0;
+      let startY = 0;
+      let origLeft = 0;
+      let origTop = 0;
+
+      function clamp(n, min, max) {
+        return Math.min(max, Math.max(min, n));
+      }
+
+      handle.addEventListener("pointerdown", (ev) => {
+        if (!panel.classList.contains("floating")) return;
+        if (ev.button != null && ev.button !== 0) return;
+        if (ev.target?.closest?.("#btn-viz-close, #btn-viz-undock, .viz-panel-actions")) return;
+        const rect = panel.getBoundingClientRect();
+        dragging = true;
+        handle.classList.add("dragging");
+        startX = ev.clientX;
+        startY = ev.clientY;
+        origLeft = rect.left;
+        origTop = rect.top;
+        panel.style.left = `${origLeft}px`;
+        panel.style.top = `${origTop}px`;
+        panel.style.right = "auto";
+        panel.style.bottom = "auto";
+        handle.setPointerCapture?.(ev.pointerId);
+        ev.preventDefault();
+      });
+
+      handle.addEventListener("pointermove", (ev) => {
+        if (!dragging) return;
+        const w = panel.offsetWidth;
+        const h = panel.offsetHeight;
+        const left = clamp(origLeft + (ev.clientX - startX), 8, window.innerWidth - Math.min(w, 80));
+        const top = clamp(origTop + (ev.clientY - startY), 8, window.innerHeight - Math.min(h, 48));
+        panel.style.left = `${left}px`;
+        panel.style.top = `${top}px`;
+      });
+
+      const endDrag = (ev) => {
+        if (!dragging) return;
+        dragging = false;
+        handle.classList.remove("dragging");
+        try {
+          handle.releasePointerCapture?.(ev.pointerId);
+        } catch {
+          /* ignore */
+        }
+      };
+      handle.addEventListener("pointerup", endDrag);
+      handle.addEventListener("pointercancel", endDrag);
+    })();
+
+    unlockControls();
+    refreshSessionMeta();
+    const lab = await fetchLab();
+    labName = lab.name || "Lab";
+    labNameEl.textContent = labName;
+    document.title = `${labName} · topology`;
+    showLinkIps = loadShowLinkIps();
+    applyShowLinkIps();
+    showLinkV4 = loadShowLinkRoutes("v4");
+    showLinkV6 = loadShowLinkRoutes("v6");
+    applyShowLinkRoutes();
+
+    applyLabPayload(lab);
+    const nodeIds = lab.nodes || addressedNodeList(lab.topology).map((n) => n.id);
+    // Always poll container availability (green/grey + CLI enable); session
+    // link coloring still gated inside applyRuntimeStatus.
+    pollRuntime().then(() => {
+      const firstUp = nodeIds.find((id) => nodeIsAvailable(id));
+      if (firstUp) connect(firstUp);
+      else if (nodeIds.length) {
+        setStatus("No running nodes — deploy the lab, then open CLI");
+      }
+    });
+    setInterval(pollRuntime, 3000);
+  </script>
+</body>
+</html>

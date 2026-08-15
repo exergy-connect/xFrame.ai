@@ -1,5 +1,5 @@
 # Regenerate example consolidated output, compile locale decks (example-deck*.md),
-# compile the xForm semantic lab example, then commit once.
+# then commit once.
 name: xFrame examples
 
 on:
@@ -14,7 +14,6 @@ on:
       - "examples/present/snapshots/**"
       - "examples/present/diagrams/**"
       - "examples/present/*.png"
-      - "docs/examples/xform-semantic-lab/**"
       - "skills/xframe-present/**"
       - "skills/xform/**"
       - "actions/present/action.yml"
@@ -34,7 +33,6 @@ env:
   TZ: America/Chicago
   DATA: ${{ github.workspace }}/examples/consolidate/output/consolidated_data.json
   PRESENT_OUT: examples/present/output
-  SEMANTIC_LAB: docs/examples/xform-semantic-lab
 
 jobs:
   examples:
@@ -79,14 +77,6 @@ jobs:
             cp "$html" "docs/examples/present/$base"
           done
 
-      # External repos: uses: exergy-connect/xFrame.ai/actions/xform@main
-      - name: Compile semantic lab example
-        uses: ./actions/xform
-        with:
-          sources: ${{ env.SEMANTIC_LAB }}/semantic-lab-fw.xpt ${{ env.SEMANTIC_LAB }}/topology.xp
-          materialization: clab.yml
-          no-execute: "true"
-
       - name: Commit generated examples
         run: |
           git config user.name "github-actions[bot]"
@@ -108,14 +98,11 @@ jobs:
             [[ "$base" =~ ^example-deck(\.[A-Za-z0-9-]+)?\.html$ ]] || continue
             git add -f "docs/examples/present/$base"
           done
-          if [[ -d "$SEMANTIC_LAB/output" ]]; then
-            git add -f "$SEMANTIC_LAB/output"
-          fi
           if git diff --staged --quiet; then
             echo "No changes to generated examples."
             exit 0
           fi
-          git commit -m "examples: refresh consolidated output, presentation, and semantic lab (CI) [skip ci]"
+          git commit -m "examples: refresh consolidated output and presentation (CI) [skip ci]"
           for attempt in 1 2 3 4 5; do
             if git push origin "${GITHUB_REF_NAME}"; then
               echo "Pushed on attempt $attempt"

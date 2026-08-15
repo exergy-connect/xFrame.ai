@@ -52,13 +52,11 @@ cp -r path/to/xFrame.ai/skills/xframe-code .cursor/skills/
 
 ## Dev Container
 
-This repository includes [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) for Cursor / VS Code **Dev Containers**. It uses the published **xForm** image (`ghcr.io/exergy-connect/experiments/xform:latest`) so you can compile `.xp` examples and run the lab UI without installing Node.js 24 locally.
+This repository includes [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) for Cursor / VS Code **Dev Containers**. It builds from [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) (Debian Trixie plus the skill installer).
 
 - **Name:** `xFrame.ai`
 - Reopen the folder in the container (Command Palette: **Dev Containers: Reopen in Container**).
-- `--privileged` is required so the image can start in-container `dockerd` (Containerlab / lab deploy). Do not add the `docker-in-docker` feature; it conflicts with the image’s own daemon.
-- After start, `xform` is on `PATH`. Lab UI: http://127.0.0.1:42042/
-- `postStart` also runs the in-image skill installer into `.cursor/skills/` (same suite as the install script above).
+- `postStart` runs the skill installer into `.cursor/skills/` (same suite as the install script above).
 
 ## Examples
 

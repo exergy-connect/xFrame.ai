@@ -1,0 +1,538 @@
+name: fabric-from-image
+prefix: ""
+
+mgmt:
+  network: dc_mgmt
+  ipv4-subnet: 10.255.0.0/24
+
+topology:
+  nodes:
+    client1:
+      mgmt-ipv4: 10.255.0.36
+      kind: linux
+      image: alpine:3.19
+      runtime: docker
+      
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/sh
+      cmd: /opt/lab-config/client1-initialize.sh
+    client2:
+      mgmt-ipv4: 10.255.0.37
+      kind: linux
+      image: alpine:3.19
+      runtime: docker
+      
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/sh
+      cmd: /opt/lab-config/client2-initialize.sh
+    L1-1-1:
+      mgmt-ipv4: 10.255.0.25
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/L1-1-1-initialize.sh
+    L1-1-2:
+      mgmt-ipv4: 10.255.0.26
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/L1-1-2-initialize.sh
+    L1-2-1:
+      mgmt-ipv4: 10.255.0.27
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/L1-2-1-initialize.sh
+    L1-3-1:
+      mgmt-ipv4: 10.255.0.28
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/L1-3-1-initialize.sh
+    L1-3-2:
+      mgmt-ipv4: 10.255.0.29
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/L1-3-2-initialize.sh
+    L1-4-1:
+      mgmt-ipv4: 10.255.0.30
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/L1-4-1-initialize.sh
+    L2-1-1:
+      mgmt-ipv4: 10.255.0.31
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/L2-1-1-initialize.sh
+    L2-1-2:
+      mgmt-ipv4: 10.255.0.32
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/L2-1-2-initialize.sh
+    L2-2-1:
+      mgmt-ipv4: 10.255.0.33
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/L2-2-1-initialize.sh
+    L2-3-1:
+      mgmt-ipv4: 10.255.0.34
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/L2-3-1-initialize.sh
+    L2-4-1:
+      mgmt-ipv4: 10.255.0.35
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/L2-4-1-initialize.sh
+    S1-1:
+      mgmt-ipv4: 10.255.0.17
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/S1-1-initialize.sh
+    S1-2:
+      mgmt-ipv4: 10.255.0.18
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/S1-2-initialize.sh
+    S1-3:
+      mgmt-ipv4: 10.255.0.19
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/S1-3-initialize.sh
+    S1-4:
+      mgmt-ipv4: 10.255.0.20
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/S1-4-initialize.sh
+    S2-1:
+      mgmt-ipv4: 10.255.0.21
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/S2-1-initialize.sh
+    S2-2:
+      mgmt-ipv4: 10.255.0.22
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/S2-2-initialize.sh
+    S2-3:
+      mgmt-ipv4: 10.255.0.23
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/S2-3-initialize.sh
+    S2-4:
+      mgmt-ipv4: 10.255.0.24
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/S2-4-initialize.sh
+    SS1:
+      mgmt-ipv4: 10.255.0.11
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/SS1-initialize.sh
+    SS2:
+      mgmt-ipv4: 10.255.0.12
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/SS2-initialize.sh
+    SS3:
+      mgmt-ipv4: 10.255.0.13
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/SS3-initialize.sh
+    SS4:
+      mgmt-ipv4: 10.255.0.14
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/SS4-initialize.sh
+    SS5:
+      mgmt-ipv4: 10.255.0.15
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/SS5-initialize.sh
+    SS6:
+      mgmt-ipv4: 10.255.0.16
+      kind: linux
+      image: quay.io/frrouting/frr:10.6.1
+      runtime: docker
+      binds:
+        - config:/opt/lab-config
+      entrypoint: /bin/bash
+      cmd: /opt/lab-config/SS6-initialize.sh
+
+  links:
+  - endpoints:
+      - "S1-1:eth1"
+      - "SS1:eth1"
+  - endpoints:
+      - "S1-1:eth2"
+      - "SS2:eth1"
+  - endpoints:
+      - "S1-1:eth3"
+      - "SS3:eth1"
+  - endpoints:
+      - "S1-1:eth4"
+      - "SS4:eth1"
+  - endpoints:
+      - "S1-1:eth5"
+      - "SS5:eth1"
+  - endpoints:
+      - "S1-1:eth6"
+      - "SS6:eth1"
+  - endpoints:
+      - "S1-2:eth1"
+      - "SS1:eth2"
+  - endpoints:
+      - "S1-2:eth2"
+      - "SS2:eth2"
+  - endpoints:
+      - "S1-2:eth3"
+      - "SS3:eth2"
+  - endpoints:
+      - "S1-2:eth4"
+      - "SS4:eth2"
+  - endpoints:
+      - "S1-2:eth5"
+      - "SS5:eth2"
+  - endpoints:
+      - "S1-2:eth6"
+      - "SS6:eth2"
+  - endpoints:
+      - "S1-3:eth1"
+      - "SS1:eth3"
+  - endpoints:
+      - "S1-3:eth2"
+      - "SS2:eth3"
+  - endpoints:
+      - "S1-3:eth3"
+      - "SS3:eth3"
+  - endpoints:
+      - "S1-3:eth4"
+      - "SS4:eth3"
+  - endpoints:
+      - "S1-3:eth5"
+      - "SS5:eth3"
+  - endpoints:
+      - "S1-3:eth6"
+      - "SS6:eth3"
+  - endpoints:
+      - "S1-4:eth1"
+      - "SS1:eth4"
+  - endpoints:
+      - "S1-4:eth2"
+      - "SS2:eth4"
+  - endpoints:
+      - "S1-4:eth3"
+      - "SS3:eth4"
+  - endpoints:
+      - "S1-4:eth4"
+      - "SS4:eth4"
+  - endpoints:
+      - "S1-4:eth5"
+      - "SS5:eth4"
+  - endpoints:
+      - "S1-4:eth6"
+      - "SS6:eth4"
+  - endpoints:
+      - "L1-1-1:eth1"
+      - "S1-1:eth7"
+  - endpoints:
+      - "L1-1-1:eth2"
+      - "S1-2:eth7"
+  - endpoints:
+      - "L1-1-1:eth3"
+      - "S1-3:eth7"
+  - endpoints:
+      - "L1-1-1:eth4"
+      - "S1-4:eth7"
+  - endpoints:
+      - "L1-1-2:eth1"
+      - "S1-1:eth8"
+  - endpoints:
+      - "L1-1-2:eth2"
+      - "S1-2:eth8"
+  - endpoints:
+      - "L1-1-2:eth3"
+      - "S1-3:eth8"
+  - endpoints:
+      - "L1-1-2:eth4"
+      - "S1-4:eth8"
+  - endpoints:
+      - "L1-2-1:eth1"
+      - "S1-1:eth9"
+  - endpoints:
+      - "L1-2-1:eth2"
+      - "S1-2:eth9"
+  - endpoints:
+      - "L1-2-1:eth3"
+      - "S1-3:eth9"
+  - endpoints:
+      - "L1-2-1:eth4"
+      - "S1-4:eth9"
+  - endpoints:
+      - "L1-3-1:eth1"
+      - "S1-1:eth10"
+  - endpoints:
+      - "L1-3-1:eth2"
+      - "S1-2:eth10"
+  - endpoints:
+      - "L1-3-1:eth3"
+      - "S1-3:eth10"
+  - endpoints:
+      - "L1-3-1:eth4"
+      - "S1-4:eth10"
+  - endpoints:
+      - "L1-3-2:eth1"
+      - "S1-1:eth11"
+  - endpoints:
+      - "L1-3-2:eth2"
+      - "S1-2:eth11"
+  - endpoints:
+      - "L1-3-2:eth3"
+      - "S1-3:eth11"
+  - endpoints:
+      - "L1-3-2:eth4"
+      - "S1-4:eth11"
+  - endpoints:
+      - "L1-4-1:eth1"
+      - "S1-1:eth12"
+  - endpoints:
+      - "L1-4-1:eth2"
+      - "S1-2:eth12"
+  - endpoints:
+      - "L1-4-1:eth3"
+      - "S1-3:eth12"
+  - endpoints:
+      - "L1-4-1:eth4"
+      - "S1-4:eth12"
+  - endpoints:
+      - "S2-1:eth1"
+      - "SS1:eth5"
+  - endpoints:
+      - "S2-1:eth2"
+      - "SS2:eth5"
+  - endpoints:
+      - "S2-1:eth3"
+      - "SS3:eth5"
+  - endpoints:
+      - "S2-1:eth4"
+      - "SS4:eth5"
+  - endpoints:
+      - "S2-1:eth5"
+      - "SS5:eth5"
+  - endpoints:
+      - "S2-1:eth6"
+      - "SS6:eth5"
+  - endpoints:
+      - "S2-2:eth1"
+      - "SS1:eth6"
+  - endpoints:
+      - "S2-2:eth2"
+      - "SS2:eth6"
+  - endpoints:
+      - "S2-2:eth3"
+      - "SS3:eth6"
+  - endpoints:
+      - "S2-2:eth4"
+      - "SS4:eth6"
+  - endpoints:
+      - "S2-2:eth5"
+      - "SS5:eth6"
+  - endpoints:
+      - "S2-2:eth6"
+      - "SS6:eth6"
+  - endpoints:
+      - "S2-3:eth1"
+      - "SS1:eth7"
+  - endpoints:
+      - "S2-3:eth2"
+      - "SS2:eth7"
+  - endpoints:
+      - "S2-3:eth3"
+      - "SS3:eth7"
+  - endpoints:
+      - "S2-3:eth4"
+      - "SS4:eth7"
+  - endpoints:
+      - "S2-3:eth5"
+      - "SS5:eth7"
+  - endpoints:
+      - "S2-3:eth6"
+      - "SS6:eth7"
+  - endpoints:
+      - "S2-4:eth1"
+      - "SS1:eth8"
+  - endpoints:
+      - "S2-4:eth2"
+      - "SS2:eth8"
+  - endpoints:
+      - "S2-4:eth3"
+      - "SS3:eth8"
+  - endpoints:
+      - "S2-4:eth4"
+      - "SS4:eth8"
+  - endpoints:
+      - "S2-4:eth5"
+      - "SS5:eth8"
+  - endpoints:
+      - "S2-4:eth6"
+      - "SS6:eth8"
+  - endpoints:
+      - "L2-1-1:eth1"
+      - "S2-1:eth7"
+  - endpoints:
+      - "L2-1-1:eth2"
+      - "S2-2:eth7"
+  - endpoints:
+      - "L2-1-1:eth3"
+      - "S2-3:eth7"
+  - endpoints:
+      - "L2-1-1:eth4"
+      - "S2-4:eth7"
+  - endpoints:
+      - "L2-1-2:eth1"
+      - "S2-1:eth8"
+  - endpoints:
+      - "L2-1-2:eth2"
+      - "S2-2:eth8"
+  - endpoints:
+      - "L2-1-2:eth3"
+      - "S2-3:eth8"
+  - endpoints:
+      - "L2-1-2:eth4"
+      - "S2-4:eth8"
+  - endpoints:
+      - "L2-2-1:eth1"
+      - "S2-1:eth9"
+  - endpoints:
+      - "L2-2-1:eth2"
+      - "S2-2:eth9"
+  - endpoints:
+      - "L2-2-1:eth3"
+      - "S2-3:eth9"
+  - endpoints:
+      - "L2-2-1:eth4"
+      - "S2-4:eth9"
+  - endpoints:
+      - "L2-3-1:eth1"
+      - "S2-1:eth10"
+  - endpoints:
+      - "L2-3-1:eth2"
+      - "S2-2:eth10"
+  - endpoints:
+      - "L2-3-1:eth3"
+      - "S2-3:eth10"
+  - endpoints:
+      - "L2-3-1:eth4"
+      - "S2-4:eth10"
+  - endpoints:
+      - "L2-4-1:eth1"
+      - "S2-1:eth11"
+  - endpoints:
+      - "L2-4-1:eth2"
+      - "S2-2:eth11"
+  - endpoints:
+      - "L2-4-1:eth3"
+      - "S2-3:eth11"
+  - endpoints:
+      - "L2-4-1:eth4"
+      - "S2-4:eth11"
+  - endpoints:
+      - "client1:eth1"
+      - "L1-1-1:eth5"
+  - endpoints:
+      - "L2-4-1:eth5"
+      - "client2:eth1"
