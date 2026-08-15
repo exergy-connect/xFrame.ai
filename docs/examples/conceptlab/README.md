@@ -1,5 +1,7 @@
 # Concept lab: Fabric-A Clos
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/exergy-connect/xFrame.ai)
+
 This example is a **compiled xForm semantic lab**: a Containerlab package and
 lab web UI generated from a data-center fabric diagram, then published in [`output/`](output/) so GitHub Pages can serve the static UI.
 
