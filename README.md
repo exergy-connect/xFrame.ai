@@ -2,7 +2,7 @@
 
 Public repository of **Cursor agent skills** for [xFrame](https://github.com/exergy-connect/xFrame): model-driven data consolidation and related workflows.
 
-**Live demo:** [xFrame Present example deck](https://exergy-connect.github.io/xFrame.ai/examples/present/example-deck.html#1) — subsea tieback portfolio slides with consolidated-data graphs.
+**Live demo:** [Fabric-A Clos concept lab](https://exergy-connect.github.io/xFrame.ai/examples/conceptlab/output/ui/) — compiled Containerlab topology and static lab UI. GitHub Pages has no Docker daemon, so Deploy will not launch containers.
 
 ## Skills
 
@@ -60,28 +60,28 @@ This repository includes [`.devcontainer/devcontainer.json`](.devcontainer/devco
 
 ## Examples
 
-End-to-end sample under [`examples/`](examples/):
+End-to-end samples:
 
 | Path | Description |
 | --- | --- |
 | [`examples/consolidate/`](examples/consolidate/) | Subsea tieback portfolio — JSON model, sample data, and consolidated output. See [README](examples/consolidate/README.md) for entity layout and how to run the consolidator. |
-| [`examples/present/`](examples/present/) | Demo slide decks (`example-deck.md` / locale variants → HTML under `output/`) bound to the consolidated data, with shared graph specs via `@include`. |
+| [`docs/examples/conceptlab/`](docs/examples/conceptlab/) | Compiled Fabric-A Clos lab snapshot (Containerlab package + static UI). See [README](docs/examples/conceptlab/README.md). |
 
-CI on `main` keeps generated artifacts fresh via [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml): consolidate, compile decks to `examples/present/output/`, copy into `docs/examples/present/`, and commit once.
+CI on `main` reconsolidates [`examples/consolidate/`](examples/consolidate/) via [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) and commits refreshed `output/` when the model or data change.
 
 ## GitHub Pages
 
-The live site ([exergy-connect.github.io/xFrame.ai](https://exergy-connect.github.io/xFrame.ai)) is published from [`docs/`](docs/) only. Pushes that touch other paths (skills sync, action metadata, README, and so on) do not trigger a Pages rebuild. CI copies the compiled demo deck into `docs/examples/present/` when it changes.
+GitHub Pages serves files from [`docs/`](docs/) at `https://exergy-connect.github.io/xFrame.ai/<path>`. Pushes that touch other paths (skills sync, action metadata, README, and so on) do not trigger a Pages rebuild.
 
 | Path under `docs/` | Served URL |
 | --- | --- |
-| `install-skills.sh` | `/install-skills.sh` |
-| `latest` | `/latest` |
-| `examples/present/example-deck.html` | `/examples/present/example-deck.html` |
-| `examples/present/example-deck.cz.html` | `/examples/present/example-deck.cz.html` |
-| `examples/resume/index.html` | `/examples/resume/` |
-| `goa_field_of_dreams.html` | `/goa_field_of_dreams.html` |
-| `LICENSE` | `/LICENSE` |
+| `install-skills.sh` | [`/install-skills.sh`](https://exergy-connect.github.io/xFrame.ai/install-skills.sh) |
+| `latest` | [`/latest`](https://exergy-connect.github.io/xFrame.ai/latest) |
+| `examples/conceptlab/output/ui/index.html` | [`/examples/conceptlab/output/ui/`](https://exergy-connect.github.io/xFrame.ai/examples/conceptlab/output/ui/) |
+| `examples/resume/index.html` | [`/examples/resume/`](https://exergy-connect.github.io/xFrame.ai/examples/resume/) |
+| `goa_field_of_dreams.html` | [`/goa_field_of_dreams.html`](https://exergy-connect.github.io/xFrame.ai/goa_field_of_dreams.html) |
+| `xform/xform.browser.min.js` | [`/xform/xform.browser.min.js`](https://exergy-connect.github.io/xFrame.ai/xform/xform.browser.min.js) |
+| `LICENSE` | [`/LICENSE`](https://exergy-connect.github.io/xFrame.ai/LICENSE) |
 
 Root [`wrangler.jsonc`](wrangler.jsonc) deploys the `xframe-ai` Worker: static résumé assets under `docs/examples/resume` plus the Gemini proxy API (`/v1/*`, `/health`) from [`cloudflare-proxy/`](cloudflare-proxy/).
 
@@ -94,7 +94,7 @@ npx wrangler secret put GEMINI_API_KEY
 
 ## Cloudflare Gemini proxy
 
-[`cloudflare-proxy/`](cloudflare-proxy/) is the API module bundled into `xframe-ai` (keeps the Gemini key off the client for runtime LLM and Live TTS). See [cloudflare-proxy/README.md](cloudflare-proxy/README.md). CI deploys the combined Worker via [`.github/workflows/deploy-cloudflare-proxy.yml`](.github/workflows/deploy-cloudflare-proxy.yml) when `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are configured.
+[`cloudflare-proxy/`](cloudflare-proxy/) is the API module bundled into `xframe-ai` (keeps the Gemini key off the client for runtime LLM and Live TTS). See [cloudflare-proxy/README.md](cloudflare-proxy/README.md). Deploy the combined Worker from the repo root with `npm run deploy`.
 
 ## GitHub Actions
 
@@ -120,7 +120,7 @@ Store a token with push access to this repository as `XFRAME_AI_TOKEN` in the ca
 | [**xFrame present**](actions/present/action.yml) | `exergy-connect/xFrame.ai/actions/present@main` | `actions/present/present.min.js` (copied into the skill on install) |
 | [**xForm**](actions/xform/action.yml) | `exergy-connect/xFrame.ai/actions/xform@main` | `actions/xform/xform.min.js` (copied into the skill on install) |
 
-[`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo actions (`./actions/consolidate`, `./actions/present`) and is intended as a copyable template. External workflows pin the published refs below.
+[`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) uses the in-repo consolidate action (`./actions/consolidate`) and is intended as a copyable template. External workflows pin the published refs below.
 
 ### xFrame consolidate
 
@@ -211,4 +211,4 @@ Action outputs `ir`, `html`, `png`, and `pptx` are absolute paths for the format
 
 ## License
 
-See [LICENSE](https://exergy-connect.github.io/xFrame.ai/LICENSE).
+See [LICENSE](LICENSE).
