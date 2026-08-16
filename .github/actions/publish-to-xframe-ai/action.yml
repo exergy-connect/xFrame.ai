@@ -156,7 +156,8 @@ runs:
         work="$(mktemp -d "${RUNNER_TEMP:-/tmp}/publish-xframe-ai.XXXXXX")"
         trap 'rm -rf "$work"' EXIT
         repo="$work/repo"
-        auth_header="Authorization: Bearer ${TOKEN}"
+        # GitHub's git HTTPS endpoint rejects Bearer; use Basic like actions/checkout.
+        auth_header="AUTHORIZATION: basic $(printf '%s' "x-access-token:${TOKEN}" | base64 | tr -d '\n')"
 
         clone_args=(--depth 1)
         if [[ -n "$TARGET_BRANCH" ]]; then
