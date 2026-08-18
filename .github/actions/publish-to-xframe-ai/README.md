@@ -27,6 +27,11 @@ Directory mappings **replace** the destination tree, so stale files under that
 dest go away. Use `remove_paths` only for leftovers outside those dests
 (renamed folders).
 
+A successful sync also writes `docs/latest` (timestamp plus the publish commit
+SHA) in a follow-up commit so GitHub Pages rebuilds and
+`install-skills.sh --check` sees the new suite version. Set `update_latest: false`
+to skip that bump.
+
 Optional `source_root` prefixes every source path. Optional `target_branch`
 selects a non-default branch on the target repo.
 
@@ -44,6 +49,7 @@ selects a non-default branch on the target repo.
 | `target_branch` | no | target default branch |
 | `user_name` | no | `GitHub Actions` |
 | `user_email` | no | `actions@github.com` |
+| `update_latest` | no | `true` |
 
 ## Outputs
 

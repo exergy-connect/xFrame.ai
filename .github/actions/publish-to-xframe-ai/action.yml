@@ -59,6 +59,12 @@ inputs:
     description: 'Commit author email'
     required: false
     default: 'actions@github.com'
+  update_latest:
+    description: >-
+      When true, bump docs/latest after a successful sync so GitHub Pages
+      rebuilds and install-skills.sh --check sees the new suite version.
+    required: false
+    default: 'true'
 
 outputs:
   committed:
@@ -85,6 +91,7 @@ runs:
         TARGET_BRANCH: ${{ inputs.target_branch }}
         USER_NAME: ${{ inputs.user_name }}
         USER_EMAIL: ${{ inputs.user_email }}
+        UPDATE_LATEST: ${{ inputs.update_latest }}
       run: |
         set -euo pipefail
 
@@ -241,6 +248,29 @@ runs:
         fi
 
         git commit -m "$COMMIT_MESSAGE"
+
+        bump_docs_latest() {
+          local publish_sha="$1"
+          local version
+          version="$(date -u +'%Y-%m-%dT%H:%M:%S').${publish_sha}"
+          mkdir -p docs
+          printf '%s\n' "$version" > docs/latest
+          git add docs/latest
+          if git diff --staged --quiet -- docs/latest; then
+            return 0
+          fi
+          if git log -1 --format=%s | grep -qx 'chore: update latest skill version'; then
+            git commit --amend --no-edit
+          else
+            # No [skip ci]: Pages deploys from docs/ and skips commits that opt out of CI.
+            git commit -m "chore: update latest skill version"
+          fi
+        }
+
+        if [[ "$UPDATE_LATEST" == "true" ]]; then
+          bump_docs_latest "$(git rev-parse HEAD)"
+        fi
+
         branch="$(git rev-parse --abbrev-ref HEAD)"
         max_attempts=5
         for attempt in $(seq 1 "$max_attempts"); do
@@ -260,5 +290,12 @@ runs:
             echo "Rebase conflict while syncing; aborting." >&2
             git rebase --abort 2>/dev/null || true
             exit 1
+          fi
+          if [[ "$UPDATE_LATEST" == "true" ]]; then
+            if git log -1 --format=%s | grep -qx 'chore: update latest skill version'; then
+              bump_docs_latest "$(git rev-parse HEAD^)"
+            else
+              bump_docs_latest "$(git rev-parse HEAD)"
+            fi
           fi
         done

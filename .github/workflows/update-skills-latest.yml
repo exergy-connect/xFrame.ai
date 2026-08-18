@@ -6,10 +6,8 @@ on:
       - main
     paths:
       - "skills/**"
-  # Skill syncs currently use `[skip ci]`, which suppresses push workflows.
-  # Reconcile periodically so those pushes still update the version marker.
-  schedule:
-    - cron: "*/5 * * * *"
+  # External repos bump docs/latest in publish-to-xframe-ai. This workflow
+  # covers in-repo skill edits that do not use [skip ci].
   workflow_dispatch:
 
 permissions:
