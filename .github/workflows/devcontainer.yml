@@ -6,6 +6,7 @@ on:
     paths: &image-paths
       - ".devcontainer/**"
       - ".github/workflows/devcontainer.yml"
+      - ".github/scripts/smoke-devcontainer-skills.sh"
       - "docs/install-skills.sh"
       - "docs/examples/conceptlab/**"
   pull_request:
@@ -46,16 +47,38 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=,format=short
 
-      - name: Build and push image
+      - name: Build image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: .devcontainer/Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          load: true
+          provenance: false
+          tags: |
+            xframe-ai:ci
+            ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Smoke test skills
+        run: |
+          docker run --rm \
+            --entrypoint bash \
+            -v "$GITHUB_WORKSPACE:/workspaces/xFrame.ai:ro" \
+            -w /workspaces/xFrame.ai \
+            -e HOME=/tmp \
+            xframe-ai:ci \
+            /workspaces/xFrame.ai/.github/scripts/smoke-devcontainer-skills.sh
+
+      - name: Push image
+        if: github.event_name != 'pull_request'
+        run: |
+          set -euo pipefail
+          while IFS= read -r tag; do
+            [[ -z "$tag" ]] && continue
+            docker push "$tag"
+          done <<< "${{ steps.meta.outputs.tags }}"
 
       # New GHCR packages default to private; keep this image anonymously pullable.
       - name: Make package public
