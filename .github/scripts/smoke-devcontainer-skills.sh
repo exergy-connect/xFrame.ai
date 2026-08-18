@@ -34,14 +34,14 @@ for skill_dir in skills/*/; do
 done
 mkdir -p \
   "$install_root/.cursor/skills/xframe-consolidate/scripts" \
-  "$install_root/.cursor/skills/xframe-present/scripts" \
   "$install_root/.cursor/skills/xform-run/scripts"
 cp actions/consolidate/consolidate.min.js actions/consolidate/package.json \
   "$install_root/.cursor/skills/xframe-consolidate/scripts/"
-cp actions/present/present.min.js actions/present/package.json \
-  "$install_root/.cursor/skills/xframe-present/scripts/"
 cp actions/xform/xform.min.js actions/xform/package.json \
   "$install_root/.cursor/skills/xform-run/scripts/"
+bash "$install_root/.cursor/skills/xframe-present/install.sh" \
+  "$repo/actions/present" \
+  "$install_root/.cursor/skills/xframe-present"
 
 skills_root="$install_root/.cursor/skills"
 work="$(mktemp -d)"
@@ -106,7 +106,11 @@ echo "::endgroup::"
 echo "::group::xframe-present"
 mark xframe-present
 need_file "$skills_root/xframe-present/SKILL.md"
+need_file "$skills_root/xframe-present/install.sh"
 need_file "$skills_root/xframe-present/scripts/present.min.js"
+need_file "$skills_root/xframe-present/model/document.yang"
+need_file "$skills_root/xframe-present/model/ir.yang"
+need_file "$skills_root/xframe-present/model/runtime.yang"
 mkdir -p "$work/present"
 cat > "$work/present/deck.xp" <<'EOF'
 ---

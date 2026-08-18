@@ -10,7 +10,7 @@ Compile `.xp` to IR, HTML, PNG, and/or PowerPoint. Edit the `.xp` source and rec
 
 ## Run
 
-The CLI is the published GitHub Action bundle. After `install-skills.sh`, that file is copied into this skill:
+The CLI is the published GitHub Action bundle. After `install-skills.sh`, this skill's `install.sh` copies that file and the YANG models into the installed skill:
 
 ```bash
 node .cursor/skills/xframe-present/scripts/present.min.js <input.xp> [options]

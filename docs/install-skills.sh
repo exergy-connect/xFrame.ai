@@ -218,12 +218,17 @@ done
 
 for spec in "${ACTION_CLIS[@]}"; do
   IFS='|' read -r action_dir skill_name bundle <<< "$spec"
+  dest="$OLDPWD/$TARGET/$skill_name"
+  if [ -f "$dest/install.sh" ]; then
+    bash "$dest/install.sh" "$TMP/$action_dir" "$dest"
+    continue
+  fi
   src="$TMP/$action_dir/$bundle"
   if [ ! -f "$src" ]; then
     echo "Action bundle missing at $action_dir/$bundle" >&2
     exit 1
   fi
-  scripts="$OLDPWD/$TARGET/$skill_name/scripts"
+  scripts="$dest/scripts"
   mkdir -p "$scripts"
   cp "$src" "$scripts/$bundle"
   if [ -f "$TMP/$action_dir/package.json" ]; then
