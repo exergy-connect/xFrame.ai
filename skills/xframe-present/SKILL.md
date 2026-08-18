@@ -1,12 +1,12 @@
 ---
 name: xframe-present
-description: Compiles .xp authoring documents (YAML front matter + Markdown segments) through normalized IR into HTML, PNG, and PowerPoint. Supports presentations (slidedeck, poster, readout, cover-letter), formats (desktop/tablet/mobile/poster/video), themes/styles, @layout/@region/@graph/@image/@narrative, Jinja templates, llm() / text_to_speech filters, and consolidated xFrame data. Use when building slides, decks, posters, .xp files, xframe-build, or exporting HTML/PNG/PPTX.
+description: Compiles .xp authoring documents (YAML front matter + Markdown segments) through normalized IR into HTML, PNG, PowerPoint, and narrated H.264 MP4. Supports presentations (slidedeck, poster, readout, cover-letter), formats (desktop/tablet/mobile/poster/video), themes/styles, @layout/@region/@graph/@image/@narrative, Jinja templates, llm() / text_to_speech filters, and consolidated xFrame data. Use when building slides, decks, posters, .xp files, xframe-build, html2mp4, or exporting HTML/PNG/PPTX/MP4.
 disable-model-invocation: true
 ---
 
 # Present (xFrame)
 
-Compile `.xp` to IR, HTML, PNG, and/or PowerPoint. Edit the `.xp` source and recompile; do not edit generated `.html` or `.xp.json`.
+Compile `.xp` to IR, HTML, PNG, PowerPoint, and/or narrated MP4. Edit the `.xp` source and recompile; do not edit generated `.html` or `.xp.json`.
 
 ## Run
 
@@ -41,7 +41,7 @@ Default outputs: IR + HTML. `.xp` must start with a closed YAML fence (`---` …
 | `--embed-images` | Inline local images in HTML. |
 | `--llm` | Enable compile-time `llm()`. |
 | `--llm-model <name>` | LLM model override. |
-| `--skip-audio` | Do not run TTS; reuse existing clips; omit audio from PPTX. |
+| `--skip-audio` | Do not run TTS; reuse existing clips; omit audio from HTML and PPTX. |
 | `--force-audio` | Regenerate TTS. Not with `--skip-audio`. |
 | `--combined-audio` | One deck TTS track. |
 | `--combined-pause <seconds>` | Pause between combined-track slides (default 3). |
@@ -66,6 +66,49 @@ node actions/present/present.min.js deck.xp --evaluation dynamic --theme dark --
 node actions/present/present.min.js flyer.xp --presentation poster --format poster --html --png
 node actions/present/present.min.js deck.xp --pptx -o dist/
 ```
+
+## MP4
+
+`present.min.js` does not emit video (`--mp4` is not a flag). Encode narrated H.264 with `html2mp4`. Input is `.xp` or `.xp.json`, not HTML. Requires Chrome or Chromium (`XFRAME_CHROME_PATH`), `ffmpeg`, and `ffprobe` (`FFMPEG_PATH` / `FFPROBE_PATH`). Compiling `.xp` forces `format: video` (logical canvas 1280×720 from `slidedeck-video`; output 1920×1080 unless `--width` / `--height`). HUD and chrome are hidden. Local animated `<img>` GIFs are composited; remote GIFs and CSS backgrounds are not.
+
+In this repository:
+
+```bash
+npm run html2mp4 -- <input.xp|input.xp.json> -o <output.mp4> [options]
+node dist/html2mp4/cli.js <input.xp|input.xp.json> -o <output.mp4> [options]
+```
+
+Pipeline in memory: compile → optional select → optional resolve → encode. Each slide is held for its `@narrative` audio plus `narrative.pause_seconds` (`--pause` wins; 0.75s if no narrative). Slides without audio use `--slide-duration` (default 5). The last slide adds `--outro-delay` / `video.outro_delay` (default 7). Missing clips are synthesized at encode time; existing `audio/<slide>-<locale>.*` are reused. Narrative language/text must be concrete — unresolved Jinja needs `--vars` / `--set` (or standalone `ir-resolve`) first.
+
+| Option | Description |
+|--------|-------------|
+| `-o, --output <file>` | Required MP4 path. |
+| `--language <locale>` | Narrative language, exact or base locale (default: first). |
+| `--pause` `--outro-delay` `--slide-duration` | Timing in seconds. |
+| `--slides <spec>` `--ids <id[,id...]>` `--ai-path` `--ai-context <text\|file>` | In-memory `ir-select`. `--ai-path` needs context (CLI or `video.ai_context`); not with `--slides` / `--ids`. |
+| `--vars <file.json>` `--set <name=value\|name=@file>` | In-memory `ir-resolve`. |
+| `--transition <name>` | `none`, `fade` (default), `wipeleft`, `wiperight`, `slideleft`, `slideright`. `none` stream-copies; others re-encode. |
+| `--transition-duration <sec>` | Overlap (default 0.5; ignored when `none`). |
+| `--iphone` | H.264 High Profile Level 4.1 + AAC for iPhone. |
+| `--preset` `--crf` `--tune` `--threads` | libx264 (defaults: `medium`, 18, `stillimage`, 0=auto). CI: `ultrafast`, 26, 2 threads. |
+| `--snapshot-delay <ms>` | Wait before screenshot / GIF measurement (default 1500). |
+| `--chrome` `--ffmpeg` `--ffprobe` | Executables. |
+
+```yaml
+narrative:
+  pause_seconds: 3
+video:
+  outro_delay: 10
+  ai_context: prompts/ai-video.md   # or inline notes; seeds --ai-path
+```
+
+```bash
+node dist/html2mp4/cli.js deck.xp -o deck.mp4 --language en-US --transition fade
+node dist/html2mp4/cli.js deck.xp -o cut.mp4 --slides 1,4,9 --language en-US
+node dist/html2mp4/cli.js deck.xp -o tailored.mp4 --ai-path --ai-context "Network architect" --language en-US
+```
+
+Or isolate stages on disk: `ir-select` → `ir-resolve` → `html2mp4` on `.xp.json`. This repo's GitHub workflow is `.github/workflows/build-video.yml` (`workflow_dispatch`; prefers `--transition none` on free-tier).
 
 ## GitHub Action
 
@@ -99,7 +142,7 @@ title: My Talk
 - Segments: split on a line that is only `---`.
 - Body: GFM Markdown. `{{ … }}` is Jinja (compile-time unless `evaluation: dynamic`).
 
-Front matter: `presentation`/`presentations` (default `slidedeck`), `format`/`formats` (default `desktop`, or `poster` for poster), `themes`/`theme`, `styles`/`style`, `title`, `subtitle`, `author`, `lang`, `layout`, `data`, `topic`, `llm`, `evaluation`, `header`, `footer`, `header-image`, `footer-image`, `narrative`.
+Front matter: `presentation`/`presentations` (default `slidedeck`), `format`/`formats` (default `desktop`, or `poster` for poster), `themes`/`theme`, `styles`/`style`, `title`, `subtitle`, `author`, `lang`, `layout`, `data`, `topic`, `llm`, `evaluation`, `header`, `footer`, `header-image`, `footer-image`, `narrative`, `video`.
 
 Segment head: `@id`, `@layout <name>` (optional indented YAML), `@theme`, `@evaluation`, `@presentation`, `@format`, `@class`.
 
