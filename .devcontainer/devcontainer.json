@@ -34,7 +34,7 @@
     "OPENROUTER_API_KEY2": "${localEnv:OPENROUTER_API_KEY2}",
     "OPENROUTER_API_KEY3": "${localEnv:OPENROUTER_API_KEY3}"
   },
-  "postStartCommand": "mkdir -p .cursor && echo '[xFrame.ai] refreshing skills' >&2 && /usr/local/bin/install-xFrame-ai-skills.sh >&2",
+  "postStartCommand": "mkdir -p .cursor && echo '[xFrame.ai] refreshing skills' >&2 && /usr/local/bin/install-xFrame-ai-skills.sh --aliases >&2",
   "customizations": {
     "vscode": {
       "extensions": [
