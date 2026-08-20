@@ -4,5 +4,4 @@ COPY --from=node:latest /usr/local/lib/node_modules/npm /usr/local/lib/node_modu
 RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 COPY --chmod=755 docs/install-skills.sh /usr/local/bin/install-xFrame-ai-skills.sh
-RUN /usr/local/bin/install-xFrame-ai-skills.sh --aliases
 COPY docs/examples/conceptlab /examples/conceptlab

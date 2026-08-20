@@ -25,6 +25,7 @@
     }
   },
   "containerEnv": {
+    "XFRAME_SKILLS_ROOT": "/workspaces/${localWorkspaceFolderBasename}/.cursor/skills",
     "XFORM_WORKSPACE": "/tmp/xform-ws",
     "XFORM_PORT": "${localEnv:XFORM_PORT:42042}",
     "GEMINI_API_KEY1": "${localEnv:GEMINI_API_KEY1}",
