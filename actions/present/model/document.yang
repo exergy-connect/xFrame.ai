@@ -165,6 +165,7 @@ module document {
       enum list;
       enum table;
       enum media;
+      enum html;
       enum qr_code;
       enum widget;
       enum raw;
@@ -813,6 +814,50 @@ module document {
           }
           leaf caption {
             type string;
+          }
+        }
+      }
+      case html {
+        container html {
+          presence "Interactive HTML artifact hosted by an @html directive.";
+          leaf src {
+            type string;
+            description "Local path or http(s) URL for the HTML artifact.";
+          }
+          leaf title {
+            type string;
+            description "Accessible title for the iframe host.";
+          }
+          leaf mode {
+            type enumeration {
+              enum iframe;
+              enum inline;
+              enum srcdoc;
+            }
+            default "iframe";
+            description
+              "iframe isolates a full document; inline/srcdoc accept fragments only.";
+          }
+          leaf sandbox {
+            type string;
+            description
+              "iframe sandbox tokens (default: allow-scripts allow-same-origin).";
+          }
+          leaf embed {
+            type boolean;
+            default "false";
+            description
+              "When true, gzip+base64 the artifact into the deck and inflate on load.";
+          }
+          leaf click-to-zoom {
+            type boolean;
+            default "true";
+            description
+              "When true, host chrome opens a full-viewport overlay of the artifact.";
+          }
+          leaf content {
+            type string;
+            description "Fragment body for mode inline or srcdoc (mutually exclusive with src).";
           }
         }
       }

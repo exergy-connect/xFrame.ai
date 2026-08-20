@@ -146,7 +146,27 @@ Front matter: `presentation`/`presentations` (default `slidedeck`), `format`/`fo
 
 Segment head: `@id`, `@layout <name>` (optional indented YAML), `@theme`, `@evaluation`, `@presentation`, `@format`, `@class`.
 
-Body: `@region <name>`, `@graph` (YAML spec; needs `data`), `@image`, `@map`, `@qr-code`, `@table`, `@narrative`, `@include <path>` (relative; optional `#fragment` or `segments:` range).
+Body: `@region <name>`, `@graph` (YAML spec; needs `data`), `@image`, `@html`, `@map`, `@qr_code`, `@table`, `@narrative`, `@include <path>` (relative; optional `#fragment` or `segments:` range).
+
+### `@html`
+
+Host an interactive HTML artifact (not a Markdown HTML leak; not `@include`; not `@image` with a `.html`).
+
+```xp
+@html
+  url: charts/sankey.html
+  title: Contractor Sankey
+  mode: iframe
+  sandbox: allow-scripts allow-same-origin
+  embed: true
+  click_to_zoom: true
+```
+
+- `url` XOR `content` (fragment). Paths resolve relative to the `.xp`; with `--out-dir`, local files are hard-linked/copied into the output tree (unless `embed: true`).
+- `mode: iframe` (default) isolates a full document. `inline` / `srcdoc` accept fragments only.
+- `embed: true` gzip+base64 embeds the local file or fetched remote document into the deck; the browser inflates on load (`DecompressionStream`). Self-contained artifacts only.
+- Interactive in `--html`; PNG / screenshot PPTX / MP4 photograph the iframe. Missing local file or failed embed fetch is a compile/build error with the resolved path or URL.
+- `click_to_zoom` (default true) adds host chrome that opens a full-viewport overlay of the iframe.
 
 ```yaml
 data:
