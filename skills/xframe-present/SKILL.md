@@ -1,12 +1,12 @@
 ---
 name: xframe-present
-description: Compiles .xp authoring documents (YAML front matter + Markdown segments) through normalized IR into HTML, PNG, PowerPoint, and narrated H.264 MP4. Supports presentations (slidedeck, poster, readout, cover-letter), formats (desktop/tablet/mobile/poster/video), themes/styles, @layout/@region/@graph/@image/@narrative, Jinja templates, llm() / text_to_speech filters, and consolidated xFrame data. Use when building slides, decks, posters, .xp files, xframe-build, html2mp4, or exporting HTML/PNG/PPTX/MP4.
+description: Compiles .xp authoring documents (YAML front matter + Markdown segments) through normalized IR into HTML, PNG, PowerPoint, Word (.docx), and narrated H.264 MP4. Supports presentations (slidedeck, poster, readout, cover-letter), formats (desktop/tablet/mobile/poster/video), themes/styles, @layout/@region/@graph/@image/@narrative, Jinja templates, llm() / text_to_speech filters, and consolidated xFrame data. Use when building slides, decks, posters, .xp files, xframe-build, html2mp4, or exporting HTML/PNG/PPTX/DOCX/MP4.
 disable-model-invocation: true
 ---
 
 # Present (xFrame)
 
-Compile `.xp` to IR, HTML, PNG, PowerPoint, and/or narrated MP4. Edit the `.xp` source and recompile; do not edit generated `.html` or `.xp.json`.
+Compile `.xp` to IR, HTML, PNG, PowerPoint, Word, and/or narrated MP4. Edit the `.xp` source and recompile; do not edit generated `.html` or `.xp.json`.
 
 ## Run
 
@@ -26,7 +26,7 @@ Default outputs: IR + HTML. `.xp` must start with a closed YAML fence (`---` …
 
 | Option | Description |
 |--------|-------------|
-| `--ir` `--html` `--png` `--pptx` | Outputs. If omitted, writes IR and HTML. |
+| `--ir` `--html` `--png` `--pptx` `--docx` | Outputs. If omitted, writes IR and HTML. |
 | `--screenshots` | With `--pptx`: photograph each HTML slide as a full-bleed PNG (same canvas as `--html`). |
 | `-o, --out-dir <dir>` | Output directory (default: beside input). |
 | `--presentation <name>` | `slidedeck`, `poster`, `readout`, `cover-letter`, … |
@@ -57,6 +57,7 @@ Outputs in `--out-dir` (basename = input without extension):
 - `--html` → `<base>.<presentation>.html`
 - `--png` → `<base>.<presentation>.png` or `<base>.<presentation>.<format>.png` when those names differ
 - `--pptx` → `<base>.<presentation>.pptx`
+- `--docx` → `<base>.<presentation>.docx`
 
 Exit 0 success (`Wrote <path>` on stderr), 1 compile/I/O, 2 usage.
 
@@ -65,6 +66,7 @@ node actions/present/present.min.js deck.xp --html
 node actions/present/present.min.js deck.xp --evaluation dynamic --theme dark --html
 node actions/present/present.min.js flyer.xp --presentation poster --format poster --html --png
 node actions/present/present.min.js deck.xp --pptx -o dist/
+node actions/present/present.min.js resume.xp --docx -o dist/
 ```
 
 ## MP4

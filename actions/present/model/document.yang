@@ -17,6 +17,11 @@ module document {
 
      Compiled portable IR (``.xp.json``) is validated separately by ``ir.yang``.";
 
+  revision "2026-08-21" {
+    description
+      "Add document-meta paginate boolean so overflowing letter-page content is
+       split into additional IR segments with section Continued headings.";
+  }
   revision "2026-08-10" {
     description
       "Add document-meta canvas boolean so fixed-canvas HTML framing is declared
@@ -457,6 +462,16 @@ module document {
          framing and viewport scaling). Declared on presentation templates
          (for example slidedeck, poster, cover-letter); not derived from the
          presentation name in code.";
+    }
+    leaf paginate {
+      type boolean;
+      default false;
+      description
+        "When true, xp2ir splits overflowing segment content into additional
+         page segments using constraints.height, inserting a
+         'TITLE (Continued)' heading at the same level as the interrupted
+         section heading when content spans pages. Declared on presentation
+         templates (for example cover-letter).";
     }
     leaf presentation {
       type presentation-name;
