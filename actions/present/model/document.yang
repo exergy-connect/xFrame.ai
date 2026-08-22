@@ -17,6 +17,11 @@ module document {
 
      Compiled portable IR (``.xp.json``) is validated separately by ``ir.yang``.";
 
+  revision "2026-08-22" {
+    description
+      "Add page-break header.continue (default true) so forced letter-page
+       breaks can repeat the interrupted section heading.";
+  }
   revision "2026-08-21" {
     description
       "Add document-meta paginate boolean so overflowing letter-page content is
@@ -172,6 +177,7 @@ module document {
       enum media;
       enum html;
       enum qr_code;
+      enum page_break;
       enum widget;
       enum raw;
       enum annotation;
@@ -468,10 +474,9 @@ module document {
       default false;
       description
         "When true, xp2ir splits overflowing segment content into additional
-         page segments using constraints.height, inserting a
-         'TITLE (Continued)' heading at the same level as the interrupted
-         section heading when content spans pages. Declared on presentation
-         templates (for example cover-letter).";
+         page segments using constraints.height, inserting a heading with
+         continued=true at the interrupted section level when content spans
+         pages. Declared on presentation templates (for example cover-letter).";
     }
     leaf presentation {
       type presentation-name;
@@ -778,6 +783,14 @@ module document {
             type string;
             mandatory true;
           }
+          leaf continued {
+            type boolean;
+            default false;
+            description
+              "Set by paginate when this heading continues a section from the
+               previous page. Display layers append ' (Continued)'; text stays
+               the original section title.";
+          }
         }
       }
       case paragraph {
@@ -873,6 +886,21 @@ module document {
           leaf content {
             type string;
             description "Fragment body for mode inline or srcdoc (mutually exclusive with src).";
+          }
+        }
+      }
+      case page-break {
+        container page-break {
+          presence "Forced letter-page break from an @page-break directive.";
+          container header {
+            leaf continue {
+              type boolean;
+              default true;
+              description
+                "When true, the next page repeats the interrupted section heading
+                 with continued=true. Set false to start the new page with no
+                 continuation heading.";
+            }
           }
         }
       }

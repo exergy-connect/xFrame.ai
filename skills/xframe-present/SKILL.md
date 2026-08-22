@@ -148,7 +148,7 @@ Front matter: `presentation`/`presentations` (default `slidedeck`), `format`/`fo
 
 Segment head: `@id`, `@layout <name>` (optional indented YAML), `@theme`, `@evaluation`, `@presentation`, `@format`, `@class`.
 
-Body: `@region <name>`, `@graph` (YAML spec; needs `data`), `@image`, `@html`, `@map`, `@qr_code`, `@table`, `@narrative`, `@include <path>` (relative; optional `#fragment` or `segments:` range).
+Body: `@region <name>`, `@graph` (YAML spec; needs `data`), `@image`, `@html`, `@map`, `@qr_code`, `@page-break` (`header.continue`, default true), `@table`, `@narrative`, `@include <path>` (relative; optional `#fragment` or `segments:` range).
 
 ### `@html`
 
