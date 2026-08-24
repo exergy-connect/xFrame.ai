@@ -1,7 +1,6 @@
 ---
 name: xframe-present
 description: Compiles .xp authoring documents (YAML front matter + Markdown segments) through normalized IR into HTML, PNG, PowerPoint, Word (.docx), and narrated H.264 MP4. Supports presentations (slidedeck, poster, readout, cover-letter), formats (desktop/tablet/mobile/poster/video), themes/styles, @layout/@region/@graph/@image/@narrative, Jinja templates, llm() / text_to_speech filters, and consolidated xFrame data. Use when building slides, decks, posters, .xp files, xframe-build, html2mp4, or exporting HTML/PNG/PPTX/DOCX/MP4.
-disable-model-invocation: true
 ---
 
 # Present (xFrame)
@@ -10,7 +9,7 @@ Compile `.xp` to IR, HTML, PNG, PowerPoint, Word, and/or narrated MP4. Edit the 
 
 ## Run
 
-The CLI is the published GitHub Action bundle. After `install-skills.sh`, this skill's `install.sh` copies that file and the YANG models into the installed skill:
+The CLIs are published with the GitHub Action bundle. After `install-skills.sh`, this skill's `install.sh` copies them and the YANG models into the installed skill:
 
 ```bash
 node .cursor/skills/xframe-present/scripts/present.min.js <input.xp> [options]
@@ -71,11 +70,18 @@ node actions/present/present.min.js resume.xp --docx -o dist/
 
 ## MP4
 
-`present.min.js` does not emit video (`--mp4` is not a flag). Encode narrated H.264 with `html2mp4`. Input is `.xp` or `.xp.json`, not HTML. Requires Chrome or Chromium (`XFRAME_CHROME_PATH`), `ffmpeg`, and `ffprobe` (`FFMPEG_PATH` / `FFPROBE_PATH`). Compiling `.xp` forces `format: video` (logical canvas 1280×720 from `slidedeck-video`; output 1920×1080 unless `--width` / `--height`). HUD and chrome are hidden. Local animated `<img>` GIFs are composited; remote GIFs and CSS backgrounds are not.
+`present.min.js` does not emit video (`--mp4` is not a flag). Encode narrated H.264 with the separately published `html2mp4.min.js`. Input is `.xp` or `.xp.json`, not HTML. Requires Chrome or Chromium (`XFRAME_CHROME_PATH`), `ffmpeg`, and `ffprobe` (`FFMPEG_PATH` / `FFPROBE_PATH`). Compiling `.xp` forces `format: video` (logical canvas 1280×720 from `slidedeck-video`; output 1920×1080 unless `--width` / `--height`). HUD and chrome are hidden. Local animated `<img>` GIFs are composited; remote GIFs and CSS backgrounds are not.
 
-In this repository:
+After skill installation:
 
 ```bash
+node .cursor/skills/xframe-present/scripts/html2mp4.min.js <input.xp|input.xp.json> -o <output.mp4> [options]
+```
+
+In the xFrame.ai repository or this source repository:
+
+```bash
+node actions/present/html2mp4.min.js <input.xp|input.xp.json> -o <output.mp4> [options]
 npm run html2mp4 -- <input.xp|input.xp.json> -o <output.mp4> [options]
 node dist/html2mp4/cli.js <input.xp|input.xp.json> -o <output.mp4> [options]
 ```
@@ -105,9 +111,9 @@ video:
 ```
 
 ```bash
-node dist/html2mp4/cli.js deck.xp -o deck.mp4 --language en-US --transition fade
-node dist/html2mp4/cli.js deck.xp -o cut.mp4 --slides 1,4,9 --language en-US
-node dist/html2mp4/cli.js deck.xp -o tailored.mp4 --ai-path --ai-context "Network architect" --language en-US
+node .cursor/skills/xframe-present/scripts/html2mp4.min.js deck.xp -o deck.mp4 --language en-US --transition fade
+node .cursor/skills/xframe-present/scripts/html2mp4.min.js deck.xp -o cut.mp4 --slides 1,4,9 --language en-US
+node .cursor/skills/xframe-present/scripts/html2mp4.min.js deck.xp -o tailored.mp4 --ai-path --ai-context "Network architect" --language en-US
 ```
 
 Or isolate stages on disk: `ir-select` → `ir-resolve` → `html2mp4` on `.xp.json`. This repo's GitHub workflow is `.github/workflows/build-video.yml` (`workflow_dispatch`; prefers `--transition none` on free-tier).
