@@ -1,7 +1,7 @@
 ---
 presentation: slidedeck
 format: desktop
-themes: [light]
+themes: [canadian-monochrome, canadian-color]
 styles: [canadian-declaration]
 title: The Canadian Declaration of Independence
 author: Canada
@@ -30,6 +30,11 @@ horizontal_split:
 We hold these truths to be self-evident: that Canada is a free people, possessed of its own history, its own institutions, and its own destiny; and that no nation, however powerful or beloved, may rightfully govern another by influence, habit, or proximity.
 
 For generations, we have lived beneath the overwhelming shadow of the United States, accepting as natural that which was never formally granted: that our security should be determined in Washington, our prosperity measured against American fortunes, and our place in the world understood through an American lens.
+
+@image canadian_flag_reveal.png
+  id: canadian-flag-reveal
+  alt: The Canadian flag waving against a blue sky
+  click_to_zoom: false
 
 @region image
 <div class="declaration-logos" aria-label="Exergy and Distributive">
@@ -67,3 +72,16 @@ And though we shall remain neighbors, we shall henceforth be **neighbors as equa
       And though we shall remain neighbors, we shall henceforth be neighbors as equals.
 
       So let it be declared.
+
+```javascript
+document.addEventListener("ended", (event) => {
+  const audio = event.target;
+  if (!(audio instanceof HTMLAudioElement) || !audio.matches("audio[data-narrative-audio]")) return;
+  const theme = "canadian-color";
+  const root = document.getElementById("xframe");
+  if (!root) return;
+  root.dataset.theme = theme;
+  root.querySelectorAll(".segment").forEach((slide) => { slide.dataset.theme = theme; });
+  document.documentElement.dataset.theme = theme;
+}, true);
+```
