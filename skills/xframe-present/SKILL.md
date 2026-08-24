@@ -70,7 +70,7 @@ node actions/present/present.min.js resume.xp --docx -o dist/
 
 ## MP4
 
-`present.min.js` does not emit video (`--mp4` is not a flag). Encode narrated H.264 with the separately published `html2mp4.min.js`. Input is `.xp` or `.xp.json`, not HTML. Requires Chrome or Chromium (`XFRAME_CHROME_PATH`), `ffmpeg`, and `ffprobe` (`FFMPEG_PATH` / `FFPROBE_PATH`). Compiling `.xp` forces `format: video` (logical canvas 1280×720 from `slidedeck-video`; output 1920×1080 unless `--width` / `--height`). HUD and chrome are hidden. Local animated `<img>` GIFs are composited; remote GIFs and CSS backgrounds are not.
+Encode narrated H.264 with the separately published `html2mp4.min.js`. Input is `.xp` or `.xp.json`, not HTML. Requires Chrome or Chromium (`XFRAME_CHROME_PATH`), `ffmpeg`, and `ffprobe` (`FFMPEG_PATH` / `FFPROBE_PATH`). Compiling `.xp` forces `format: video` (logical canvas 1280×720 from `slidedeck-video`; output 1920×1080 unless `--width` / `--height`). HUD and chrome are hidden. Local animated `<img>` GIFs are composited; remote GIFs and CSS backgrounds are not.
 
 After skill installation:
 
@@ -101,6 +101,7 @@ Pipeline in memory: compile → optional select → optional resolve → encode.
 | `--preset` `--crf` `--tune` `--threads` | libx264 (defaults: `medium`, 18, `stillimage`, 0=auto). CI: `ultrafast`, 26, 2 threads. |
 | `--snapshot-delay <ms>` | Wait before screenshot / GIF measurement (default 1500). |
 | `--chrome` `--ffmpeg` `--ffprobe` | Executables. |
+| `--source-root <dir>` | Override the source base recorded in IR when `.xp.json` and its assets have been relocated. |
 
 ```yaml
 narrative:
