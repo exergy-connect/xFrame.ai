@@ -1,0 +1,69 @@
+---
+presentation: slidedeck
+format: desktop
+themes: [light]
+styles: [canadian-declaration]
+title: The Canadian Declaration of Independence
+author: Canada
+classification: So let it be declared.
+layout: horizontal-split
+narrative:
+  provider: gemini
+  voice: female
+  direction:
+    profile: A seasoned Canadian stateswoman addressing the nation with calm authority, democratic conviction, and restrained warmth.
+    scene: A formal national declaration delivered from a dignified parliamentary chamber.
+    style: Statesmanlike, measured, resolute, and unifying; never theatrical or imitative of any specific person.
+    accent: Educated Canadian English, natural and subtle.
+    pacing: Deliberate and ceremonial, with clear pauses after each declaration and added weight on the bold sovereignty clauses.
+    notes: Begin reflectively, build toward firm resolve, and close with quiet finality.
+horizontal_split:
+  left: 1.16
+  right: 1
+---
+@id canadian-independence
+@layout horizontal-split
+# The Canadian Declaration of Independence
+
+**When, in the course of human events, it becomes necessary for one nation to cast off the influence of another, and to assume among the nations of the Earth the separate and equal station to which its people are entitled, a decent respect to the judgment of mankind requires that it should declare the causes which compel that separation.**
+
+We hold these truths to be self-evident: that Canada is a free people, possessed of its own history, its own institutions, and its own destiny; and that no nation, however powerful or beloved, may rightfully govern another by influence, habit, or proximity.
+
+For generations, we have lived beneath the overwhelming shadow of the United States, accepting as natural that which was never formally granted: that our security should be determined in Washington, our prosperity measured against American fortunes, and our place in the world understood through an American lens.
+
+@region image
+<div class="declaration-logos" aria-label="Exergy and Distributive">
+  <img class="declaration-logo" src="exergy_connect_logo.png" alt="Exergy" />
+  <img class="declaration-logo" src="distributive_logo.jpeg" alt="Distributive" />
+</div>
+
+@region right
+We have been good neighbors, faithful allies, and steadfast friends. But **friendship is not sovereignty, alliance is not submission, and geography is not dominion.**
+
+We therefore declare that **Canada is, and ought to be, a sovereign and independent nation**, free to determine its own laws, its own alliances, its own economy, and its own destiny.
+
+And though we shall remain neighbors, we shall henceforth be **neighbors as equals**.
+
+**So let it be declared.**
+
+@image independent_keystone.jpeg
+  alt: A parchment Canadian declaration beside a beaver in a mountain landscape
+  click_to_zoom: true
+
+@narrative
+  - en-CA: >-
+      The Canadian Declaration of Independence.
+
+      When, in the course of human events, it becomes necessary for one nation to cast off the influence of another, and to assume among the nations of the Earth the separate and equal station to which its people are entitled, a decent respect to the judgment of mankind requires that it should declare the causes which compel that separation.
+
+      We hold these truths to be self-evident: that Canada is a free people, possessed of its own history, its own institutions, and its own destiny; and that no nation, however powerful or beloved, may rightfully govern another by influence, habit, or proximity.
+
+      For generations, we have lived beneath the overwhelming shadow of the United States, accepting as natural that which was never formally granted: that our security should be determined in Washington, our prosperity measured against American fortunes, and our place in the world understood through an American lens.
+
+      We have been good neighbors, faithful allies, and steadfast friends. But friendship is not sovereignty, alliance is not submission, and geography is not dominion.
+
+      We therefore declare that Canada is, and ought to be, a sovereign and independent nation, free to determine its own laws, its own alliances, its own economy, and its own destiny.
+
+      And though we shall remain neighbors, we shall henceforth be neighbors as equals.
+
+      So let it be declared.
