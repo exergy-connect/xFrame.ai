@@ -17,6 +17,13 @@ module document {
 
      Compiled portable IR (``.xp.json``) is validated separately by ``ir.yang``.";
 
+  revision "2026-08-25" {
+    description
+      "Add document-meta css_imports (stylesheet URLs emitted as CSS @import
+       before rules) and embed_images boolean so HTML builds can inline local
+       Media as data URIs from front matter / presentation defaults, matching
+       the --embed-images CLI flag.";
+  }
   revision "2026-08-22" {
     description
       "Add page-break header.continue (default true) so forced letter-page
@@ -478,6 +485,14 @@ module document {
          continued=true at the interrupted section level when content spans
          pages. Declared on presentation templates (for example cover-letter).";
     }
+    leaf embed_images {
+      type boolean;
+      default false;
+      description
+        "When true, HTML builds rewrite local Media sources as data URIs
+         (same as --embed-images). Can be set in document front matter or on
+         a presentation template so portable HTML is the default.";
+    }
     leaf presentation {
       type presentation-name;
       description
@@ -544,6 +559,15 @@ module document {
     leaf-list styles {
       type string;
       description "Presentation style template names (for example deck, base).";
+    }
+    leaf-list css_imports {
+      type string;
+      description
+        "Stylesheet URLs (or full @import rules) for this document. HTML emit
+         writes them as link rel=stylesheet in the document head so adaptive
+         format-pane style blocks stay import-free. Style and theme templates
+         may also declare css_imports in their front matter; plugins contribute
+         via runtime cssImports versus css.";
     }
     leaf header {
       type string;

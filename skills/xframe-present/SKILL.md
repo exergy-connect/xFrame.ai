@@ -37,7 +37,7 @@ Default outputs: IR + HTML. `.xp` must start with a closed YAML fence (`---` …
 | `--templates <dir>` | Extra `.xpt` root. |
 | `--content-plugin <module>` | Repeatable. |
 | `--force-content-plugins` | Rebuild `.xframe/content-cache/`. |
-| `--embed-images` | Inline local images in HTML. |
+| `--embed-images` | Inline local images in HTML (or set `embed_images: true` in front matter). |
 | `--llm` | Enable compile-time `llm()`. |
 | `--llm-model <name>` | LLM model override. |
 | `--skip-audio` | Do not run TTS; reuse existing clips; omit audio from HTML and PPTX. |
@@ -151,7 +151,7 @@ title: My Talk
 - Segments: split on a line that is only `---`.
 - Body: GFM Markdown. `{{ … }}` is Jinja (compile-time unless `evaluation: dynamic`).
 
-Front matter: `presentation`/`presentations` (default `slidedeck`), `format`/`formats` (default `desktop`, or `poster` for poster), `themes`/`theme`, `styles`/`style`, `title`, `subtitle`, `author`, `lang`, `layout`, `data`, `topic`, `llm`, `evaluation`, `header`, `footer`, `header-image`, `footer-image`, `narrative`, `video`.
+Front matter: `presentation`/`presentations` (default `slidedeck`), `format`/`formats` (default `desktop`, or `poster` for poster), `themes`/`theme`, `styles`/`style`, `css_imports` (stylesheet URLs; also on style/theme `.xpt` front matter — compiled to IR `css.imports` and `<link rel="stylesheet">` in the HTML head, not `@import` inside pane CSS), `title`, `subtitle`, `author`, `lang`, `layout`, `data`, `topic`, `llm`, `evaluation`, `header`, `footer`, `header-image`, `footer-image`, `narrative`, `video`.
 
 Segment head: `@id`, `@layout <name>` (optional indented YAML), `@theme`, `@evaluation`, `@presentation`, `@format`, `@class`.
 
