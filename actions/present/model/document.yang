@@ -711,6 +711,13 @@ module document {
           ordered-by user;
         }
       }
+      leaf soundbites {
+        type boolean;
+        default false;
+        description
+          "When true, slides may declare @narrative soundbites ranges and HTML emits a "
+          + "runtime control that plays only those fragments from the narration audio.";
+      }
     }
     leaf evaluation {
       type evaluation-mode;
