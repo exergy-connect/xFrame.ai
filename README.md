@@ -2,7 +2,9 @@
 
 Public repository of **Cursor agent skills** for [xFrame](https://github.com/exergy-connect/xFrame): model-driven data consolidation and related workflows.
 
-**Live demo:** [Fabric-A Clos concept lab](https://exergy-connect.github.io/xFrame.ai/examples/conceptlab/output/ui/) — compiled Containerlab topology and static lab UI. GitHub Pages has no Docker daemon, so Deploy will not launch containers.
+**Live demos:**
+- [Fabric-A Clos concept lab](https://exergy-connect.github.io/xFrame.ai/examples/conceptlab/output/ui/) — compiled Containerlab topology and static lab UI. GitHub Pages has no Docker daemon, so Deploy will not launch containers.
+- [Canadian independence presentation](https://exergy-connect.github.io/xFrame.ai/examples/independence/canadian_independence.slidedeck.html) — compiled `.xp` slidedeck with narration.
 
 ## Skills
 
@@ -66,6 +68,7 @@ End-to-end samples:
 | --- | --- |
 | [`examples/consolidate/`](examples/consolidate/) | Subsea tieback portfolio — JSON model, sample data, and consolidated output. See [README](examples/consolidate/README.md) for entity layout and how to run the consolidator. |
 | [`docs/examples/conceptlab/`](docs/examples/conceptlab/) | Compiled Fabric-A Clos lab snapshot (Containerlab package + static UI). See [README](docs/examples/conceptlab/README.md). |
+| [`docs/examples/independence/`](docs/examples/independence/) | Canadian independence slidedeck (`.xp` source + compiled HTML). Live: [canadian_independence.slidedeck.html](https://exergy-connect.github.io/xFrame.ai/examples/independence/canadian_independence.slidedeck.html). |
 
 CI on `main` reconsolidates [`examples/consolidate/`](examples/consolidate/) via [`.github/workflows/examples-ci.yml`](.github/workflows/examples-ci.yml) and commits refreshed `output/` when the model or data change.
 
@@ -78,6 +81,7 @@ GitHub Pages serves files from [`docs/`](docs/) at `https://exergy-connect.githu
 | `install-skills.sh` | [`/install-skills.sh`](https://exergy-connect.github.io/xFrame.ai/install-skills.sh) |
 | `latest` | [`/latest`](https://exergy-connect.github.io/xFrame.ai/latest) |
 | `examples/conceptlab/output/ui/index.html` | [`/examples/conceptlab/output/ui/`](https://exergy-connect.github.io/xFrame.ai/examples/conceptlab/output/ui/) |
+| `examples/independence/canadian_independence.slidedeck.html` | [`/examples/independence/canadian_independence.slidedeck.html`](https://exergy-connect.github.io/xFrame.ai/examples/independence/canadian_independence.slidedeck.html) |
 | `examples/resume/index.html` | [`/examples/resume/`](https://exergy-connect.github.io/xFrame.ai/examples/resume/) |
 | `goa_field_of_dreams.html` | [`/goa_field_of_dreams.html`](https://exergy-connect.github.io/xFrame.ai/goa_field_of_dreams.html) |
 | `xform/xform.browser.min.js` | [`/xform/xform.browser.min.js`](https://exergy-connect.github.io/xFrame.ai/xform/xform.browser.min.js) |
