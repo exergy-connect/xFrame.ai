@@ -46,7 +46,7 @@ module runtime {
         type doc:invite-feature;
         description
           "Complete set of invite-feature enum values from document.yang. Used for
-           local file:// / 127.0.0.1 testing and feature enumeration; ideally
+           local file:// / 127.0.0.1 / localhost testing and feature enumeration; ideally
            generated from the typedef at build time.";
       }
 
