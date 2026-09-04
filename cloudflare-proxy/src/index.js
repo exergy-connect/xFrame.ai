@@ -52,6 +52,11 @@ export default {
       return jsonError(403, "Origin is not allowed");
     }
 
+    if (request.method === "POST") {
+      const limited = await isRateLimited(request, env);
+      if (limited) return jsonError(429, "Rate limit exceeded", cors);
+    }
+
     if (request.method === "POST" && url.pathname === "/invite/mint") {
       try {
         assertInviteKvContextHeadroom(env);
@@ -73,9 +78,6 @@ export default {
     if (request.method !== "POST") {
       return jsonError(405, "Method not allowed", cors);
     }
-
-    const limited = await isRateLimited(request, env);
-    if (limited) return jsonError(429, "Rate limit exceeded", cors);
 
     const turnstileError = await verifyTurnstile(request, env);
     if (turnstileError) return jsonError(403, turnstileError, cors);

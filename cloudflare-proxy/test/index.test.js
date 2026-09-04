@@ -127,6 +127,33 @@ test("mints file-backed context by default and stores ciphertext in Workers KV",
   assert.deepEqual([...servedBytes], [...stored.bytes]);
 });
 
+test("rate limits invite minting before writing to Workers KV", async () => {
+  const kv = mockInviteKv();
+  let limitedKey;
+  const response = await worker.fetch(new Request("https://proxy.example/invite/mint", {
+    method: "POST",
+    headers: {
+      Origin: "https://resume.example",
+      "Content-Type": "application/json",
+      Authorization: "Bearer admin-secret",
+      "CF-Connecting-IP": "192.0.2.1",
+    },
+    body: JSON.stringify({ context: "Must not be stored" }),
+  }), mintEnv({
+    INVITE_CONTEXTS: kv,
+    RATE_LIMITER: {
+      async limit({ key }) {
+        limitedKey = key;
+        return { success: false };
+      },
+    },
+  }));
+
+  assert.equal(response.status, 429);
+  assert.equal(limitedKey, "192.0.2.1");
+  assert.equal(kv.store.size, 0);
+});
+
 test("mints gzip context into the token when contextStorage is token", async () => {
   const active = new Date(Date.now() + 5 * 60_000);
   const expires = new Date(active.getTime() + 24 * 60 * 60_000);
