@@ -193,6 +193,8 @@ module document {
       enum widget;
       enum raw;
       enum annotation;
+      enum narrative;
+      enum cue;
     }
     description "Semantic content node produced by the Markdown parser.";
   }
@@ -806,6 +808,18 @@ module document {
 
     choice content {
       mandatory true;
+      case cue {
+        container cue {
+          presence "Timed @cue container relative to video.source.";
+          leaf id { type string; mandatory true; }
+          leaf startUs { type uint64; mandatory true; }
+          leaf endUs { type uint64; mandatory true; description "Exclusive end; must exceed startUs."; }
+          anydata content {
+            mandatory true;
+            description "Ordered ContentNode array containing existing narrative nodes.";
+          }
+        }
+      }
       case heading {
         container heading {
           presence "Markdown heading (# … ######).";
