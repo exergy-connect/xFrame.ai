@@ -513,6 +513,19 @@ module document {
          when that presentation is selected. Each key loads
          presentations/<name>.xpt.";
     }
+    leaf variant {
+      type string;
+      description
+        "Active document variant for this compile. When omitted, document-level
+         front matter is used (the first variants key is not an implicit default).";
+    }
+    anydata variants {
+      description
+        "Named parameter overlays merged when that variant is selected
+         (for example email or title). YAML list of names, or a map of name
+         to property overlays. Select with variant: or --variant; build all
+         plus the unoverlaid document with --variants.";
+    }
     leaf format {
       type format-name;
       description
