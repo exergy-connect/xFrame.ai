@@ -1,6 +1,6 @@
 ---
 name: xform-run
-description: Compiles composable .xp semantic documents into deterministic outputs (compile-tree JSON, finalized HTML/YAML/text, multi-file artifacts). Supports Jinja concepts/templates, .json runtime bindings, .js filter modules, capability realization, and CLI overrides. Also sets up new projects with a Dev Container using ghcr.io/exergy-connect/experiments/xform:latest. Use when compiling .xp decks, scaffolding an xForm project/devcontainer, running the xform script, or finalizing structured documents. For authoring .xp files, use the xform-author skill. For launching semantic-lab_v2 ConceptLab topologies, use the conceptlab skill.
+description: Compiles composable .xp semantic documents into deterministic outputs (compile-tree JSON, finalized HTML/YAML/text, multi-file artifacts). Supports Jinja concepts/templates, .json runtime bindings, .js filter modules, capability realization, and CLI overrides. Also sets up new projects with a Dev Container using ghcr.io/exergy-connect/experiments/xform:latest. Use when compiling .xp decks, scaffolding an xForm project/devcontainer, running the xform script, or finalizing structured documents. For authoring .xp files, use the xform-author skill. For launching network_validation ConceptLab topologies, use the conceptlab skill.
 ---
 
 # xForm
@@ -12,7 +12,7 @@ finalized output (`--final`).
 Requires **Node.js ≥24** (or the published controller image below).
 
 To **write or edit** `.xp` / `.xpt` sources, use the **xform-author** skill.
-To **launch / deploy** a semantic-lab_v2 lab, use the **conceptlab** skill.
+To **launch / deploy** a network_validation lab, use the **conceptlab** skill.
 
 ## When to use
 
@@ -147,4 +147,4 @@ node actions/xform/xform.min.js deck.xp runtime.json filters.js --final html -o 
 - `skills/xform-run/SKILL.md` — this skill (compile / CLI)
 - `actions/xform/xform.min.js` — minified CLI bundle (published with the GitHub Action; copied into this skill on install)
 - `skills/xform-author/SKILL.md` — authoring `.xp` documents
-- `examples/semantic-lab_v2/skills/conceptlab/SKILL.md` — ConceptLab launch / deploy
+- `examples/network_validation/skills/conceptlab/SKILL.md` — ConceptLab launch / deploy
