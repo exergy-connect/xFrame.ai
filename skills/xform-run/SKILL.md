@@ -100,7 +100,7 @@ directories, or `dir/*.ext` patterns (recursive filesystem order by default).
 | `-o, --output <file>` | Override the compile-tree JSON path. |
 | `--tree` | Write the full compile tree as JSON (default behavior). |
 | `--final <extension>` | Apply `templates/_final/<extension>.xpt` (or `_final._templates`); write `output/<document>.<extension>`. Segment-stream finals write each segment's `_document._output` under `output/`. |
-| `--with name=value` | Override a root-scope variable (repeatable; supports `company.name=X`). Capability paths prefer a realization: `--with persist.store=neo4j` or `--with persist=neo4j`. |
+| `--with name=value` | Inline root-scope binding at that argv position (repeatable; nested `company.name=X`). Later sources override earlier ones. `--with persist.store=neo4j` or `--with persist=neo4j` prefers a realization. |
 | `--env name` | Include an OS environment variable in root scope (repeatable). |
 | `--keep-segment-separators` | With `--final`, join segments with `---` (default: blank line). |
 | `--no-recurse` | Do not recurse into subdirectories when expanding dirs/patterns. |
