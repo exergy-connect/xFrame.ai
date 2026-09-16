@@ -40,7 +40,7 @@ Default outputs: IR + HTML. `.xp` must start with a closed YAML fence (`---` …
 | `--embed-images` | Inline local images in HTML (or set `embed_images: true` in front matter). |
 | `--llm` | Enable compile-time `llm()`. |
 | `--llm-model <name>` | LLM model override. |
-| `--skip-audio` | Do not run TTS; reuse existing clips; omit audio from HTML and PPTX. |
+| `--skip-audio` | Do not run TTS; reuse existing clips; leave missing audio unset. |
 | `--force-audio` | Regenerate TTS. Not with `--skip-audio`. |
 | `--combined-audio` | One deck TTS track. |
 | `--combined-pause <seconds>` | Pause between combined-track slides (default 3). |
