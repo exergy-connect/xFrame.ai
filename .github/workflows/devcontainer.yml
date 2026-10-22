@@ -27,6 +27,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -47,16 +52,16 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix=,format=short
 
-      - name: Build image
+      # Load only the native image for the smoke test; publish both platforms below.
+      - name: Build smoke test image
         uses: docker/build-push-action@v7
         with:
           context: .
           file: .devcontainer/Dockerfile
+          platforms: linux/amd64
           load: true
           provenance: false
-          tags: |
-            xframe-ai:ci
-            ${{ steps.meta.outputs.tags }}
+          tags: xframe-ai:ci
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -71,14 +76,18 @@ jobs:
             xframe-ai:ci \
             /workspaces/xFrame.ai/.github/scripts/smoke-devcontainer-skills.sh
 
-      - name: Push image
-        if: github.event_name != 'pull_request'
-        run: |
-          set -euo pipefail
-          while IFS= read -r tag; do
-            [[ -z "$tag" ]] && continue
-            docker push "$tag"
-          done <<< "${{ steps.meta.outputs.tags }}"
+      - name: Build and push multiarch image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: .devcontainer/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          provenance: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # New GHCR packages default to private; keep this image anonymously pullable.
       - name: Make package public
